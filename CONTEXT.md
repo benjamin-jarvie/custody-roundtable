@@ -26,7 +26,10 @@ branches. Do not call a branch an "option" or a "recommendation".
 end-to-end paths for the eventual quiz.
 
 **status**: a node is `open`, `active`, `contested`, or `resolved`. Tracked
-in `BACKLOG.md`. Nothing else counts as a status.
+in `BACKLOG.md`. Nothing else counts as a status. No status means closed. A
+published node takes replies for as long as the project runs, and `resolved`
+returns to `contested` if a later reply reopens it. Do not say a node
+"expires", "closes", or "is due".
 
 **editor of record**: Kiwi. The only person who commits changes to the
 document. There are no PRs from contributors.

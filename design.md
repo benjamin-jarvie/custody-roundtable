@@ -140,9 +140,28 @@ its own comment thread (see Comments below).
    roundtable experts DM'd directly with a link; public sees the same thread
    via the public post).
 3. Following Monday. Kiwi drafts the node's branches from that week's
-   replies, commits them to the page, and opens the next node's question.
+   replies so far, commits them to the page, and opens the next node's
+   question.
 4. A backlog file (`BACKLOG.md`) tracks which nodes are open/contested vs.
    resolved.
+
+**No deadline on any node (added 2026-08-05)**: the weekly cadence sets how
+often a *new* question opens. It does not close the old ones. Every published
+node stays open for replies for as long as the project runs. A reply that
+arrives months later is still worth having, and the tree is a living document
+rather than a set of closed polls.
+
+What this means in practice:
+- A node never moves to `resolved` because time passed. It moves when its
+  branches have been stable for a week or more with no new argument against
+  them, and it moves back to `contested` if a later reply reopens it.
+- Experts are never late. Someone who answers node 1 in week nine is answering
+  an open question, not a closed one, and their branch gets drafted the same
+  way.
+- The invite text says the question has no deadline, so nobody stays quiet
+  because they think they missed it.
+- Several nodes are open at once by design. This is expected, not a backlog
+  problem to clear.
 
 **Fragmentation, not forced consensus**: when experts disagree, the node's
 Mermaid sub-tree branches instead of collapsing to one answer. Each branch
@@ -268,7 +287,8 @@ codebase. Not built yet.
   can still surface a branch but need Kiwi's editorial judgment to promote.
 - **Scope creep into "the how"**: explicitly excluded per node.
 - **Never converging**: not a failure mode by design. A node is "done" when
-  its branches are stable for a week, not when everyone agrees.
+  its branches are stable for a week, not when everyone agrees. "Done" also
+  never means closed. A resolved node still takes replies and can reopen.
 
 ## Explicitly out of scope for this project
 

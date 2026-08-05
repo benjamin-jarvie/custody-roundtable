@@ -4,6 +4,11 @@ Status values: `open` (not yet published), `active` (question live, collecting
 replies), `contested` (branches drafted, still disputed), `resolved`
 (branches stable for a week or more).
 
+No node has a deadline. The weekly cadence sets how often a new question
+opens, not when an old one shuts. Every published node keeps taking replies
+for as long as the project runs, and a `resolved` node returns to `contested`
+if a later reply reopens it. Expect several nodes to be live at once.
+
 | # | Node | Pillar | Status |
 |---|------|--------|--------|
 | P | Premise: why self-custody at all (bearer asset, NYKNYC) | 0 (intro, not debated) | resolved |
