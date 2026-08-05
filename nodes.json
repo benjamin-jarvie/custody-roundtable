@@ -10,7 +10,10 @@
     "framing": "One live position, offered to be tested here rather than assumed: collaborative custody is “abdication-as-a-service”. You are still trusting someone else's solvency, honesty, and continued willingness to cooperate, just with better branding than an exchange. Is that fair, or does collaborative custody solve a real problem (loss of a single key, no heir with technical skill) that pure self-custody doesn't?",
     "videos": [],
     "anchorEvent": null,
-    "relays": []
+    "relays": [
+      "wss://relay.ditto.pub",
+      "wss://nos.lol"
+    ]
   },
   {
     "id": "02",
@@ -23,6 +26,9 @@
     "framing": "Framing to test, not to assume: for the entropy step specifically, there's no way to verify a non-deterministic output after the fact. You can only control its source in the first place. If that's right, generating it yourself may be the only point in the whole setup where “verify, don't trust” isn't actually possible, and controlling the source is the only lever available. Is that framing correct, or is there a way to gain assurance about a device's TRNG that doesn't reduce to trust?",
     "videos": [],
     "anchorEvent": null,
-    "relays": []
+    "relays": [
+      "wss://relay.ditto.pub",
+      "wss://nos.lol"
+    ]
   }
 ]

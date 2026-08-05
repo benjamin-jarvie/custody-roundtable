@@ -59,7 +59,9 @@ it, and the thread reader fetches replies by it. Set per node in
 `nodes.json`. A node with no anchor event has no open thread.
 
 **relay**: a Nostr relay URL the thread reader queries. Set per node in
-`nodes.json`.
+`nodes.json`. The project reads and writes `wss://relay.ditto.pub` (Soapbox)
+and `wss://nos.lol`. Both were tested on 2026-08-05 and accept writes from the
+project key. `wss://relay.damus.io` refused the connection and is not used.
 
 **NIP-07**: the browser extension standard (Alby, nos2x) that signs a
 reader's reply. The site never touches a private key.

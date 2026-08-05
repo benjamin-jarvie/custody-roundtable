@@ -204,6 +204,18 @@ Filling `whitelist.json` needs care. Take each npub from the person directly
 or from a post they signed, never from a search result. A wrong npub gives an
 impersonator roundtable weight on the page.
 
+**Relays (set 2026-08-05)**: `wss://relay.ditto.pub` (Soapbox) and
+`wss://nos.lol`. Both were tested end to end with the project key and accept
+writes. `wss://relay.damus.io` refused the connection and was dropped. Running
+a relay of our own is not needed yet and would add an uptime dependency the
+project does not have to carry.
+
+**Opening a node's thread**: publish one kind-1 event from the project key,
+then paste its event id into that node's `anchorEvent` in `nodes.json` and
+re-run `build-nodes.js`. A node with `anchorEvent: null` shows "This node's
+thread is not open yet" and takes no replies. This is the Monday step in the
+weekly loop.
+
 Moderation model: the reader queries a specific relay (or small relay set)
 that the project controls or curates by default. Filtering and hiding happen
 at the display layer only. Nothing is force-deleted from the network,

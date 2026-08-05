@@ -12,16 +12,43 @@
     "Entries with an empty npub are ignored by the filter."
   ],
   "roundtable": [
-    { "name": "Ben Kaufman", "npub": "" },
-    { "name": "Piers Cockram", "npub": "" },
-    { "name": "Jesse Posner", "npub": "" },
-    { "name": "Fractal Encrypt", "npub": "" },
-    { "name": "Giacomo Zucco", "npub": "" },
-    { "name": "Jimbo (Seed Picker Solitaire)", "npub": "" },
-    { "name": "Rob Hamilton", "npub": "" },
-    { "name": "Francis Poliout", "npub": "" }
+    {
+      "name": "Ben Kaufman",
+      "npub": ""
+    },
+    {
+      "name": "Piers Cockram",
+      "npub": ""
+    },
+    {
+      "name": "Jesse Posner",
+      "npub": ""
+    },
+    {
+      "name": "Fractal Encrypt",
+      "npub": ""
+    },
+    {
+      "name": "Giacomo Zucco",
+      "npub": ""
+    },
+    {
+      "name": "Jimbo (Seed Picker Solitaire)",
+      "npub": ""
+    },
+    {
+      "name": "Rob Hamilton",
+      "npub": ""
+    },
+    {
+      "name": "Francis Poliout",
+      "npub": ""
+    }
   ],
   "editor": [
-    { "name": "Kiwi (editor of record)", "npub": "" }
+    {
+      "name": "Custody Roundtable (project key)",
+      "npub": "npub1ddeduk2zx9wpu86v2d3t0qxdgz4yymyt2ake5kll3sl6w3f2qvdqcevr7n"
+    }
   ]
 }
