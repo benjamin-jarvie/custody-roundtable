@@ -78,6 +78,12 @@ not say "login" or "account", because neither exists here.
 **deep link**: the `nostr:` link labelled "Reply in your Nostr app". It opens
 the thread in the reader's own client. Built into the page at build time.
 
+**how to comment**: the help section at the bottom of every node page, anchor
+`#how-to-comment`. The composer links to it as "Having issues commenting?".
+It covers why Nostr, getting a key, the computer and phone routes, and why
+the roundtable view shows some names first. Edit it in one place, the
+`howToComment()` function in `build-nodes.js`, then rebuild.
+
 **thread reader**: `comments.js`, this project's own comment code. It
 replaced the planned ZapThreads fork. See `design.md` for why.
 

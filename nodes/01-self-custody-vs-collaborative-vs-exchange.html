@@ -41,6 +41,120 @@
     <script type="module" src="../comments.js"></script>
   </div>
 
+  <h2 id="how-to-comment">How to comment</h2>
+
+  <div class="howto">
+    <h3>Why Nostr and not a normal comment box</h3>
+    <p>
+      Your reply is signed with your own key. That has three consequences that
+      matter for a document built out of other people's arguments.
+    </p>
+    <ul>
+      <li>Nobody can edit what sits under your name, including us. We compile
+        replies into branches, and you can always check the original.</li>
+      <li>Nobody can delete your argument either. A signed event does not
+        depend on us keeping it. If this project disappears, your answer is
+        still on the relays.</li>
+      <li>There is no account, no email, and no password. Nothing to sign up
+        for and nothing for us to leak.</li>
+    </ul>
+    <p>
+      A project about not trusting third parties should not ask you to trust
+      one to hold your words.
+    </p>
+
+    <h3>Getting a key, about two minutes</h3>
+    <p>
+      A Nostr key is a keypair, the same idea as a Bitcoin key. The public half
+      (<code>npub</code>) is your name. The private half (<code>nsec</code>) is
+      your password and your identity. Back it up. Losing it means losing the
+      identity, and there is no reset.
+    </p>
+    <ul>
+      <li><strong>On a phone</strong>: install
+        <a href="https://github.com/greenart7c3/Amber" rel="noopener">Amber</a>
+        (Android), or open <a href="https://nsec.app" rel="noopener">nsec.app</a>
+        in any mobile browser. Create a key.</li>
+      <li><strong>On a computer</strong>: install
+        <a href="https://getalby.com" rel="noopener">Alby</a> or
+        <a href="https://github.com/fiatjaf/nos2x" rel="noopener">nos2x</a> as a
+        browser extension. Create a key.</li>
+    </ul>
+    <p>
+      If you already answer on Nostr from Damus, Primal or Amethyst, you have a
+      key already. Skip this.
+    </p>
+
+    <h3>Commenting from a computer</h3>
+    <ol>
+      <li>Install Alby or nos2x and create or import your key.</li>
+      <li>Press <strong>Browser extension</strong> above the reply box.</li>
+      <li>Approve the connection when the extension asks. It shares your public
+        key only.</li>
+      <li>Write your reply and press <strong>Sign and post</strong>. The
+        extension asks you to approve the signature.</li>
+    </ol>
+
+    <h3>Commenting from a phone</h3>
+    <p>
+      Browser extensions do not exist on phones, so phones use a remote signer.
+      Your key stays inside the signer app and never reaches this page. The app
+      asks you to approve every signature.
+    </p>
+    <ol>
+      <li>Install Amber, or open nsec.app, and create or import your key.</li>
+      <li>In that app, copy your connection string. It starts with
+        <code>bunker://</code>.</li>
+      <li>Press <strong>Remote signer</strong> above the reply box, paste the
+        string, and press <strong>Connect</strong>.</li>
+      <li>Approve the connection in your signer app.</li>
+      <li>Write your reply and press <strong>Sign and post</strong>, then
+        approve the signature in the signer app.</li>
+    </ol>
+    <p>
+      This page remembers the connection, so you only paste that string once on
+      this device.
+    </p>
+
+    <h3>Or answer from the app you already use</h3>
+    <p>
+      Press <strong>Reply in your Nostr app</strong> under the reply box. It
+      opens this thread in Damus, Primal, Amethyst or whatever you have
+      installed, and you reply there as you would to any note. Nothing to copy
+      and no key to connect. Your reply still appears on this page.
+    </p>
+
+    <h3>Why some names show first</h3>
+    <p>
+      The thread opens on <strong>Roundtable only</strong>, which shows the
+      people listed in
+      <a href="../whitelist.json">whitelist.json</a>. <strong>Everyone</strong>
+      shows every reply. Both views read the same relays.
+    </p>
+    <p>
+      This is a display default. It is not moderation and it is not permission.
+      Anyone can post, no reply is hidden from the relays, and every reply is
+      one press away. The list is public so you can see exactly whose answers
+      are being weighted.
+    </p>
+    <p>
+      The reason for it: a handful of people with deep experience should not be
+      buried under bots and drive-by opinions. Deciding whose answer carries
+      weight is human judgment, and this project treats that as part of the
+      work rather than something to hide behind an algorithm. Public replies
+      can still raise a branch and reach the tree on their merits.
+    </p>
+
+    <h3>Still stuck</h3>
+    <p>
+      Post your answer publicly on Nostr and tag
+      <code>npub1ddeduk2zx9wpu86v2d3t0qxdgz4yymyt2ake5kll3sl6w3f2qvdqcevr7n</code>,
+      or raise it on the
+      <a href="https://github.com/benjamin-jarvie/custody-roundtable" rel="noopener">repo</a>.
+      There is no deadline on any question, so there is no rush.
+    </p>
+  </div>
+
   <footer>
     
     

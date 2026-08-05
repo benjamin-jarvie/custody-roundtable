@@ -318,7 +318,7 @@ class Thread {
       const off = el("button", "signer-link", "disconnect");
       off.type = "button";
       off.addEventListener("click", () => this.clearSigner());
-      this.signerBar.append(who, off);
+      this.signerBar.append(who, off, this.helpLink("Having issues commenting?"));
       this.sendBtn.disabled = false;
       return;
     }
@@ -336,7 +336,15 @@ class Thread {
     const remote = el("button", "signer-btn", "Remote signer");
     remote.type = "button";
     remote.addEventListener("click", () => this.promptBunker());
-    this.signerBar.append(remote);
+    this.signerBar.append(remote, this.helpLink("Having issues commenting?"));
+  }
+
+  // Points at the how-to section further down the same page, so nobody loses
+  // a half-written reply by navigating away.
+  helpLink(text) {
+    const link = el("a", "help-link", text);
+    link.href = "#how-to-comment";
+    return link;
   }
 
   async connectExtension() {

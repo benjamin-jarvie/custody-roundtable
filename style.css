@@ -232,6 +232,34 @@ nav.breadcrumb { margin-bottom: 1.5rem; font-size: 1rem; }
 .bunker-input:focus-visible { outline: 2px solid var(--gold-hover); outline-offset: 1px; }
 .bunker-row .comment-note { flex-basis: 100%; }
 
+.help-link { font-size: 0.9rem; margin-left: auto; }
+
+/* How to comment, the anchor target for the help link. */
+.howto {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 1.25rem 1.25rem;
+}
+.howto h3 {
+  font-size: 1.1rem;
+  color: var(--gold);
+  margin: 1.5rem 0 0.5rem;
+  font-weight: 600;
+}
+.howto h3:first-of-type { margin-top: 1rem; }
+.howto p, .howto li { font-size: 1rem; }
+.howto ul, .howto ol { padding-left: 1.25rem; }
+.howto li { margin-bottom: 0.4rem; }
+.howto code {
+  font-size: 0.9em;
+  background: var(--surface-overlay);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.35rem;
+  overflow-wrap: anywhere;
+}
+:target { scroll-margin-top: 1rem; }
+
 .deep-link-row { margin-top: 0.25rem; }
 .deep-link { font-size: 0.95rem; }
 .deep-link::after { content: " \2192"; }
