@@ -4,32 +4,39 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Node 01: Self-custody vs. collaborative custody vs. exchange | Custody Roundtable</title>
-<meta name="description" content="Given the premise above, what accountability are you actually taking on with full self-custody, versus collaborative custody (a co-signing service or ">
+<meta name="description" content="What accountability are you actually taking on with full self-custody, versus collaborative custody (a co-signing service or third party holds one key">
 <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 <div class="wrap">
-  <nav class="breadcrumb"><a href="../index.html">&larr; Custody Roundtable tree</a></nav>
-  <p><span class="status-pill active">active</span> &nbsp; <span style="color:var(--fg-muted)">A. Certainty of the secret</span></p>
-  <h1>Node 01: Self-custody vs. collaborative custody vs. exchange</h1>
+  <a class="crumb" href="../index.html">&larr; The tree</a>
 
-  <h2>Premise</h2><p>Bitcoin's properties, savings that can't be inflated and payments that can't be censored, only hold if you are the bearer. A custodian reintroduces the counterparty risk Bitcoin exists to remove, links your identity to your holdings, and makes you a named target for a wrench attack you didn't need to invite. Everything below assumes this as the starting point, not something up for debate.</p>
+  <p class="eyebrow">
+    <span>Node 01</span>
+    <span>A. Certainty of the secret</span>
+    <span class="state-tag ">Open for answers</span>
+  </p>
+  <h1>Self-custody vs. collaborative custody vs. exchange</h1>
 
-  <h2>The question</h2>
-  <p>Given the premise above, what accountability are you actually taking on with full self-custody, versus collaborative custody (a co-signing service or third party holds one key in a multisig with you), versus leaving funds on an exchange? What did each option let you avoid, and what did it cost you?</p>
-  <p>One live position, offered to be tested here rather than assumed: collaborative custody is “abdication-as-a-service”. You are still trusting someone else's solvency, honesty, and continued willingness to cooperate, just with better branding than an exchange. Is that fair, or does collaborative custody solve a real problem (loss of a single key, no heir with technical skill) that pure self-custody doesn't?</p>
+  <p class="question">What accountability are you actually taking on with full self-custody, versus collaborative custody (a co-signing service or third party holds one key in a multisig with you), versus leaving funds on an exchange? What did each option let you avoid, and what did it cost you?</p>
 
-  <h2>Branches</h2>
-  <p style="color:var(--fg-muted)">To be filled in from replies. Each branch gets an "applies when" tag and attribution. See the fragmentation policy in <code>design.md</code>. None drafted yet.</p>
+  <p class="section">The premise this assumes</p>
+  <div class="premise"><p>Bitcoin's properties, savings that can't be inflated and payments that can't be censored, only hold if you are the bearer. A custodian reintroduces the counterparty risk Bitcoin exists to remove, links your identity to your holdings, and makes you a named target for a wrench attack you didn't need to invite. Everything below assumes this as the starting point, not something up for debate.</p></div>
 
-  <h2>Video answers</h2>
+  <p class="section">A position to test</p>
+  <div class="framing"><p>One live position, offered to be tested here rather than assumed: collaborative custody is “abdication-as-a-service”. You are still trusting someone else's solvency, honesty, and continued willingness to cooperate, just with better branding than an exchange. Is that fair, or does collaborative custody solve a real problem (loss of a single key, no heir with technical skill) that pure self-custody doesn't?</p></div>
+
+  <p class="section">Branches</p>
+  <p class="empty">None drafted yet. Branches are compiled from the answers below, and each one carries an "applies when" tag and the name of whoever argued for it.</p>
+
+  <p class="section">Video answers</p>
   <div class="video-slot">
       No video answers yet. Approved contributors can submit a video response;
       we transcribe it to text here and keep the original for promotion.
       See the process note in <code>design.md</code>.
     </div>
 
-  <h2>Discuss</h2>
+  <p class="section">Answer this question</p>
   <div class="comments-section">
     <p class="mic-note">Answer here. Sign with a browser extension (Alby, nos2x) on a computer, or a remote signer (Amber, nsec.app) on a phone. Your key never reaches this page. The thread opens on the core roundtable by default, and Everyone shows every reply. This question has no deadline.</p>
     <div
@@ -41,7 +48,7 @@
     <script type="module" src="../comments.js"></script>
   </div>
 
-  <h2 id="how-to-comment">How to comment</h2>
+  <p class="section" id="how-to-comment">How to comment</p>
 
   <div class="howto">
     <h3>Why Nostr and not a normal comment box</h3>
@@ -155,10 +162,15 @@
     </p>
   </div>
 
-  <footer>
-    
-    
+  <nav class="page-nav">
+    <span></span>
     <a href="02-roll-your-own-entropy.html">Node 02 &rarr;</a>
+  </nav>
+
+  <footer class="colophon">
+    <span>Bitcoin Butlers</span>
+    <a href="../index.html">The tree</a>
+    <a href="https://github.com/benjamin-jarvie/custody-roundtable">Source</a>
   </footer>
 </div>
 </body>

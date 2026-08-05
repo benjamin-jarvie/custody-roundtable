@@ -6,7 +6,7 @@
     "pillar": "A. Certainty of the secret",
     "status": "active",
     "premise": "Bitcoin's properties, savings that can't be inflated and payments that can't be censored, only hold if you are the bearer. A custodian reintroduces the counterparty risk Bitcoin exists to remove, links your identity to your holdings, and makes you a named target for a wrench attack you didn't need to invite. Everything below assumes this as the starting point, not something up for debate.",
-    "question": "Given the premise above, what accountability are you actually taking on with full self-custody, versus collaborative custody (a co-signing service or third party holds one key in a multisig with you), versus leaving funds on an exchange? What did each option let you avoid, and what did it cost you?",
+    "question": "What accountability are you actually taking on with full self-custody, versus collaborative custody (a co-signing service or third party holds one key in a multisig with you), versus leaving funds on an exchange? What did each option let you avoid, and what did it cost you?",
     "framing": "One live position, offered to be tested here rather than assumed: collaborative custody is “abdication-as-a-service”. You are still trusting someone else's solvency, honesty, and continued willingness to cooperate, just with better branding than an exchange. Is that fair, or does collaborative custody solve a real problem (loss of a single key, no heir with technical skill) that pure self-custody doesn't?",
     "videos": [],
     "anchorEvent": "8c26e2e2cf7dcaf27bdc530a7cf65564e6c92bb4f39288a7fe5673cf76b38848",

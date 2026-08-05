@@ -7,6 +7,16 @@ const path = require("path");
 const nodes = JSON.parse(fs.readFileSync(path.join(__dirname, "nodes.json"), "utf8"));
 const outDir = path.join(__dirname, "nodes");
 
+// Reader-facing wording for each status, since "drafted" and "open" describe
+// our workflow rather than what a visitor can do.
+const STATE = {
+  active: { label: "Open for answers", cls: "" },
+  drafted: { label: "Next up", cls: "is-next" },
+  contested: { label: "Open, branches disputed", cls: "" },
+  resolved: { label: "Settled for now", cls: "is-pending" },
+  open: { label: "Not published yet", cls: "is-pending" },
+};
+
 function escapeHtml(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -97,7 +107,7 @@ function videoBlock(node) {
 // The same help section on every node page, so the "Having issues
 // commenting?" link beside the composer never leaves the page.
 function howToComment() {
-  return `<h2 id="how-to-comment">How to comment</h2>
+  return `<p class="section" id="how-to-comment">How to comment</p>
 
   <div class="howto">
     <h3>Why Nostr and not a normal comment box</h3>
@@ -224,23 +234,30 @@ function nodeHtml(node, prev, next) {
 </head>
 <body>
 <div class="wrap">
-  <nav class="breadcrumb"><a href="../index.html">&larr; Custody Roundtable tree</a></nav>
-  <p><span class="status-pill ${node.status}">${node.status}</span> &nbsp; <span style="color:var(--fg-muted)">${escapeHtml(node.pillar)}</span></p>
-  <h1>Node ${node.id}: ${escapeHtml(node.title)}</h1>
+  <a class="crumb" href="../index.html">&larr; The tree</a>
 
-  ${node.premise ? `<h2>Premise</h2><p>${escapeHtml(node.premise)}</p>` : ""}
+  <p class="eyebrow">
+    <span>Node ${node.id}</span>
+    <span>${escapeHtml(node.pillar)}</span>
+    <span class="state-tag ${STATE[node.status] ? STATE[node.status].cls : ""}">${STATE[node.status] ? STATE[node.status].label : escapeHtml(node.status)}</span>
+  </p>
+  <h1>${escapeHtml(node.title)}</h1>
 
-  <h2>The question</h2>
-  <p>${escapeHtml(node.question)}</p>
-  <p>${escapeHtml(node.framing)}</p>
+  <p class="question">${escapeHtml(node.question)}</p>
 
-  <h2>Branches</h2>
-  <p style="color:var(--fg-muted)">To be filled in from replies. Each branch gets an "applies when" tag and attribution. See the fragmentation policy in <code>design.md</code>. None drafted yet.</p>
+  ${node.premise ? `<p class="section">The premise this assumes</p>
+  <div class="premise"><p>${escapeHtml(node.premise)}</p></div>` : ""}
 
-  <h2>Video answers</h2>
+  <p class="section">A position to test</p>
+  <div class="framing"><p>${escapeHtml(node.framing)}</p></div>
+
+  <p class="section">Branches</p>
+  <p class="empty">None drafted yet. Branches are compiled from the answers below, and each one carries an "applies when" tag and the name of whoever argued for it.</p>
+
+  <p class="section">Video answers</p>
   ${videoBlock(node)}
 
-  <h2>Discuss</h2>
+  <p class="section">Answer this question</p>
   <div class="comments-section">
     <p class="mic-note">Answer here. Sign with a browser extension (Alby, nos2x) on a computer, or a remote signer (Amber, nsec.app) on a phone. Your key never reaches this page. The thread opens on the core roundtable by default, and Everyone shows every reply. This question has no deadline.</p>
     <div
@@ -254,10 +271,15 @@ function nodeHtml(node, prev, next) {
 
   ${howToComment()}
 
-  <footer>
-    ${prev ? `<a href="${prev.id}-${prev.slug}.html">&larr; Node ${prev.id}</a>` : ""}
-    ${prev && next ? " &nbsp;·&nbsp; " : ""}
-    ${next ? `<a href="${next.id}-${next.slug}.html">Node ${next.id} &rarr;</a>` : ""}
+  <nav class="page-nav">
+    ${prev ? `<a href="${prev.id}-${prev.slug}.html">&larr; Node ${prev.id}</a>` : "<span></span>"}
+    ${next ? `<a href="${next.id}-${next.slug}.html">Node ${next.id} &rarr;</a>` : "<span></span>"}
+  </nav>
+
+  <footer class="colophon">
+    <span>Bitcoin Butlers</span>
+    <a href="../index.html">The tree</a>
+    <a href="https://github.com/benjamin-jarvie/custody-roundtable">Source</a>
   </footer>
 </div>
 </body>

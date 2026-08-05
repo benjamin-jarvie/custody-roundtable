@@ -9,27 +9,33 @@
 </head>
 <body>
 <div class="wrap">
-  <nav class="breadcrumb"><a href="../index.html">&larr; Custody Roundtable tree</a></nav>
-  <p><span class="status-pill drafted">drafted</span> &nbsp; <span style="color:var(--fg-muted)">A. Certainty of the secret</span></p>
-  <h1>Node 02: Should you roll your own entropy?</h1>
+  <a class="crumb" href="../index.html">&larr; The tree</a>
+
+  <p class="eyebrow">
+    <span>Node 02</span>
+    <span>A. Certainty of the secret</span>
+    <span class="state-tag is-next">Next up</span>
+  </p>
+  <h1>Should you roll your own entropy?</h1>
+
+  <p class="question">A hardware device's TRNG can generate a seed for you in seconds. Rolling your own entropy (dice, shuffled cards) takes longer and requires you to trust your own procedure instead of a chip. What does rolling your own actually buy you, and what does skipping it cost you?</p>
 
   
 
-  <h2>The question</h2>
-  <p>A hardware device's TRNG can generate a seed for you in seconds. Rolling your own entropy (dice, shuffled cards) takes longer and requires you to trust your own procedure instead of a chip. What does rolling your own actually buy you, and what does skipping it cost you?</p>
-  <p>Framing to test, not to assume: for the entropy step specifically, there's no way to verify a non-deterministic output after the fact. You can only control its source in the first place. If that's right, generating it yourself may be the only point in the whole setup where “verify, don't trust” isn't actually possible, and controlling the source is the only lever available. Is that framing correct, or is there a way to gain assurance about a device's TRNG that doesn't reduce to trust?</p>
+  <p class="section">A position to test</p>
+  <div class="framing"><p>Framing to test, not to assume: for the entropy step specifically, there's no way to verify a non-deterministic output after the fact. You can only control its source in the first place. If that's right, generating it yourself may be the only point in the whole setup where “verify, don't trust” isn't actually possible, and controlling the source is the only lever available. Is that framing correct, or is there a way to gain assurance about a device's TRNG that doesn't reduce to trust?</p></div>
 
-  <h2>Branches</h2>
-  <p style="color:var(--fg-muted)">To be filled in from replies. Each branch gets an "applies when" tag and attribution. See the fragmentation policy in <code>design.md</code>. None drafted yet.</p>
+  <p class="section">Branches</p>
+  <p class="empty">None drafted yet. Branches are compiled from the answers below, and each one carries an "applies when" tag and the name of whoever argued for it.</p>
 
-  <h2>Video answers</h2>
+  <p class="section">Video answers</p>
   <div class="video-slot">
       No video answers yet. Approved contributors can submit a video response;
       we transcribe it to text here and keep the original for promotion.
       See the process note in <code>design.md</code>.
     </div>
 
-  <h2>Discuss</h2>
+  <p class="section">Answer this question</p>
   <div class="comments-section">
     <p class="mic-note">Answer here. Sign with a browser extension (Alby, nos2x) on a computer, or a remote signer (Amber, nsec.app) on a phone. Your key never reaches this page. The thread opens on the core roundtable by default, and Everyone shows every reply. This question has no deadline.</p>
     <div
@@ -41,7 +47,7 @@
     <script type="module" src="../comments.js"></script>
   </div>
 
-  <h2 id="how-to-comment">How to comment</h2>
+  <p class="section" id="how-to-comment">How to comment</p>
 
   <div class="howto">
     <h3>Why Nostr and not a normal comment box</h3>
@@ -155,10 +161,15 @@
     </p>
   </div>
 
-  <footer>
+  <nav class="page-nav">
     <a href="01-self-custody-vs-collaborative-vs-exchange.html">&larr; Node 01</a>
-    
-    
+    <span></span>
+  </nav>
+
+  <footer class="colophon">
+    <span>Bitcoin Butlers</span>
+    <a href="../index.html">The tree</a>
+    <a href="https://github.com/benjamin-jarvie/custody-roundtable">Source</a>
   </footer>
 </div>
 </body>

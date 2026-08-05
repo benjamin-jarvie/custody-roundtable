@@ -4,90 +4,162 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Custody Roundtable | Bitcoin Butlers</title>
-<meta name="description" content="A living, async, expert-sourced decision tree for Bitcoin self-custody: threat models, tool tradeoffs, and open questions.">
+<meta name="description" content="A living, expert-sourced decision tree for Bitcoin self-custody: threat models, tool tradeoffs, and open questions. One question at a time, no deadlines.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="wrap">
 
+<p class="eyebrow"><span>Bitcoin Butlers</span><span>17 nodes</span><span>1 open</span></p>
 <h1>Custody Roundtable</h1>
-<p class="tagline">
-  An async, public, expert-sourced process to build a decision tree for
-  Bitcoin self-custody, built from first principles rather than a
-  threat-model list.
-  One question a week, compiled into branches, not forced consensus.
-  Full process in <a href="design.md">design.md</a>.
+
+<p class="lede">
+  A public decision tree for Bitcoin self-custody, built one question at a
+  time from the answers of people who design and use these setups. Where
+  answers disagree, the tree branches.
 </p>
 
-<h2>The tree so far</h2>
-<div id="tree">
-  <pre class="mermaid">
-graph TD
-  P0["Premise: bearer asset, NYKNYC"] --> N1
-  N1["Node 1: self-custody vs collaborative vs exchange"]
-  N1 --> N2["Node 2: roll your own entropy?"]
-  N2 --> N3["Node 3: verify entropy mixing"]
-  N3 --> N4["Node 4: seed format"]
-  N4 --> N5["Node 5: full backup material"]
-  N5 --> N6["Node 6: passphrase handling"]
-  N6 --> N7["Node 7: descriptor backup (open question)"]
-  N7 --> N8["Node 8: single-sig vs multisig"]
-  N8 --> N9["Node 9: single vs multi-vendor"]
-  N9 --> N10["Node 10: air-gapped transport"]
-  N10 --> N11["Node 11: backup redundancy"]
-  N11 --> N12["Node 12: end-to-end verification + cold recovery"]
-  N12 --> N13["Node 13: inheritance"]
-  N13 --> N14["Node 14: retirement / incapacity"]
-  N14 --> N15["Node 15: rotation / migration"]
-  N15 --> N16["Node 16: UTXO management & privacy"]
-  N16 --> S["Synthesis: named end-to-end paths"]
+<blockquote class="thread">
+  <q>How do I know I am the only one who knows this secret, while minimizing
+  dependency on any one piece of hardware or software?</q>
+  <span class="attrib">Every node follows from this</span>
+</blockquote>
 
-  classDef active fill:#FBDC7B,stroke:#FF9125,color:#1a1400,font-weight:bold;
-  classDef drafted fill:#1e1e1e,stroke:#FF9125,color:#FBDC7B;
-  class N1 active;
-  class N2 drafted;
-  </pre>
-</div>
+<p class="section">The tree</p>
 
-<h2>Nodes</h2>
-<div class="node-list">
-  <a class="node-card" href="nodes/01-self-custody-vs-collaborative-vs-exchange.html">
-    <span class="node-num">Node 1</span>
-    <span class="status-pill active">active</span>
-    <span class="node-title">Self-custody vs. collaborative custody vs. exchange</span>
-  </a>
-  <a class="node-card" href="nodes/02-roll-your-own-entropy.html">
-    <span class="node-num">Node 2</span>
-    <span class="status-pill drafted">drafted, queued</span>
-    <span class="node-title">Should you roll your own entropy?</span>
-  </a>
-</div>
-<p style="color:var(--fg-muted)">Remaining nodes publish weekly. See <a href="BACKLOG.md">BACKLOG.md</a> for status on all 17.</p>
+<section class="pillar">
+  <p class="pillar-head"><span class="pillar-key">0</span><span>Premise, not debated</span></p>
+  <ol class="tree">
+    <li class="node-row is-pending">
+      <span>
+        <span class="node-id">00</span>
+        <span class="node-name">Bitcoin's properties only hold if you are the bearer</span>
+        <span class="node-state">settled, in the intro</span>
+      </span>
+    </li>
+  </ol>
+</section>
 
-<h2>How this works</h2>
+<section class="pillar">
+  <p class="pillar-head"><span class="pillar-key">A</span><span>Certainty of the secret</span></p>
+  <ol class="tree">
+    <li class="node-row is-open">
+      <a href="nodes/01-self-custody-vs-collaborative-vs-exchange.html">
+        <span class="node-id">01</span>
+        <span class="node-name">Self-custody vs. collaborative custody vs. exchange</span>
+        <span class="node-state is-open">open for answers</span>
+      </a>
+    </li>
+    <li class="node-row is-next">
+      <a href="nodes/02-roll-your-own-entropy.html">
+        <span class="node-id">02</span>
+        <span class="node-name">Should you roll your own entropy?</span>
+        <span class="node-state is-next">next up</span>
+      </a>
+    </li>
+    <li class="node-row is-pending">
+      <span>
+        <span class="node-id">03</span>
+        <span class="node-name">Verifying entropy mixing instead of trusting it</span>
+      </span>
+    </li>
+    <li class="node-row is-pending">
+      <span>
+        <span class="node-id">04</span>
+        <span class="node-name">Seed format: BIP-39, raw BIP-32, or Codex32</span>
+      </span>
+    </li>
+  </ol>
+</section>
+
+<section class="pillar">
+  <p class="pillar-head"><span class="pillar-key">A.5</span><span>What has to survive on a backup</span></p>
+  <ol class="tree">
+    <li class="node-row is-pending">
+      <span><span class="node-id">05</span><span class="node-name">The complete material per key: path, script type, fingerprint</span></span>
+    </li>
+    <li class="node-row is-pending">
+      <span><span class="node-id">06</span><span class="node-name">Passphrase handling and separate storage</span></span>
+    </li>
+    <li class="node-row is-pending">
+      <span><span class="node-id">07</span><span class="node-name">Does the descriptor need its own backup?</span></span>
+    </li>
+  </ol>
+</section>
+
+<section class="pillar">
+  <p class="pillar-head"><span class="pillar-key">B</span><span>Minimizing dependency</span></p>
+  <ol class="tree">
+    <li class="node-row is-pending">
+      <span><span class="node-id">08</span><span class="node-name">Single-sig vs. multisig, named or by accident</span></span>
+    </li>
+    <li class="node-row is-pending">
+      <span><span class="node-id">09</span><span class="node-name">Single-vendor vs. multi-vendor multisig</span></span>
+    </li>
+    <li class="node-row is-pending">
+      <span><span class="node-id">10</span><span class="node-name">Air-gapped signing and transport</span></span>
+    </li>
+    <li class="node-row is-pending">
+      <span><span class="node-id">11</span><span class="node-name">Physical and geographic redundancy</span></span>
+    </li>
+    <li class="node-row is-pending">
+      <span><span class="node-id">12</span><span class="node-name">End-to-end verification and rehearsed cold recovery</span></span>
+    </li>
+  </ol>
+</section>
+
+<section class="pillar">
+  <p class="pillar-head"><span class="pillar-key">C</span><span>Continuity without a new dependency</span></p>
+  <ol class="tree">
+    <li class="node-row is-pending">
+      <span><span class="node-id">13</span><span class="node-name">Inheritance</span></span>
+    </li>
+    <li class="node-row is-pending">
+      <span><span class="node-id">14</span><span class="node-name">Retirement and incapacity</span></span>
+    </li>
+    <li class="node-row is-pending">
+      <span><span class="node-id">15</span><span class="node-name">Rotation and migration after a compromise</span></span>
+    </li>
+  </ol>
+</section>
+
+<section class="pillar">
+  <p class="pillar-head"><span class="pillar-key">D</span><span>Living with it</span></p>
+  <ol class="tree">
+    <li class="node-row is-pending">
+      <span><span class="node-id">16</span><span class="node-name">UTXO management and privacy</span></span>
+    </li>
+    <li class="node-row is-pending">
+      <span><span class="node-id">17</span><span class="node-name">Synthesis: named end-to-end paths</span></span>
+    </li>
+  </ol>
+</section>
+
+<p class="section">How this works</p>
+
 <p>
-  Tap a node to see its question, any video answers from approved
-  contributors (transcribed to text, original kept for promotion), and the
-  live comment thread underneath. Nothing forces agreement. Where experts
-  disagree, the tree branches instead of collapsing to one answer.
+  One new question opens each week. No question has a deadline, so every
+  published node keeps taking answers for as long as the project runs. A reply
+  months from now is still worth having.
 </p>
 <p>
   Answers are Nostr comments signed with your own key, from a computer or a
-  phone. No account and no sign-up. New to that, or having trouble? Read
+  phone. There is no account and no sign-up, and nobody can edit or delete what
+  sits under your name, including us. New to that, or having trouble? Read
   <a href="nodes/01-self-custody-vs-collaborative-vs-exchange.html#how-to-comment">how to comment</a>.
-  No question has a deadline, so there is no rush.
+</p>
+<p>
+  Where answers disagree the tree branches, and each branch carries the name of
+  whoever argued for it. Nothing is forced into consensus. Full process in
+  <a href="design.md">design.md</a>, node status in <a href="BACKLOG.md">BACKLOG.md</a>.
 </p>
 
-<footer>
-  Bitcoin Butlers · <a href="https://github.com/benjamin-jarvie/custody-roundtable">source on GitHub</a>
+<footer class="colophon">
+  <span>Bitcoin Butlers</span>
+  <a href="https://github.com/benjamin-jarvie/custody-roundtable">Source</a>
+  <a href="README.md">Readme</a>
 </footer>
 
 </div>
-
-<script type="module">
-  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
-  mermaid.initialize({ startOnLoad: true, theme: "dark", themeVariables: { background: "#141414" } });
-</script>
-
 </body>
 </html>

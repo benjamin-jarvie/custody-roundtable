@@ -195,7 +195,9 @@ class Thread {
       const item = el("article", "comment");
       const name = this.whitelist.get(ev.pubkey);
       const head = el("div", "comment-head");
-      head.append(el("span", "comment-author", name || shortKey(ev.pubkey)));
+      // Gold is reserved for a reply with a name attached. Unattributed keys
+      // stay grey, so the named answers read first.
+      head.append(el("span", name ? "comment-author" : "comment-author is-anon", name || shortKey(ev.pubkey)));
       if (name) head.append(el("span", "roundtable-badge", "roundtable"));
       head.append(el("time", "comment-time", timeAgo(ev.created_at)));
       item.append(head, el("div", "comment-body", ev.content));
