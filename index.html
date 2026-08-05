@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Custody Roundtable — Bitcoin Butlers</title>
+<meta name="description" content="A living, async, expert-sourced decision tree for Bitcoin self-custody: threat models, tool tradeoffs, and open questions.">
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+  h1 { font-size: 1.6rem; }
+  .status { display: inline-block; font-size: 0.8rem; padding: 0.1rem 0.5rem; border-radius: 0.3rem; }
+  .status.active { background: #ffe9a8; }
+  .status.open { background: #eee; }
+  .status.resolved { background: #c8f0c8; }
+  .node-link { display: block; margin: 0.4rem 0; }
+  #tree { border: 1px solid #ddd; border-radius: 0.5rem; padding: 1rem; overflow-x: auto; margin: 1.5rem 0; }
+</style>
+</head>
+<body>
+
+<h1>Custody Roundtable</h1>
+<p>
+  An async, public, expert-sourced process to build a decision tree for
+  Bitcoin self-custody — from first principles, not a threat-model list.
+  One question a week, compiled into branches, not forced consensus.
+  See <code>design.md</code> for the full process.
+</p>
+
+<h2>The tree so far</h2>
+<div id="tree">
+  <pre class="mermaid">
+graph TD
+  P0["Premise: bearer asset, NYKNYC"] --> N1
+  N1["Node 1: self-custody vs collaborative vs exchange<br/><i>active</i>"]
+  N1 --> N2["Node 2: roll your own entropy?"]
+  N2 --> N3["Node 3: verify entropy mixing"]
+  N3 --> N4["Node 4: seed format (BIP-39 / BIP-32 / Codex32)"]
+  N4 --> N5["Node 5: full backup material"]
+  N5 --> N6["Node 6: passphrase handling"]
+  N6 --> N7["Node 7: descriptor backup — open question"]
+  N7 --> N8["Node 8: single-sig vs multisig"]
+  N8 --> N9["Node 9: single vs multi-vendor"]
+  N9 --> N10["Node 10: air-gapped transport"]
+  N10 --> N11["Node 11: backup redundancy"]
+  N11 --> N12["Node 12: end-to-end verification + cold recovery"]
+  N12 --> N13["Node 13: inheritance"]
+  N13 --> N14["Node 14: retirement / incapacity"]
+  N14 --> N15["Node 15: rotation / migration"]
+  N15 --> N16["Node 16: UTXO management & privacy"]
+  N16 --> S["Synthesis: named end-to-end paths"]
+  </pre>
+</div>
+
+<h2>Nodes</h2>
+<a class="node-link" href="nodes/01-self-custody-vs-collaborative-vs-exchange.md">
+  Node 1 — Self-custody vs. collaborative custody vs. exchange
+  <span class="status active">active</span>
+</a>
+<p><em>Remaining nodes publish weekly. See BACKLOG.md for status.</em></p>
+
+<h2>Discuss</h2>
+<p>
+  Comments are Nostr-signed (NIP-07) via a moderated ZapThreads fork. Install
+  a signer extension (e.g. Alby, nos2x) to comment under your own key.
+</p>
+<!--
+  TODO before going live: configure relays and anchor event, then uncomment.
+  <script src="https://unpkg.com/zapthreads-codonaft/dist/zap-threads.iife.js"></script>
+  <zap-threads
+    anchor="REPLACE_WITH_NODE_1_NOSTR_EVENT_ID"
+    relays="wss://REPLACE,wss://REPLACE"
+    disable="zaps">
+  </zap-threads>
+-->
+<p><em>Comment widget not yet wired up — see Trello card "embed codonaft/zapthreads-codonaft comments".</em></p>
+
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "neutral" });
+</script>
+
+</body>
+</html>
