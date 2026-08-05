@@ -47,10 +47,18 @@ published node keeps taking replies for as long as the project runs, so a
 reply months later is still worth having, and a settled node reopens if
 someone argues against it.
 
-Answers are Nostr comments signed with your own key. Reply to a node's anchor
-note from any Nostr client, or from the node page with a NIP-07 browser
-extension such as Alby or nos2x. Your reply appears on the page attributed to
-your key. Nothing you sign can be edited or deleted by this project.
+Answers are Nostr comments signed with your own key. Reply on the node page
+itself, whatever device you are on:
+
+- **On a computer**: a NIP-07 browser extension such as Alby or nos2x.
+- **On a phone**: a NIP-46 remote signer such as Amber or nsec.app. Paste the
+  bunker string once and the page remembers the connection.
+- **Or from your own client**: one tap on "Reply in your Nostr app" opens the
+  thread in Damus, Primal or Amethyst. Nothing to copy.
+
+Your key never reaches this page in any of these. Your reply appears
+attributed to your key, and nothing you sign can be edited or deleted by this
+project.
 
 Comments have two views. **Roundtable only** is the default and shows the
 pubkeys in `whitelist.json`. **Everyone** shows every reply.
@@ -86,13 +94,17 @@ editor's judgment to promote.
 | `index.html` | the tree and the node index |
 | `nodes.json` | node content, anchor event, and relays. Source of truth |
 | `build-nodes.js` | generates `nodes/*.html` from `nodes.json`. Run after any edit |
-| `comments.js` | the Nostr thread reader and the whitelist filter |
+| `comments.js` | the Nostr thread reader, signing, and the whitelist filter |
+| `vendor/nostr-tools.js` | vendored MIT library, loaded only when signing |
 | `whitelist.json` | pubkeys shown in the default comment view |
 | `design.md` | the full process design |
 | `BACKLOG.md` | status of all nodes |
 | `CONTEXT.md` | the vocabulary this project uses |
 
-No build step beyond `node build-nodes.js`. No dependencies.
+No build step beyond `node build-nodes.js`, and no package manager. The one
+library, `nostr-tools`, is committed under `vendor/` rather than pulled from a
+CDN, so the published page depends on no third party at runtime. Reading the
+thread never downloads it. Only signing does.
 
 ## Writing rule
 

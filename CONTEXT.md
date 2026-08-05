@@ -67,7 +67,16 @@ and `wss://nos.lol`. Both were tested on 2026-08-05 and accept writes from the
 project key. `wss://relay.damus.io` refused the connection and is not used.
 
 **NIP-07**: the browser extension standard (Alby, nos2x) that signs a
-reader's reply. The site never touches a private key.
+reader's reply on a computer. The site never touches a private key.
+
+**NIP-46**, or **remote signer**: the phone path. A signer app (Amber,
+nsec.app) holds the key and approves each signature over a relay. The reader
+connects by pasting a **bunker string**, the `bunker://` URI their signer app
+gives them. Say "remote signer" in prose and "bunker string" for the URI. Do
+not say "login" or "account", because neither exists here.
+
+**deep link**: the `nostr:` link labelled "Reply in your Nostr app". It opens
+the thread in the reader's own client. Built into the page at build time.
 
 **thread reader**: `comments.js`, this project's own comment code. It
 replaced the planned ZapThreads fork. See `design.md` for why.

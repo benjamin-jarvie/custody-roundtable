@@ -248,8 +248,30 @@ that the project controls or curates by default. Filtering and hiding happen
 at the display layer only. Nothing is force-deleted from the network,
 consistent with how Nostr moderation works generally.
 
-Known limitation, accepted: some public visitors without a Nostr extension
-will not comment. This is an acceptable tradeoff given the priority on
+**Signing on a phone (added 2026-08-05)**: NIP-07 browser extensions are
+desktop only, so an extension-only page has a reply box that half the audience
+cannot use. The page now offers two ways in. A NIP-07 extension covers
+computers. A NIP-46 remote signer (Amber, nsec.app, any bunker) covers phones:
+the visitor pastes a bunker string once, the page stores the connection, and
+the signer app approves each signature. The private key never reaches the page
+in either case.
+
+This needed real cryptography (NIP-44 is ChaCha20-Poly1305 plus secp256k1
+ECDH), so `nostr-tools` is vendored under `vendor/`, committed rather than
+pulled from a CDN. A page about not trusting third parties should not load
+code from one at runtime. The library loads lazily, only when a visitor
+chooses to sign, so reading the thread stays dependency-free.
+
+There is also a "Reply in your Nostr app" link, a `nostr:` deep link built
+into the page at build time. One tap opens the thread in whatever client the
+person already uses, with no ids to copy.
+
+Known limitation, accepted: visitors with no Nostr key at all cannot comment.
+They read everything, and the page tells them why replies are signed. This
+holds the sovereignty framing rather than adding an unsigned fallback channel.
+
+Older note, now partly addressed: some public visitors without a Nostr
+extension will not comment. This is an acceptable tradeoff given the priority on
 key-signed, undeletable-by-Kiwi expert input.
 
 ## Video answers (added 2026-08-05)

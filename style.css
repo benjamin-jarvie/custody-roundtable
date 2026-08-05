@@ -182,6 +182,59 @@ nav.breadcrumb { margin-bottom: 1.5rem; font-size: 1rem; }
 .comment-body { font-size: 1rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .comment-form { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem; }
+
+/* Signer connection. Extension on desktop, remote signer on a phone. */
+.signer-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+  color: var(--fg-muted);
+}
+.signer-who { color: var(--fg-muted); }
+.signer-btn {
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: var(--surface-overlay);
+  color: var(--gold);
+  border: 1px solid var(--gold-dark);
+}
+.signer-btn:hover { background: var(--gold); color: #1a1400; }
+.signer-btn:focus-visible { outline: 2px solid var(--gold-hover); outline-offset: 2px; }
+.signer-link {
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--gold);
+  text-decoration: underline;
+}
+
+.bunker-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.bunker-input {
+  font: inherit;
+  font-size: 0.95rem;
+  flex: 1 1 16rem;
+  min-width: 0;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.7rem;
+}
+.bunker-input:focus-visible { outline: 2px solid var(--gold-hover); outline-offset: 1px; }
+.bunker-row .comment-note { flex-basis: 100%; }
+
+.deep-link-row { margin-top: 0.25rem; }
+.deep-link { font-size: 0.95rem; }
+.deep-link::after { content: " \2192"; }
 .comment-input {
   font: inherit;
   font-size: 1rem;
