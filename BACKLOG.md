@@ -8,7 +8,7 @@ replies), `contested` (branches drafted, still disputed), `resolved`
 |---|------|--------|--------|
 | — | Premise: why self-custody at all (bearer asset, NYKNYC) | 0 (intro, not debated) | resolved |
 | 1 | Self-custody vs. collaborative custody vs. exchange | A | active |
-| 2 | Roll your own entropy? | A | open |
+| 2 | Roll your own entropy? | A | drafted, queued behind node 1 |
 | 3 | Verifying entropy mixing (XOR, cross-device) instead of trusting it | A | open |
 | 4 | Seed format: BIP-39 vs. raw BIP-32 vs. Codex32 | A | open |
 | 5 | Full backup material: derivation path, script type, master fingerprint | A.5 | open |
