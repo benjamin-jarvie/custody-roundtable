@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Node 01 — Self-custody vs. collaborative custody vs. exchange — Custody Roundtable</title>
+<meta name="description" content="Given the premise above, what accountability are you actually taking on with full self-custody, versus collaborative custody (a co-signing service or ">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="breadcrumb"><a href="../index.html">&larr; Custody Roundtable tree</a></nav>
+  <p><span class="status-pill active">active</span> &nbsp; <span style="color:var(--fg-muted)">A — Certainty of the secret</span></p>
+  <h1>Node 01: Self-custody vs. collaborative custody vs. exchange</h1>
+
+  <h2>Premise</h2><p>Bitcoin's properties — savings that can't be inflated, payments that can't be censored — only hold if you are the bearer. A custodian reintroduces the counterparty risk Bitcoin exists to remove, links your identity to your holdings, and makes you a named target for a wrench attack you didn't need to invite. Everything below assumes this as the starting point, not something up for debate.</p>
+
+  <h2>The question</h2>
+  <p>Given the premise above, what accountability are you actually taking on with full self-custody, versus collaborative custody (a co-signing service or third party holds one key in a multisig with you), versus leaving funds on an exchange? What did each option let you avoid, and what did it cost you?</p>
+  <p>One live position, offered to be tested here rather than assumed: collaborative custody is “abdication-as-a-service” — you're still trusting someone else's solvency, honesty, and continued willingness to cooperate, just with better branding than an exchange. Is that fair, or does collaborative custody solve a real problem (loss of a single key, no heir with technical skill) that pure self-custody doesn't?</p>
+
+  <h2>Branches</h2>
+  <p style="color:var(--fg-muted)">To be filled in from replies. Each branch gets an "applies when" tag and attribution — see the fragmentation policy in <code>design.md</code>. None drafted yet.</p>
+
+  <h2>Video answers</h2>
+  <div class="video-slot">
+      No video answers yet. Approved contributors can submit a video response;
+      we transcribe it to text here and keep the original for promotion —
+      see the process note in <code>design.md</code>.
+    </div>
+
+  <h2>Discuss</h2>
+  <div class="comments-section">
+    <p class="mic-note">Comments are Nostr-signed (NIP-07) via a moderated ZapThreads fork. Voice-to-text input is planned as a PR to that fork — not live yet, so type for now.</p>
+    <!--
+      TODO: configure relays + anchorEvent in nodes.json for this node, then
+      uncomment. anchorEvent should be a Nostr event id you publish once per
+      node to anchor its thread.
+      <script src="https://unpkg.com/zapthreads-codonaft/dist/zap-threads.iife.js"></script>
+      <zap-threads anchor="REPLACE_WITH_EVENT_ID" relays="wss://REPLACE"></zap-threads>
+    -->
+    <p style="color:var(--fg-muted)"><em>Comment widget not yet wired up — relay + anchor event pending.</em></p>
+  </div>
+
+  <footer>
+    
+    
+    <a href="02-roll-your-own-entropy.html">Node 02 &rarr;</a>
+  </footer>
+</div>
+</body>
+</html>

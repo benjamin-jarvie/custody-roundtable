@@ -195,6 +195,33 @@ Known limitation, accepted: some public visitors without a Nostr extension
 will not comment. This is an acceptable tradeoff given the priority on
 key-signed, undeletable-by-Kiwi expert input.
 
+## Video answers (added 2026-08-05)
+
+Approved contributors (the named core roundtable, keyed by their Nostr
+pubkey) may submit a video answer to a node instead of, or alongside, a text
+comment. Process, since there is no upload backend on this static site yet:
+
+1. Contributor sends Kiwi the video directly (whatever channel is easiest for
+   them).
+2. Kiwi transcribes it to text and posts the transcript on the node page
+   (`nodes.json` → that node's `videos` array), attributed to them.
+3. The raw video file is kept in Bitcoin Butlers' own media store for
+   promotion and social use — it does not need to live in this public repo.
+
+Automating intake (a real upload form, gated by pubkey signature, automatic
+transcription) is a separate infra project once this manual version proves
+the format is worth the effort. Building that now, before a single video has
+been submitted, would be solving a problem that doesn't exist yet.
+
+## Voice-to-text for comments (added 2026-08-05)
+
+The ZapThreads comment box is text-only. A voice-to-text input (browser
+`SpeechRecognition` API filling the reply textarea, no server required) is
+planned as a contribution to `codonaft/zapthreads-codonaft`, forked at
+`benjamin-jarvie/zapthreads-codonaft`. Tracked as its own PR, not bundled into
+this project's own commits, since it's a change to someone else's codebase
+with its own review process.
+
 ## Success criteria
 
 - At least half the named list has visibly participated or signed off.
