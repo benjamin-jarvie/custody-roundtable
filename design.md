@@ -223,6 +223,14 @@ Filling `whitelist.json` needs care. Take each npub from the person directly
 or from a post they signed, never from a search result. A wrong npub gives an
 impersonator roundtable weight on the page.
 
+The whitelist is public on purpose (confirmed by Kiwi 2026-08-05). Publishing
+who carries roundtable weight is honest about an editorial choice the project
+is making anyway. The reason for having it: a handful of people with deep
+experience should not be buried under bots and drive-by opinions. Deciding
+whose answer carries weight is human judgment, and that judgment is part of
+the work rather than something to hide behind an algorithm. Every reply stays
+readable one click away, so nobody is silenced by the default.
+
 **Relays (set 2026-08-05)**: `wss://relay.ditto.pub` (Soapbox) and
 `wss://nos.lol`. Both were tested end to end with the project key and accept
 writes. `wss://relay.damus.io` refused the connection and was dropped. Running

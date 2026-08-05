@@ -47,6 +47,10 @@
   ],
   "editor": [
     {
+      "name": "Kiwi (editor of record)",
+      "npub": "npub1nrnt33y9y3pc9tpnjcp2nrurcxpcyrs4hz2327f3xkzl5hz8mwzq347per"
+    },
+    {
       "name": "Custody Roundtable (project key)",
       "npub": "npub1ddeduk2zx9wpu86v2d3t0qxdgz4yymyt2ake5kll3sl6w3f2qvdqcevr7n"
     }
