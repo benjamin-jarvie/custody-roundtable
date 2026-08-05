@@ -23,7 +23,7 @@ roundtable process and the living document it produces.
 Ben Kaufman, Piers Cockram, Jesse Posner, Fractal Encrypt, Giacomo Zucco,
 Jimbo (Seed Picker Solitaire), and if time allows, Rob Hamilton and Francis
 Poliout ("core roundtable"). The public can also submit answers and questions,
-but cannot edit the document directly (no PRs) — Kiwi is the sole editor of
+but cannot edit the document directly (no PRs). Kiwi is the sole editor of
 record.
 
 ## Structure
@@ -37,17 +37,17 @@ epistemic thread, not from a threat-model list. The thread: *how do I know I
 am the only one who knows this secret, while minimizing dependency on any one
 piece of hardware or software.* Everything is organized into four pillars.
 
-**Pillar 0 — Premise, not a debated node.** Goes in the document's intro, not
-a weekly question. Bitcoin's properties — savings that can't be inflated,
-payments that can't be censored — only hold if you are the bearer. A
+**Pillar 0: Premise, not a debated node.** Goes in the document's intro, not
+a weekly question. Bitcoin's properties, savings that can't be inflated and
+payments that can't be censored, only hold if you are the bearer. A
 custodian reintroduces the counterparty risk Bitcoin exists to remove, links
 your identity to your holdings, and makes you a named target for a wrench
 attack you didn't need to invite. This is the NYKNYC framing that motivates
 every node after it and does not need reconciling across experts.
 
-**Pillar A — Certainty of the secret** (does anyone else know it, provably,
+**Pillar A: Certainty of the secret** (does anyone else know it, provably,
 not probably):
-1. Self-custody vs. collaborative custody vs. exchange — what accountability
+1. Self-custody vs. collaborative custody vs. exchange. What accountability
    are you actually taking on, and what did you avoid? (Collaborative custody
    as "abdication-as-a-service" is a live position to test here, not the
    document's stance.)
@@ -57,46 +57,46 @@ not probably):
    XOR, checksums) can be replicated on a second vendor's device to confirm a
    match; non-deterministic randomness itself cannot be replicated or proven,
    only sourced by you.
-4. Seed format: BIP-39 vs. raw BIP-32 vs. Codex32 — what each buys or costs
+4. Seed format: BIP-39 vs. raw BIP-32 vs. Codex32. What each buys or costs
    for backup, recovery, and error correction.
 
-**Pillar A.5 — What actually has to survive on a backup** (added 2026-08-04,
+**Pillar A.5: What actually has to survive on a backup** (added 2026-08-04,
 was missing from the original draft): seed words alone are not a complete
 backup for anything beyond the simplest single-sig case.
 5. The complete material per key: seed words, derivation path (e.g.
    `m/48'/0'/0'/2'` for multisig P2WSH), script type, and the master
-   fingerprint (root XFP) — without all four, restoring the words elsewhere
+   fingerprint (root XFP). Without all four, restoring the words elsewhere
    can silently derive the wrong addresses and show a correct-looking, empty
    wallet.
-6. The passphrase, if used, is a separate secret with no checksum — a typo is
-   undetectable and opens a different, valid, empty wallet. It must be backed
-   up with more rigor than the seed, and never co-located with the seed
-   itself, or the "second factor" collapses back into one.
+6. The passphrase, if used, is a separate secret with no checksum, so a typo
+   is undetectable and opens a different, valid, empty wallet. It must be
+   backed up with more rigor than the seed, and never co-located with the
+   seed itself, or the "second factor" collapses back into one.
 7. Open question for the roundtable, not a settled claim: for multisig, is a
    separate descriptor/policy backup actually necessary, or is it recoverable
    from the seeds alone? A descriptor can be engraved on metal like a seed,
    but in practice most people will keep it in a wallet file or cloud backup
    instead. Reconstructing it from seeds alone requires *every* cosigner's
-   seed present (not just a spending quorum — a strictly harder bar), plus
-   separately remembering the script type, every derivation path, and the
+   seed present (not just a spending quorum, which is a strictly harder bar),
+   plus separately remembering the script type, every derivation path, and the
    quorum, none of which live inside the seed data itself. Whether that
    residual out-of-band knowledge is small enough to just remember, or is
    itself a backup requirement, is the actual question to put to the
    roundtable.
 
-**Pillar B — Minimizing dependency** (not betting everything on one thing):
+**Pillar B: Minimizing dependency** (not betting everything on one thing):
 8. Single-sig vs. multisig. Frame as: people already build informal, ad hoc
-   multisig without naming it — a spare seed copy is 1-of-2, a passphrase
+   multisig without naming it. A spare seed copy is 1-of-2, a passphrase
    kept separately is 2-of-2, SeedXOR is 2-of-2, an encrypted backup is
    2-of-2. The question is whether to do that on purpose, with a scheme
    designed for it, or by accident.
 9. If multisig, single-vendor or multi-vendor? What failure mode does vendor
    diversity actually address (firmware bug, discontinued product, single
    point of coercion) versus what it costs in complexity.
-10. Air-gapped signing and transport — how a PSBT physically moves between
+10. Air-gapped signing and transport. How a PSBT physically moves between
     devices (QR, SD card, USB) is itself a dependency and attack-surface
     question, not a solved detail. Missing from the original draft entirely.
-11. Physical/geographic redundancy of the backups themselves — a fire or a
+11. Physical/geographic redundancy of the backups themselves. A fire or a
     single burglary defeats a cryptographically perfect setup exactly like a
     single vendor's firmware bug does. Not addressed anywhere in the original
     draft, which covered only cryptographic and vendor dependency.
@@ -104,42 +104,42 @@ backup for anything beyond the simplest single-sig case.
     reproduced independently on a second vendor's device, so the setup is
     *known*, not trusted, to do what it claims. This node also requires
     rehearsing recovery from the cold backup materials alone, with no wallet
-    software available — the setup being mathematically correct is not the
+    software available. The setup being mathematically correct is not the
     same as someone being able to actually read it back under pressure. This
     is the seed of the "Don't Trust, Verify" article (see
     `content/dtv-article-draft.md`).
 
-**Pillar C — Continuity without creating a new dependency:**
-13. Inheritance — how heirs get access without a live single point of failure
+**Pillar C: Continuity without creating a new dependency**
+13. Inheritance. How heirs get access without a live single point of failure
     (a person who can rush you, an executor who can be coerced) existing
     years before it's needed.
-14. Retirement/incapacity — same problem, different trigger.
-15. Rotation and migration — what happens when a seed is suspected exposed, a
+14. Retirement/incapacity. The same problem with a different trigger.
+15. Rotation and migration. What happens when a seed is suspected exposed, a
     vendor is discontinued, or a firmware change breaks an assumption the
     setup relied on. Migrating to a new setup without reintroducing the same
     trust problem being solved was missing from the original draft entirely.
 
-**Pillar D — Living with it:**
-16. UTXO management and privacy — once custody is sound, how ongoing use
+**Pillar D: Living with it**
+16. UTXO management and privacy. Once custody is sound, how ongoing use
     doesn't quietly reintroduce the surveillance/deanonymization risk
     self-custody was meant to remove. Name concrete tool categories
     (coinjoin, PayJoin, label-based UTXO management) rather than leaving this
     as a vague "privacy tools" bullet.
 
 **Synthesis node (last)**: stitch the pillars into named end-to-end paths
-(e.g. "solo hobbyist," "family with heirs," "high-net-worth multi-vendor") —
-the skeleton the eventual quiz walks a person through.
+(e.g. "solo hobbyist," "family with heirs," "high-net-worth multi-vendor").
+This is the skeleton the eventual quiz walks a person through.
 
 Each node gets its own file (`nodes/01-collaborative-vs-self.md`, etc.) and
 its own comment thread (see Comments below).
 
 **Weekly loop**:
-1. Monday — Kiwi publishes the node's question and starter framing on the
+1. Monday. Kiwi publishes the node's question and starter framing on the
    page, and posts it publicly on X/Nostr tagging the named experts.
-2. Through the week — replies land in the node's comment thread (core
+2. Through the week, replies land in the node's comment thread (core
    roundtable experts DM'd directly with a link; public sees the same thread
    via the public post).
-3. Following Monday — Kiwi drafts the node's branches from that week's
+3. Following Monday. Kiwi drafts the node's branches from that week's
    replies, commits them to the page, and opens the next node's question.
 4. A backlog file (`BACKLOG.md`) tracks which nodes are open/contested vs.
    resolved.
@@ -148,7 +148,7 @@ its own comment thread (see Comments below).
 Mermaid sub-tree branches instead of collapsing to one answer. Each branch
 carries a one-line "applies when" tag (e.g. "applies if you self-custody
 >$50k" or "applies if you have heirs who aren't technical") and attribution to
-whoever argued for it. Divergence is content, not a problem to resolve — it
+whoever argued for it. Divergence is content, not a problem to resolve. It
 feeds the eventual quiz's branching logic.
 
 **Editorial role**: Kiwi is the compiler and editor of record. He merges
@@ -160,36 +160,54 @@ asking them first.
 step-by-step procedures. "The how" is a separate, later project.
 
 **Attribution gate (hard requirement, added 2026-08-04)**: any node or article
-draft built from a named expert's private messages or DMs — not something
-they posted publicly — cannot be published, even in draft form on the public
+draft built from a named expert's private messages or DMs, and not from
+something they posted publicly, cannot be published, even in draft form on the public
 repo, until that person has explicitly confirmed the compiled text is
 accurate and approved for republication under their name. This applies now to
 `content/dtv-article-draft.md`, built entirely from Jimbo's written comments
-to Kiwi. Currently unconfirmed. This is not optional editorial polish — it is
+to Kiwi. Currently unconfirmed. This is not optional editorial polish. It is
 someone else's specific technical claims and voice being attributed to them
 publicly without their sign-off.
 
 ## Comments
 
-Comment mechanism: `codonaft/zapthreads-codonaft`, a moderated fork of
-ZapThreads. Nostr-native, NIP-07 signed comments (via a browser extension like
-Alby or nos2x), embedded directly on the static page. Chosen over GitHub
-Discussions/giscus because:
+Comment mechanism (revised 2026-08-05): the project's own thread reader,
+`comments.js`. It reads kind-1 replies to a node's anchor event straight from
+the relays over WebSocket, renders them, and signs new replies with a NIP-07
+browser extension such as Alby or nos2x. No build step and no third-party
+bundle. Chosen over GitHub Discussions/giscus because:
 
-- Comments are signed with a Nostr key, not tied to a GitHub account — fits
-  the sovereignty framing of the project itself.
-- The codonaft fork adds moderation, spam filtering, and voting on top of the
-  original ZapThreads, which is not actively maintained. Moderation lets Kiwi
-  hide explicit or irrelevant content without needing to delete anyone's
-  underlying signed event.
+- Comments are signed with a Nostr key, not tied to a GitHub account. This
+  fits the sovereignty framing of the project itself.
 - Named experts are all Bitcoin-native and near-certain to already hold a
   Nostr key; friction is low for the audience that matters most.
 
-Moderation model: the widget queries a specific relay (or small relay set)
-that the project controls or curates by default. A hidden comment stops
-displaying on the page; it is not force-deleted from the network, consistent
-with how Nostr moderation works generally (display/relay layer, not mutating
-someone's signed event).
+The original plan was `codonaft/zapthreads-codonaft`, a moderated fork of
+ZapThreads. That was dropped for two reasons found on 2026-08-05. The fork is
+not published to npm, so using it means committing a self-built bundle into
+this repo. Upstream ZapThreads also has no whitelist, allowlist, or
+trusted-author attribute, so the roundtable filter below had to be our own
+code either way. Owning the render loop is simpler than filtering someone
+else's rendered DOM.
+
+**Whitelist filter (added 2026-08-05)**: a node's thread opens on the core
+roundtable by default. A reader can switch to `Everyone` to read every reply.
+The whitelisted pubkeys live in `whitelist.json` at the repo root, one entry
+per named participant plus Kiwi as editor of record.
+
+This is a display default, not moderation. Anyone with a Nostr key can still
+post, and every reply stays readable one click away. The point is that expert
+signal is what a visitor sees first, matching the editorial rule that only
+core-roundtable replies carry roundtable weight when Kiwi drafts branches.
+
+Filling `whitelist.json` needs care. Take each npub from the person directly
+or from a post they signed, never from a search result. A wrong npub gives an
+impersonator roundtable weight on the page.
+
+Moderation model: the reader queries a specific relay (or small relay set)
+that the project controls or curates by default. Filtering and hiding happen
+at the display layer only. Nothing is force-deleted from the network,
+consistent with how Nostr moderation works generally.
 
 Known limitation, accepted: some public visitors without a Nostr extension
 will not comment. This is an acceptable tradeoff given the priority on
@@ -206,7 +224,7 @@ comment. Process, since there is no upload backend on this static site yet:
 2. Kiwi transcribes it to text and posts the transcript on the node page
    (`nodes.json` → that node's `videos` array), attributed to them.
 3. The raw video file is kept in Bitcoin Butlers' own media store for
-   promotion and social use — it does not need to live in this public repo.
+   promotion and social use. It does not need to live in this public repo.
 
 Automating intake (a real upload form, gated by pubkey signature, automatic
 transcription) is a separate infra project once this manual version proves
@@ -215,12 +233,11 @@ been submitted, would be solving a problem that doesn't exist yet.
 
 ## Voice-to-text for comments (added 2026-08-05)
 
-The ZapThreads comment box is text-only. A voice-to-text input (browser
+The comment box is text-only today. A voice-to-text input (browser
 `SpeechRecognition` API filling the reply textarea, no server required) is
-planned as a contribution to `codonaft/zapthreads-codonaft`, forked at
-`benjamin-jarvie/zapthreads-codonaft`. Tracked as its own PR, not bundled into
-this project's own commits, since it's a change to someone else's codebase
-with its own review process.
+planned. Since the comment reader is now this project's own code
+(`comments.js`), this is a local change rather than a PR to someone else's
+codebase. Not built yet.
 
 ## Success criteria
 
@@ -238,7 +255,7 @@ with its own review process.
   "core roundtable" attribution weight when drafting branches; public replies
   can still surface a branch but need Kiwi's editorial judgment to promote.
 - **Scope creep into "the how"**: explicitly excluded per node.
-- **Never converging**: not a failure mode by design — a node is "done" when
+- **Never converging**: not a failure mode by design. A node is "done" when
   its branches are stable for a week, not when everyone agrees.
 
 ## Explicitly out of scope for this project
