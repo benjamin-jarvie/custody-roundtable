@@ -51,6 +51,11 @@ list", or "moderation".
 **roundtable only**: the default comment view. It shows whitelisted pubkeys
 only.
 
+**avatar**: a whitelisted person's profile picture, stored in `avatars/` and
+served from this site. Never hotlinked from the host in their profile, because
+that would hand every visitor's IP to Primal, nostr.build or X. Only
+whitelisted keys get one. Refresh with `node fetch-avatars.mjs`.
+
 **everyone**: the other comment view. It shows every reply the relays
 return. A reader switches to it with the toggle.
 

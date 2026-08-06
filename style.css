@@ -377,6 +377,17 @@ h1 {
   flex-wrap: wrap;
   margin-bottom: 0.4rem;
 }
+/* Only whitelisted keys carry a face, and it is served from this site. */
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--raised);
+  align-self: center;
+  flex: none;
+}
+
 /* Gold here is the whole point: a name is attached to this. */
 .comment-author {
   font-size: 0.95rem;

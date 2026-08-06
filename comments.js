@@ -132,6 +132,7 @@ class Thread {
   constructor(mount, config) {
     this.mount = mount;
     this.anchor = config.anchor;
+    this.avatarBase = config.avatarBase || "../avatars/";
     this.nevent = config.nevent || ""; // bech32 form, built into the page
     this.relays = config.relays || [];
     this.whitelist = config.whitelist; // Map of hex pubkey to display name
@@ -193,12 +194,23 @@ class Thread {
 
     for (const ev of visible) {
       const item = el("article", "comment");
-      const name = this.whitelist.get(ev.pubkey);
+      const person = this.whitelist.get(ev.pubkey);
       const head = el("div", "comment-head");
+      // Avatars are only ever shown for whitelisted keys, and they are served
+      // from this site, never hotlinked from the profile's own host.
+      if (person && person.avatar) {
+        const img = el("img", "avatar");
+        img.src = this.avatarBase + person.avatar;
+        img.alt = ""; // the name sits right beside it
+        img.width = 28;
+        img.height = 28;
+        img.loading = "lazy";
+        head.append(img);
+      }
       // Gold is reserved for a reply with a name attached. Unattributed keys
       // stay grey, so the named answers read first.
-      head.append(el("span", name ? "comment-author" : "comment-author is-anon", name || shortKey(ev.pubkey)));
-      if (name) head.append(el("span", "roundtable-badge", "roundtable"));
+      head.append(el("span", person ? "comment-author" : "comment-author is-anon", person ? person.name : shortKey(ev.pubkey)));
+      if (person) head.append(el("span", "roundtable-badge", "roundtable"));
       head.append(el("time", "comment-time", timeAgo(ev.created_at)));
       item.append(head, el("div", "comment-body", ev.content));
       this.listEl.append(item);
@@ -308,8 +320,8 @@ class Thread {
   }
 
   signerLabel() {
-    const name = this.whitelist.get(this.signerPubkey);
-    return name || shortKey(this.signerPubkey);
+    const person = this.whitelist.get(this.signerPubkey);
+    return person ? person.name : shortKey(this.signerPubkey);
   }
 
   renderSignerBar() {
@@ -507,7 +519,7 @@ async function loadWhitelist(url) {
     for (const group of ["roundtable", "editor"]) {
       for (const person of data[group] || []) {
         const hex = npubToHex(person.npub || "");
-        if (hex) map.set(hex, person.name);
+        if (hex) map.set(hex, { name: person.name, avatar: person.avatar || "" });
         else if (person.npub) console.warn("roundtable: invalid npub for", person.name);
       }
     }
@@ -525,7 +537,8 @@ export async function mountComments(mount) {
     .filter(Boolean);
   const anchor = mount.dataset.anchor || "";
   const nevent = mount.dataset.nevent || "";
-  const thread = new Thread(mount, { anchor, nevent, relays, whitelist });
+  const avatarBase = mount.dataset.avatars || "../avatars/";
+  const thread = new Thread(mount, { anchor, nevent, relays, whitelist, avatarBase });
   thread.connect();
   thread.restoreBunker(); // reconnect a signer the visitor already approved
   return thread;

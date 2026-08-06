@@ -97,6 +97,8 @@ editor's judgment to promote.
 | `comments.js` | the Nostr thread reader, signing, and the whitelist filter |
 | `vendor/nostr-tools.js` | vendored MIT library, loaded only when signing |
 | `whitelist.json` | pubkeys shown in the default comment view |
+| `avatars/` | profile pictures, copied here so none are hotlinked |
+| `fetch-avatars.mjs` | refetches those pictures. Run by hand |
 | `design.md` | the full process design |
 | `BACKLOG.md` | status of all nodes |
 | `CONTEXT.md` | the vocabulary this project uses |

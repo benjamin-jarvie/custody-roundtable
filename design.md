@@ -29,8 +29,11 @@ record.
 ## Structure
 
 **Repo**: new standalone public repo, e.g. `BitcoinButlers/custody-roundtable`,
-open license (MIT or CC-BY). Hosted as a static page (GitHub Pages), root page
-renders the tree as a Mermaid diagram plus prose per node.
+open license (MIT or CC-BY). Hosted as a static page (GitHub Pages). The root
+page lists the tree by pillar along a spine, with each node's status, and
+links to a page per node. Mermaid was dropped on 2026-08-05: it was a CDN
+dependency on a page arguing against trusting third parties, and it rendered
+as an unreadable box chain that overflowed on a phone.
 
 **Node cadence**: one decision node per week, built ground-up from a single
 epistemic thread, not from a threat-model list. The thread: *how do I know I
@@ -218,6 +221,19 @@ This is a display default, not moderation. Anyone with a Nostr key can still
 post, and every reply stays readable one click away. The point is that expert
 signal is what a visitor sees first, matching the editorial rule that only
 core-roundtable replies carry roundtable weight when Kiwi drafts branches.
+
+**Avatars (added 2026-08-06)**: whitelisted people show a profile picture
+beside their name. The images are copied into `avatars/` and served from this
+site rather than hotlinked. The pictures in people's kind-0 profiles sit on
+third parties, currently `m.primal.net`, `image.nostr.build` and
+`pbs.twimg.com`, so hotlinking would hand every visitor's IP address to Primal,
+nostr.build and X. The same reasoning that vendored `nostr-tools` applies to a
+decorative image. Only whitelisted keys get a picture. Refresh them with
+`node fetch-avatars.mjs`.
+
+The page does not read kind-0 at runtime. The name in `whitelist.json` is the
+one Kiwi vouched for, so a compromised key cannot change how a name reads on
+the page.
 
 Filling `whitelist.json` needs care. Take each npub from the person directly
 or from a post they signed, never from a search result. A wrong npub gives an

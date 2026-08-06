@@ -14,7 +14,8 @@
   "roundtable": [
     {
       "name": "Ben Kaufman",
-      "npub": "npub1lkt97dfwg8ll45kx6yzghdmylh09z3ku609mu96tdkruathfcamslkh0ff"
+      "npub": "npub1lkt97dfwg8ll45kx6yzghdmylh09z3ku609mu96tdkruathfcamslkh0ff",
+      "avatar": "ben-kaufman.jpg"
     },
     {
       "name": "Piers Cockram",
@@ -26,7 +27,8 @@
     },
     {
       "name": "Fractal Encrypt",
-      "npub": "npub1fractalm9v8jss7n9jy0ats0jtmjjxxn6d6j06ry074hk0tdvshqgfr6de"
+      "npub": "npub1fractalm9v8jss7n9jy0ats0jtmjjxxn6d6j06ry074hk0tdvshqgfr6de",
+      "avatar": "fractal-encrypt.jpg"
     },
     {
       "name": "Giacomo Zucco",
@@ -48,7 +50,8 @@
   "editor": [
     {
       "name": "Kiwi (editor of record)",
-      "npub": "npub1nrnt33y9y3pc9tpnjcp2nrurcxpcyrs4hz2327f3xkzl5hz8mwzq347per"
+      "npub": "npub1nrnt33y9y3pc9tpnjcp2nrurcxpcyrs4hz2327f3xkzl5hz8mwzq347per",
+      "avatar": "kiwi.jpg"
     },
     {
       "name": "Custody Roundtable (project key)",

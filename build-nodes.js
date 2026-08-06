@@ -265,7 +265,8 @@ function nodeHtml(node, prev, next) {
       data-anchor="${escapeHtml(node.anchorEvent || "")}"
       data-nevent="${node.anchorEvent ? neventEncode(node.anchorEvent, node.relays) : ""}"
       data-relays="${escapeHtml((node.relays || []).join(","))}"
-      data-whitelist="../whitelist.json"></div>
+      data-whitelist="../whitelist.json"
+      data-avatars="../avatars/"></div>
     <script type="module" src="../comments.js"></script>
   </div>
 
