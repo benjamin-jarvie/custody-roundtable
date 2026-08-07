@@ -135,6 +135,7 @@ class Thread {
     this.anchor = config.anchor;
     this.avatarBase = config.avatarBase || "../avatars/";
     this.nevent = config.nevent || ""; // bech32 form, built into the page
+    this.note = config.note || ""; // plain note1 form, for pasting into a client
     this.relays = config.relays || [];
     this.whitelist = config.whitelist; // Map of hex pubkey to display name
     this.mode = "roundtable"; // the default view
@@ -342,19 +343,31 @@ class Thread {
     }
 
     this.sendBtn.disabled = true;
-    this.signerBar.append(el("span", "signer-who", "To reply, connect your key:"));
+    this.signerBar.append(el("span", "signer-who", "Sign in with Nostr to reply:"));
 
+    // Always offer both routes. Hiding the extension button on a phone just
+    // looks broken to anyone who came here expecting to use Alby.
+    const ext = el("button", "signer-btn", "Browser extension");
+    ext.type = "button";
     if (window.nostr) {
-      const ext = el("button", "signer-btn", "Sign in with extension");
-      ext.type = "button";
       ext.addEventListener("click", () => this.connectExtension());
-      this.signerBar.append(ext);
+    } else {
+      ext.disabled = true;
+      ext.title = "No Nostr extension found in this browser";
     }
 
-    const remote = el("button", "signer-btn", "Remote signer");
+    const remote = el("button", "signer-btn", "Signer app");
     remote.type = "button";
     remote.addEventListener("click", () => this.promptBunker());
-    this.signerBar.append(remote, this.helpLink("Having issues commenting?"));
+
+    this.signerBar.append(ext, remote, this.helpLink("Having issues commenting?"));
+
+    if (!window.nostr) {
+      const why = el("p", "signer-hint");
+      why.textContent =
+        "Extensions like Alby and nos2x only exist in a desktop browser, so that button is off on a phone. On a phone use Signer app, or answer from the Nostr app you already have, linked below.";
+      this.signerBar.append(why);
+    }
   }
 
   // Points at the how-to section further down the same page, so nobody loses
@@ -394,13 +407,16 @@ class Thread {
     const row = el("div", "bunker-row");
     const input = el("input", "bunker-input");
     input.type = "text";
-    input.placeholder = "bunker://…";
-    input.setAttribute("aria-label", "Remote signer connection string");
+    input.placeholder = "Paste your connection string";
+    input.autocapitalize = "off";
+    input.autocomplete = "off";
+    input.spellcheck = false;
+    input.setAttribute("aria-label", "Signer app connection string");
     const go = el("button", "signer-btn", "Connect");
     go.type = "button";
     const help = el("p", "comment-note");
     help.textContent =
-      "Paste the bunker string from your signer app (Amber on Android, nsec.app, or any NIP-46 signer). Your key stays in that app and never reaches this page. The app asks you to approve each signature.";
+      "Open your signer app, copy its connection string, and paste it here. Amber on Android and nsec.app in any mobile browser both give you one. The string starts with bunker://, which is the Nostr standard for remote signing and has nothing to do with any hardware vendor. Your key stays in that app and never reaches this page.";
     row.append(input, go, help);
     go.addEventListener("click", () => this.connectBunker(input.value.trim()));
     input.addEventListener("keydown", (e) => {
@@ -412,7 +428,7 @@ class Thread {
   }
 
   async connectBunker(uri, savedClientSk) {
-    if (!uri) return this.setNote("Paste a bunker string first.");
+    if (!uri) return this.setNote("Paste the connection string from your signer app first.");
     this.setNote("Connecting to your signer…");
     try {
       const tools = await this.loadNostrTools();
@@ -439,7 +455,7 @@ class Thread {
       this.setNote("Connected. Write your reply.");
     } catch (err) {
       console.warn("roundtable: bunker connect failed", err);
-      this.setNote("Could not reach that signer. Check the bunker string and try again.");
+      this.setNote("Could not reach that signer. Check the connection string and try again.");
     }
   }
 
@@ -510,9 +526,28 @@ class Thread {
   buildDeepLink() {
     const wrap = el("div", "deep-link-row");
     if (!this.anchor || !this.nevent) return wrap;
+
     const link = el("a", "deep-link", "Reply in your Nostr app");
     link.href = "nostr:" + this.nevent; // built into the page, no library needed
-    wrap.append(link);
+
+    // Some apps swallow the nostr: link and open on their home screen. Pasting
+    // the note id into their search always works, so offer it as a fallback.
+    const copy = el("button", "signer-link", "Copy the note id");
+    copy.type = "button";
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(this.note || this.nevent);
+        copy.textContent = "Copied. Paste it into your app's search.";
+      } catch (err) {
+        copy.textContent = this.note || this.nevent; // select it by hand
+      }
+    });
+
+    const hint = el("p", "comment-note");
+    hint.textContent =
+      "If your app opens on its home screen instead of this thread, copy the note id and paste it into the app's search.";
+
+    wrap.append(link, copy, hint);
     return wrap;
   }
 
@@ -553,8 +588,9 @@ export async function mountComments(mount) {
     .filter(Boolean);
   const anchor = mount.dataset.anchor || "";
   const nevent = mount.dataset.nevent || "";
+  const note = mount.dataset.note || "";
   const avatarBase = mount.dataset.avatars || "../avatars/";
-  const thread = new Thread(mount, { anchor, nevent, relays, whitelist, avatarBase });
+  const thread = new Thread(mount, { anchor, nevent, note, relays, whitelist, avatarBase });
   thread.connect();
   thread.restoreSigner(); // reconnect whoever was connected on the last visit
   return thread;

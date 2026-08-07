@@ -495,6 +495,28 @@ h1 {
 }
 .help-link:hover { color: var(--gold); }
 
+.signer-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  color: var(--muted);
+  border-color: var(--rule);
+}
+.signer-hint {
+  flex-basis: 100%;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 0.15rem 0 0;
+  max-width: var(--measure);
+}
+
+.deep-link-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
 .bunker-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 /* iOS Safari zooms the page when a focused field is under 16px, which drags
  * the whole layout off-screen. Every field here stays at 1rem or more. */
@@ -551,7 +573,6 @@ h1 {
   max-width: var(--measure);
 }
 
-.deep-link-row { margin-top: 0.15rem; }
 .deep-link {
   font-family: var(--mono);
   font-size: 0.75rem;

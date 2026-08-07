@@ -72,6 +72,11 @@ function bech32Encode(hrp, data) {
   return hrp + "1" + data.concat(checksum).map((i) => BECH32_CHARSET[i]).join("");
 }
 
+// Plain note1 form. Some clients resolve this when they ignore an nevent.
+function noteEncode(idHex) {
+  return bech32Encode("note", convertBits([...idHex.match(/../g).map((b) => parseInt(b, 16))], 8, 5, true));
+}
+
 // NIP-19 TLV: type 0 is the event id, type 1 is a relay hint.
 function neventEncode(idHex, relays) {
   const bytes = [];
@@ -163,15 +168,18 @@ function howToComment() {
 
     <h3>Commenting from a phone</h3>
     <p>
-      Browser extensions do not exist on phones, so phones use a remote signer.
-      Your key stays inside the signer app and never reaches this page. The app
-      asks you to approve every signature.
+      Alby and nos2x are desktop browser extensions, and no Nostr extension
+      exists for Safari on iPhone, so the <strong>Browser extension</strong>
+      button is switched off on a phone. Phones use a signer app instead. Your
+      key stays inside that app and never reaches this page, and the app asks
+      you to approve every signature.
     </p>
     <ol>
       <li>Install Amber, or open nsec.app, and create or import your key.</li>
-      <li>In that app, copy your connection string. It starts with
-        <code>bunker://</code>.</li>
-      <li>Press <strong>Remote signer</strong> above the reply box, paste the
+      <li>In that app, copy its connection string. It starts with
+        <code>bunker://</code>, which is the Nostr standard for remote signing
+        and has nothing to do with any hardware vendor.</li>
+      <li>Press <strong>Signer app</strong> above the reply box, paste the
         string, and press <strong>Connect</strong>.</li>
       <li>Approve the connection in your signer app.</li>
       <li>Write your reply and press <strong>Sign and post</strong>, then
@@ -186,8 +194,14 @@ function howToComment() {
     <p>
       Press <strong>Reply in your Nostr app</strong> under the reply box. It
       opens this thread in Damus, Primal, Amethyst or whatever you have
-      installed, and you reply there as you would to any note. Nothing to copy
-      and no key to connect. Your reply still appears on this page.
+      installed, and you reply there as you would to any note. No key to
+      connect, and your reply still appears on this page.
+    </p>
+    <p>
+      Some apps ignore that link and open on their own home screen instead.
+      When that happens, press <strong>Copy the note id</strong> beside it and
+      paste the id into the app's search. That resolves the thread in every
+      client we have tried.
     </p>
 
     <h3>Why some names show first</h3>
@@ -264,6 +278,7 @@ function nodeHtml(node, prev, next) {
       data-roundtable-comments
       data-anchor="${escapeHtml(node.anchorEvent || "")}"
       data-nevent="${node.anchorEvent ? neventEncode(node.anchorEvent, node.relays) : ""}"
+      data-note="${node.anchorEvent ? noteEncode(node.anchorEvent) : ""}"
       data-relays="${escapeHtml((node.relays || []).join(","))}"
       data-whitelist="../whitelist.json"
       data-avatars="../avatars/"></div>
