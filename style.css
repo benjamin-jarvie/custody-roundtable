@@ -14,18 +14,25 @@
  */
 
 :root {
-  --ink: #0a0a0b;
-  --paper: #101012;
-  --raised: #16161a;
-  --rule: #24242a;
-  --rule-2: #34343c;
+  /* Bitcoin Butlers palette. Gold is the only brand colour. */
+  --ink: #0a0a0a;
+  --paper: #141414;
+  --raised: #1a1a1a;
+  --overlay: #1e1e1e;
+  --rule: rgb(255 255 255 / 0.08);
+  --rule-2: rgb(251 220 123 / 0.15);
+  --rule-gold: rgb(251 220 123 / 0.3);
 
-  --text: #e9e7e2;
-  --muted: #8b8b94;
-  --dim: #5c5c65;
+  --cream: #f4eee1;
+  --muted: #a1a1a1;
+  --dim: #737373;
 
   --gold: #fbdc7b;
+  --gold-hover: #fda24a;
   --ember: #ff9125;
+  --on-gold: #0a0a0a;
+
+  --gold-grad: linear-gradient(90deg, #ff9125, #fbdc7b, #fda24a);
 
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "JetBrains Mono", "Roboto Mono", monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -49,7 +56,7 @@ html {
 body {
   margin: 0;
   background: var(--ink);
-  color: var(--text);
+  color: var(--cream);
   font-family: var(--sans);
   font-size: 1.0625rem;
   line-height: 1.62;
@@ -101,13 +108,18 @@ code {
 }
 
 h1 {
-  font-size: clamp(1.9rem, 7vw, 3rem);
-  line-height: 1.04;
+  font-size: clamp(1.75rem, 6.4vw, 3rem);
+  line-height: 1.06;
   letter-spacing: -0.025em;
   font-weight: 650;
   margin: 0 0 1.25rem;
   max-width: 20ch;
   text-wrap: balance;
+  color: var(--gold); /* fallback before the gradient paints */
+  background: var(--gold-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Section headings sit on a hairline, in the structural face. */
@@ -116,16 +128,16 @@ h1 {
   font-size: 0.72rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--gold);
   font-weight: 500;
-  margin: 3.5rem 0 1.25rem;
+  margin: 3rem 0 1.1rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--rule);
   max-width: none;
 }
 
 .lede {
-  color: var(--muted);
+  color: var(--cream);
   font-size: 1.0625rem;
   max-width: var(--measure);
 }
@@ -143,7 +155,7 @@ h1 {
   font-size: clamp(1.25rem, 4.2vw, 1.75rem);
   line-height: 1.32;
   letter-spacing: -0.012em;
-  color: var(--text);
+  color: var(--cream);
   max-width: 26ch;
 }
 .thread .attrib {
@@ -165,7 +177,7 @@ h1 {
   font-size: 0.7rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--gold);
   margin: 0 0 0.5rem;
   display: flex;
   gap: 0.6rem;
@@ -225,7 +237,7 @@ h1 {
   padding: 0.7rem 0.25rem 0.7rem 0;
   border: 0;
   border-bottom: 1px solid var(--rule);
-  color: var(--text);
+  color: var(--cream);
 }
 .node-row:last-child > * { border-bottom: 0; }
 
@@ -280,7 +292,7 @@ h1 {
 .question {
   font-size: clamp(1.1rem, 3.4vw, 1.3rem);
   line-height: 1.45;
-  color: var(--text);
+  color: var(--cream);
   max-width: var(--measure);
   margin: 0 0 1.25rem;
 }
@@ -288,8 +300,8 @@ h1 {
 .premise,
 .framing {
   padding-left: var(--spine);
-  border-left: 1px solid var(--rule-2);
-  color: var(--muted);
+  border-left: 2px solid var(--rule-gold);
+  color: var(--cream);
   max-width: none;
 }
 .premise p,
@@ -303,13 +315,14 @@ h1 {
 /* --- video ------------------------------------------------------------ */
 
 .video-slot {
+  background: var(--paper);
   border: 1px dashed var(--rule-2);
-  border-radius: 3px;
+  border-radius: 4px;
   padding: 1.25rem;
   color: var(--dim);
   font-size: 0.95rem;
 }
-.video-slot.filled { border-style: solid; border-color: var(--rule-2); color: var(--text); }
+.video-slot.filled { border-style: solid; border-color: var(--rule-2); color: var(--cream); }
 .video-slot video { width: 100%; border-radius: 3px; margin-bottom: 0.75rem; }
 .video-slot .transcript { font-size: 1rem; }
 .video-slot .attribution {
@@ -323,7 +336,7 @@ h1 {
 /* --- comments --------------------------------------------------------- */
 
 .mic-note {
-  color: var(--muted);
+  color: var(--cream);
   font-size: 0.95rem;
   max-width: var(--measure);
   margin-bottom: 1.5rem;
@@ -337,22 +350,23 @@ h1 {
 }
 .filter-btn {
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
-  padding: 0.45rem 0.8rem;
-  border-radius: 2px;
-  background: transparent;
+  padding: 0.5rem 0.85rem;
+  border-radius: 4px;
+  background: var(--paper);
   color: var(--muted);
   border: 1px solid var(--rule-2);
   transition: color 0.12s ease, border-color 0.12s ease;
 }
-.filter-btn:hover { color: var(--text); border-color: var(--muted); }
+.filter-btn:hover { color: var(--cream); border-color: var(--rule-gold); }
 .filter-btn[aria-pressed="true"] {
-  color: var(--ink);
-  background: var(--text);
-  border-color: var(--text);
+  color: var(--on-gold);
+  background: var(--gold);
+  border-color: var(--gold);
+  font-weight: 600;
 }
 
 .comment-status {
@@ -370,6 +384,7 @@ h1 {
   padding: 1rem 0;
   border-top: 1px solid var(--rule);
 }
+.comment-body { color: var(--cream); }
 .comment-head {
   display: flex;
   align-items: baseline;
@@ -448,17 +463,17 @@ h1 {
 }
 .signer-btn {
   font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
   cursor: pointer;
-  padding: 0.4rem 0.75rem;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--text);
+  padding: 0.55rem 0.9rem;
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--gold);
   border: 1px solid var(--rule-2);
-  transition: border-color 0.12s ease, color 0.12s ease;
+  transition: border-color 0.12s ease, background 0.12s ease;
 }
-.signer-btn:hover { border-color: var(--gold); color: var(--gold); }
+.signer-btn:hover { border-color: var(--rule-gold); background: var(--overlay); }
 .signer-link {
   font-family: var(--mono);
   font-size: 0.72rem;
@@ -481,21 +496,25 @@ h1 {
 .help-link:hover { color: var(--gold); }
 
 .bunker-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+/* iOS Safari zooms the page when a focused field is under 16px, which drags
+ * the whole layout off-screen. Every field here stays at 1rem or more. */
 .bunker-input,
 .comment-input {
   font-family: var(--mono);
-  font-size: 0.9rem;
+  font-size: 1rem;
   width: 100%;
-  background: var(--paper);
-  color: var(--text);
+  min-width: 0;
+  background: var(--overlay);
+  color: var(--cream);
   border: 1px solid var(--rule-2);
-  border-radius: 2px;
-  padding: 0.7rem 0.8rem;
+  border-radius: 4px;
+  padding: 0.8rem 0.85rem;
 }
-.bunker-input { flex: 1 1 14rem; min-width: 0; width: auto; }
+.bunker-input:focus, .comment-input:focus { border-color: var(--rule-gold); }
+/* The Connect button drops below the field rather than squeezing beside it. */
+.bunker-input { flex: 1 1 100%; }
 .comment-input {
   font-family: var(--sans);
-  font-size: 1rem;
   resize: vertical;
   line-height: 1.55;
 }
@@ -504,27 +523,28 @@ h1 {
 
 .comment-send {
   font-family: var(--mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  font-weight: 600;
   cursor: pointer;
   align-self: flex-start;
-  padding: 0.6rem 1.15rem;
-  border-radius: 2px;
+  padding: 0.7rem 1.3rem;
+  border-radius: 4px;
   background: var(--gold);
-  color: #17130a;
+  color: var(--on-gold);
   border: 1px solid var(--gold);
   transition: background 0.12s ease;
 }
-.comment-send:hover { background: #fde9a5; }
+.comment-send:hover { background: var(--gold-hover); }
 .comment-send:disabled {
-  background: transparent;
+  background: var(--paper);
   color: var(--dim);
-  border-color: var(--rule-2);
+  border-color: var(--rule);
   cursor: not-allowed;
 }
 .comment-note {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   line-height: 1.55;
   color: var(--muted);
   margin: 0;
@@ -547,18 +567,18 @@ h1 {
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--text);
+  color: var(--gold);
   font-weight: 500;
   margin: 2.25rem 0 0.75rem;
 }
 .howto h3:first-of-type { margin-top: 0.5rem; }
 .howto p,
-.howto li { font-size: 0.98rem; max-width: var(--measure); }
+.howto li { font-size: 1rem; max-width: var(--measure); color: var(--cream); }
 .howto ul,
 .howto ol {
   padding-left: 1.1rem;
   margin: 0 0 1rem;
-  color: var(--text);
+  color: var(--cream);
 }
 .howto li { margin-bottom: 0.45rem; }
 .howto li::marker { color: var(--dim); }
@@ -598,6 +618,20 @@ h1 {
 }
 
 :target { scroll-margin-top: 1.5rem; }
+
+/* --- narrow screens --------------------------------------------------- */
+
+@media (max-width: 30rem) {
+  /* Let the help link take its own line instead of crowding the edge. */
+  /* underline the words, not the whole flex line */
+  .help-link { margin-left: 0; flex-basis: 100%; border-bottom: 0; text-decoration: underline; text-underline-offset: 3px; }
+  .comment-head { gap: 0.35rem 0.5rem; }
+  .signer-bar { gap: 0.6rem 0.5rem; }
+  .wrap { padding-top: 1.75rem; }
+  .section { margin-top: 2.5rem; }
+  .node-row > * { grid-template-columns: 1.9rem 1fr; }
+  .thread { margin-top: 2rem; }
+}
 
 /* --- motion ----------------------------------------------------------- */
 
