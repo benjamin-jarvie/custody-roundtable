@@ -532,12 +532,12 @@ class Thread {
 
     // Some apps swallow the nostr: link and open on their home screen. Pasting
     // the note id into their search always works, so offer it as a fallback.
-    const copy = el("button", "signer-link", "Copy the note id");
+    const copy = el("button", "signer-btn", "Copy the note id");
     copy.type = "button";
     copy.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(this.note || this.nevent);
-        copy.textContent = "Copied. Paste it into your app's search.";
+        copy.textContent = "Copied. Paste it into your app's search";
       } catch (err) {
         copy.textContent = this.note || this.nevent; // select it by hand
       }
@@ -545,9 +545,9 @@ class Thread {
 
     const hint = el("p", "comment-note");
     hint.textContent =
-      "If your app opens on its home screen instead of this thread, copy the note id and paste it into the app's search.";
+      "Pasting the id into your app's search is the reliable route. The link beside it is a shortcut that some apps ignore. If the id will not resolve in your app, it is reading relays we do not publish to, so tell Kiwi which ones and we will add them.";
 
-    wrap.append(link, copy, hint);
+    wrap.append(copy, link, hint);
     return wrap;
   }
 

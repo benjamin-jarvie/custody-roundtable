@@ -11,8 +11,11 @@
     "videos": [],
     "anchorEvent": "8c26e2e2cf7dcaf27bdc530a7cf65564e6c92bb4f39288a7fe5673cf76b38848",
     "relays": [
+      "wss://relay.damus.io",
       "wss://relay.ditto.pub",
-      "wss://nos.lol"
+      "wss://nos.lol",
+      "wss://relay.primal.net",
+      "wss://offchain.pub"
     ]
   },
   {
@@ -27,8 +30,11 @@
     "videos": [],
     "anchorEvent": null,
     "relays": [
+      "wss://relay.damus.io",
       "wss://relay.ditto.pub",
-      "wss://nos.lol"
+      "wss://nos.lol",
+      "wss://relay.primal.net",
+      "wss://offchain.pub"
     ]
   }
 ]
