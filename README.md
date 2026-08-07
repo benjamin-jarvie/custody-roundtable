@@ -23,7 +23,8 @@ and a quiz that routes a person to their own tradeoffs.
 
 ## What
 
-Seventeen decision nodes across four pillars:
+Seventeen decision nodes. Four pillars, plus A.5, which was added once it was
+clear the original draft assumed seed words were a whole backup:
 
 - **A. Certainty of the secret**: does anyone else know it, provably.
 - **A.5. What has to survive on a backup**: seed words alone are not enough.
@@ -62,6 +63,11 @@ project.
 
 Comments have two views. **Roundtable only** is the default and shows the
 pubkeys in `whitelist.json`. **Everyone** shows every reply.
+
+Whitelisted people show their name and face. Everyone else shows a shortened
+public key. The pictures are copied into `avatars/` and served from this site,
+never hotlinked from wherever the profile keeps them, so reading the page sends
+nothing to any third party.
 
 That whitelist is public on purpose. It is a display default, not moderation
 and not access control. Anyone can post, nothing is hidden from the relays,
@@ -102,6 +108,7 @@ editor's judgment to promote.
 | `design.md` | the full process design |
 | `BACKLOG.md` | status of all nodes |
 | `CONTEXT.md` | the vocabulary this project uses |
+| `.nojekyll` | tells GitHub Pages to publish these files as they are |
 
 No build step beyond `node build-nodes.js`, and no package manager. The one
 library, `nostr-tools`, is committed under `vendor/` rather than pulled from a
