@@ -28,7 +28,10 @@ const avatarDir = path.join(dir, "avatars");
 const whitelistPath = path.join(dir, "whitelist.json");
 
 const whitelist = JSON.parse(fs.readFileSync(whitelistPath, "utf8"));
-const people = [...whitelist.roundtable, ...whitelist.editor].filter((p) => p.npub);
+// "pinned" means the picture is managed by hand, so leave it alone. The
+// project's own avatar is pinned: it is published at 400px for Nostr clients,
+// and refetching would overwrite it with the 96px page copy.
+const people = [...whitelist.roundtable, ...whitelist.editor].filter((p) => p.npub && !p.pinned);
 
 if (people.length === 0) {
   console.log("No npubs in whitelist.json yet. Nothing to fetch.");

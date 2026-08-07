@@ -58,8 +58,10 @@
       "avatar": "kiwi.jpg"
     },
     {
-      "name": "Custody Roundtable (project key)",
-      "npub": "npub1ddeduk2zx9wpu86v2d3t0qxdgz4yymyt2ake5kll3sl6w3f2qvdqcevr7n"
+      "name": "Self Custody Roundtable",
+      "npub": "npub1ddeduk2zx9wpu86v2d3t0qxdgz4yymyt2ake5kll3sl6w3f2qvdqcevr7n",
+      "avatar": "self-custody-roundtable.jpg",
+      "pinned": true
     }
   ]
 }
