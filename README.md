@@ -81,7 +81,7 @@ them first.
 
 The core roundtable: Ben Kaufman, Piers Cockram, Jesse Posner, Fractal
 Encrypt, Giacomo Zucco, Jimbo (Seed Picker Solitaire), and if time allows Rob
-Hamilton and Francis Poliout.
+Hamilton and Francis Pouliot.
 
 Anyone can answer. Core roundtable replies carry roundtable weight when
 branches are drafted. Public replies can still surface a branch and need the

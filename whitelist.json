@@ -19,11 +19,13 @@
     },
     {
       "name": "Piers Cockram",
-      "npub": ""
+      "npub": "npub12r5zunqwnccf8dhy5jvx6wspynxrruy5t4yr4n7jqvxzqykwc7nqqe8g4s",
+      "avatar": "piers-cockram.jpg"
     },
     {
       "name": "Jesse Posner",
-      "npub": ""
+      "npub": "npub1tr7ndmjkguzupvqhn9clasx4r08q2sklhal4g60844nsnnalw0tqpwnc05",
+      "avatar": "jesse-posner.jpg"
     },
     {
       "name": "Fractal Encrypt",
@@ -36,15 +38,17 @@
     },
     {
       "name": "Jimbo (Seed Picker Solitaire)",
-      "npub": ""
+      "npub": "npub1v9qy0ry6uyh36z65pe790qrxfye84ydsgzc877armmwr2l9tpkjsdx9q3h",
+      "avatar": "jimbo.jpg"
     },
     {
       "name": "Rob Hamilton",
       "npub": ""
     },
     {
-      "name": "Francis Poliout",
-      "npub": ""
+      "name": "Francis Pouliot",
+      "npub": "npub1t289s8ck5qfwynf2vsq49t2kypvvkpj7rhegayrur0ag9s2sezaqgunkzs",
+      "avatar": "francis-pouliot.jpg"
     }
   ],
   "editor": [

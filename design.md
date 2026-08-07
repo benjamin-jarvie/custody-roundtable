@@ -22,7 +22,7 @@ roundtable process and the living document it produces.
 
 Ben Kaufman, Piers Cockram, Jesse Posner, Fractal Encrypt, Giacomo Zucco,
 Jimbo (Seed Picker Solitaire), and if time allows, Rob Hamilton and Francis
-Poliout ("core roundtable"). The public can also submit answers and questions,
+Pouliot ("core roundtable"). The public can also submit answers and questions,
 but cannot edit the document directly (no PRs). Kiwi is the sole editor of
 record.
 
