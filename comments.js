@@ -19,6 +19,7 @@ const KIND_TEXT_NOTE = 1;
 const REPLY_LIMIT = 500;
 const EOSE_TIMEOUT_MS = 6000;
 const BUNKER_STORAGE_KEY = "custody-roundtable:bunker";
+const SIGNER_STORAGE_KEY = "custody-roundtable:signer";
 const DEFAULT_NOTE =
   "Replies are signed with your own Nostr key, so nobody can edit or delete what you wrote, including us. Anyone may reply. The Roundtable only view changes what this page shows first, not who may post.";
 
@@ -314,7 +315,10 @@ class Thread {
     this.signer = null;
     this.signerPubkey = null;
     this.signerHow = null;
-    try { localStorage.removeItem(BUNKER_STORAGE_KEY); } catch (err) { /* private mode */ }
+    try {
+      localStorage.removeItem(BUNKER_STORAGE_KEY);
+      localStorage.removeItem(SIGNER_STORAGE_KEY);
+    } catch (err) { /* private mode */ }
     this.setNote(DEFAULT_NOTE);
     this.renderSignerBar();
   }
@@ -341,7 +345,7 @@ class Thread {
     this.signerBar.append(el("span", "signer-who", "To reply, connect your key:"));
 
     if (window.nostr) {
-      const ext = el("button", "signer-btn", "Browser extension");
+      const ext = el("button", "signer-btn", "Sign in with extension");
       ext.type = "button";
       ext.addEventListener("click", () => this.connectExtension());
       this.signerBar.append(ext);
@@ -361,16 +365,27 @@ class Thread {
     return link;
   }
 
-  async connectExtension() {
-    this.setNote("Waiting for your extension…");
+  async connectExtension(silent) {
+    if (!silent) this.setNote("Waiting for your extension…");
     try {
       const pubkey = await window.nostr.getPublicKey();
       this.setSigner(window.nostr, pubkey, "extension");
-      this.setNote("Connected. Write your reply.");
+      try { localStorage.setItem(SIGNER_STORAGE_KEY, "extension"); } catch (err) { /* private mode */ }
+      if (!silent) this.setNote("Connected. Write your reply.");
     } catch (err) {
       console.warn("roundtable: extension refused", err);
-      this.setNote("Your extension refused the connection. Nothing was shared.");
+      if (!silent) this.setNote("Your extension refused the connection. Nothing was shared.");
     }
+  }
+
+  // Reconnect whoever was connected last, so a return visit does not have to
+  // press anything. The extension already remembers its permission for this
+  // site, so this does not raise a fresh prompt.
+  async restoreSigner() {
+    let choice = null;
+    try { choice = localStorage.getItem(SIGNER_STORAGE_KEY); } catch (err) { return; }
+    if (choice === "extension" && window.nostr) return this.connectExtension(true);
+    await this.restoreBunker();
   }
 
   // Inline input rather than window.prompt, which blocks the page.
@@ -418,6 +433,7 @@ class Thread {
       this.setSigner(signer, pubkey, "bunker");
       try {
         localStorage.setItem(BUNKER_STORAGE_KEY, JSON.stringify({ uri, clientSk: bytesToHex(clientSk) }));
+        localStorage.setItem(SIGNER_STORAGE_KEY, "bunker");
       } catch (err) { /* private mode, connection just will not persist */ }
       if (this.bunkerRow) { this.bunkerRow.remove(); this.bunkerRow = null; }
       this.setNote("Connected. Write your reply.");
@@ -540,7 +556,7 @@ export async function mountComments(mount) {
   const avatarBase = mount.dataset.avatars || "../avatars/";
   const thread = new Thread(mount, { anchor, nevent, relays, whitelist, avatarBase });
   thread.connect();
-  thread.restoreBunker(); // reconnect a signer the visitor already approved
+  thread.restoreSigner(); // reconnect whoever was connected on the last visit
   return thread;
 }
 
