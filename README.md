@@ -51,11 +51,15 @@ someone argues against it.
 Answers are Nostr comments signed with your own key. Reply on the node page
 itself, whatever device you are on:
 
-- **On a computer**: a NIP-07 browser extension such as Alby or nos2x.
-- **On a phone**: a NIP-46 remote signer such as Amber or nsec.app. Paste the
-  bunker string once and the page remembers the connection.
-- **Or from your own client**: one tap on "Reply in your Nostr app" opens the
-  thread in Damus, Primal or Amethyst. Nothing to copy.
+- **On a computer**: a NIP-07 browser extension such as Alby or nos2x. Press
+  **Browser extension** and the page remembers you next visit.
+- **On a phone**: a NIP-46 signer app such as Amber or nsec.app. No Nostr
+  extension exists for Safari on iPhone, so the extension button is switched
+  off there. Press **Signer app**, paste its connection string once, and the
+  page remembers the connection.
+- **Or from the client you already use**: press **Copy the note id** and paste
+  it into your app's search. That is the most reliable route. The
+  "Reply in your Nostr app" link beside it is a shortcut some apps ignore.
 
 Your key never reaches this page in any of these. Your reply appears
 attributed to your key, and nothing you sign can be edited or deleted by this
@@ -76,7 +80,9 @@ with deep experience do not get buried under bots and drive-by opinions.
 Deciding whose answer carries weight is human judgment, and this project
 treats that judgment as part of the work rather than something to hide.
 
-Relays: `wss://relay.ditto.pub` and `wss://nos.lol`.
+Relays: `relay.damus.io`, `relay.ditto.pub`, `nos.lol`, `relay.primal.net`
+and `offchain.pub`. If a node's id will not resolve in your client, it reads
+relays we do not publish to. Tell Kiwi which ones and they get added.
 
 ## Who
 
@@ -86,8 +92,8 @@ never rewrites what a named person attached to their own branch without asking
 them first.
 
 The core roundtable: Ben Kaufman, Piers Cockram, Jesse Posner, Fractal
-Encrypt, Giacomo Zucco, Jimbo (Seed Picker Solitaire), and if time allows Rob
-Hamilton and Francis Pouliot.
+Encrypt, Giacomo Zucco, Jimbo (Seed Picker Solitaire), Michael Dunworth, and
+if time allows Rob Hamilton and Francis Pouliot.
 
 Anyone can answer. Core roundtable replies carry roundtable weight when
 branches are drafted. Public replies can still surface a branch and need the
