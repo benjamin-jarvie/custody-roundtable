@@ -1,6 +1,12 @@
 // Scene copy is data. Visual and interaction changes never need to edit it.
 
 export const SCRIPTS = {
+  landing: {
+    welcome: [
+      "Every seed has three moments of truth.",
+      "Choose where to begin: how it is generated, how it signs, or how it survives."
+    ]
+  },
   generation: {
     welcome: [
       "Every seed begins as a claim about randomness.",
