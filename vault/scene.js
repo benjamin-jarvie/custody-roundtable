@@ -296,6 +296,9 @@ addEventListener("pointermove", e => {
 addEventListener("pointerup", e => {
   dragging = false;
   if (moved) return;
+  // taps on the HTML overlays (editor, chips, captions) are theirs alone;
+  // only the canvas talks to the 3D scene
+  if (e.target !== canvas) return;
   ptr.x = (e.clientX/innerWidth)*2-1; ptr.y = -(e.clientY/innerHeight)*2+1;
   ray.setFromCamera(ptr, camera);
   const hit = ray.intersectObjects([...plates, descPlate]).find(h => h.object.visible);
