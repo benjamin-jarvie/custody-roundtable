@@ -4,10 +4,17 @@
 
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS, emptyWalletLines } from "./script.js?v=2";
+import { SCRIPTS, emptyWalletLines } from "./script.js?v=4";
 import { WORDS } from "./vendor/bip39-en.js";
 import { masterFromMnemonic } from "./vendor/bip32.js";
 import { loadWatchBalance, formatBtc, formatUsd } from "./balance.js?v=1";
+import {
+  getJourneyState,
+  updateJourney,
+  journeyChoicePatch,
+  syncChoiceControls,
+  mountJourneyStations
+} from "./journey.js?v=1";
 import {
   setupPhysicalRenderer,
   brushedMetal,
@@ -59,8 +66,16 @@ const SCRIPT_PRESETS = {
     segwit: { path: "m/48'/0'/0'/2'", label: "Native multisig compatibility" }
   }
 };
-const state = { fmt: "bip39", sig: "single", ven: "one", hasDescriptor: false,
-  pass: "", path: SCRIPT_PRESETS.single.segwit.path, scr: "segwit" };
+const savedJourney = getJourneyState();
+const state = {
+  fmt: savedJourney.format,
+  sig: savedJourney.signers,
+  ven: savedJourney.vendors,
+  hasDescriptor: savedJourney.descriptorReady,
+  pass: "",
+  path: savedJourney.path,
+  scr: savedJourney.script
+};
 // A published BIP test vector used only to verify deterministic wallet identity:
 // these words, no passphrase, m/84'/0'/0', native SegWit. No balance is implied.
 const TRUE_WORDS = ["abandon","abandon","abandon","abandon","abandon","abandon",
@@ -551,6 +566,7 @@ function syncPolicyControls(){
   if (multi && !SCRIPT_PRESETS.multi[state.scr]) state.scr = "segwit";
   const policy = activePolicy();
   state.path = policy.path;
+  updateJourney({ script: state.scr, path: state.path });
   pathDisplay.textContent = policy.path;
   document.querySelectorAll("#scr .chip").forEach(button => {
     const supported = !multi || Boolean(SCRIPT_PRESETS.multi[button.dataset.v]);
@@ -656,6 +672,7 @@ addEventListener("pointerup", e => {
   }
   if (m.userData.kind === "descriptor" && state.sig === "multi" && !state.hasDescriptor && awaitingDescriptor){
     state.hasDescriptor = true; awaitingDescriptor = false;
+    updateJourney({ descriptorReady: true });
     m.position.y += 0.001; setTarget(m, 0, 1.38, 1.4, true); m.userData.ry = 0;
     presentTool("plate", "Descriptor", 850);
     speak(["The descriptor joins the seeds. Try the recovery again."]);
@@ -686,7 +703,9 @@ function wireChips(id, key, onPick){
   document.getElementById(id).addEventListener("click", e => {
     const b = e.target.closest(".chip"); if (!b || b.disabled) return;
     document.querySelectorAll(`#${id} .chip`).forEach(c => c.classList.remove("on"));
-    b.classList.add("on"); state[key] = b.dataset.v; onPick(b.dataset.v);
+    b.classList.add("on"); state[key] = b.dataset.v;
+    updateJourney(journeyChoicePatch(key, state[key]));
+    onPick(b.dataset.v);
   });
 }
 function syncVendorLock(){
@@ -723,6 +742,10 @@ wireChips("scr", "scr", v => {
 });
 syncVendorLock();
 syncPolicyControls();
+syncChoiceControls(state);
+mountJourneyStations("at-rest", station => {
+  if (station !== 10) closeDoor();
+});
 
 // ---------- the editable plate ----------
 const editor = document.getElementById("editor"), edGrid = document.getElementById("ed-grid"),
@@ -802,6 +825,7 @@ passInput.addEventListener("input", () => {
   clearTimeout(passInput._t);
   passInput._t = setTimeout(() => {
     state.pass = passInput.value;
+    updateJourney({ passphraseSet: Boolean(state.pass) });
     closeDoor();
     updateFp();
     speak([state.pass ? L.pass.butler : L.pass.none]);
@@ -815,7 +839,12 @@ document.getElementById("ed-close").addEventListener("click", () => {
 let recovering = false, awaitingDescriptor = false, failFlash = 0;
 let doorOpenT = 0, wheelSpin = 0, wheelVel = 0, shakeT = 0;
 const btn = document.getElementById("recover");
-function resetSafe(){ awaitingDescriptor = false; state.hasDescriptor = false; doorTarget = 0; }
+function resetSafe(){
+  awaitingDescriptor = false;
+  state.hasDescriptor = false;
+  doorTarget = 0;
+  updateJourney({ descriptorReady: false });
+}
 let doorTarget = 0;
 btn.addEventListener("click", () => {
   if (recovering) return;

@@ -1,6 +1,13 @@
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS } from "./script.js?v=2";
+import { SCRIPTS } from "./script.js?v=4";
+import {
+  getJourneyState,
+  updateJourney,
+  journeyChoicePatch,
+  syncChoiceControls,
+  mountJourneyStations
+} from "./journey.js?v=1";
 import {
   setupPhysicalRenderer,
   brushedMetal,
@@ -13,7 +20,13 @@ import {
 } from "./visuals.js?v=5";
 
 const COPY = SCRIPTS.inUse;
-const state = { fmt: "bip39", sig: "single", ven: "one", platform: "desktop" };
+const savedJourney = getJourneyState();
+const state = {
+  fmt: savedJourney.format,
+  sig: savedJourney.signers,
+  ven: savedJourney.vendors,
+  platform: savedJourney.platform
+};
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const canvas = document.getElementById("c");
 const readout = document.getElementById("readout");
@@ -510,6 +523,7 @@ function wireChips(id, key, callback){
     document.querySelectorAll("#" + id + " .chip").forEach(chip => chip.classList.remove("on"));
     button.classList.add("on");
     state[key] = button.dataset.v;
+    updateJourney(journeyChoicePatch(key, state[key]));
     callback(button.dataset.v);
   });
 }
@@ -545,7 +559,9 @@ wireChips("ven", "ven", value => {
   speak(COPY.vendors[value]);
 });
 syncVendorLock();
+syncChoiceControls(state);
 relayout();
+mountJourneyStations("in-use");
 
 const ray = new THREE.Raycaster();
 const pointer = new THREE.Vector2();

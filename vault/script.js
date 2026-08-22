@@ -7,6 +7,21 @@ export const SCRIPTS = {
       "Choose where to begin: how it is generated, how it signs, or how it survives."
     ]
   },
+  journey: {
+    label: "Journey stations",
+    stations: {
+      1: "Entropy",
+      2: "Encode",
+      3: "Paper",
+      4: "Load signer",
+      5: "Watch only",
+      6: "Test deposit",
+      7: "Recovery drill",
+      8: "Engrave steel",
+      9: "Retire paper",
+      10: "At rest"
+    }
+  },
   generation: {
     welcome: [
       "Every seed begins as a claim about randomness.",
