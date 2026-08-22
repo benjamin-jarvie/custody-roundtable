@@ -4,8 +4,30 @@
 
 import * as THREE from "three";
 import { makeButlerTexture, speak } from "./butler.js";
+import { WORDS } from "./vendor/bip39-en.js";
 
-const state = { fmt: "bip39", sig: "single", ven: "one", hasDescriptor: false };
+// real BIP-39 checksum: 12 words = 128 bits entropy + 4-bit checksum
+async function validMnemonic(ws){
+  const idx = ws.map(w => WORDS.indexOf(w));
+  if (idx.some(i => i < 0)) return false;
+  let bits = "";
+  for (const i of idx) bits += i.toString(2).padStart(11, "0");
+  const ent = bits.slice(0, 128), cs = bits.slice(128);
+  const bytes = new Uint8Array(16);
+  for (let i = 0; i < 16; i++) bytes[i] = parseInt(ent.slice(i*8, i*8+8), 2);
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return cs === h[0].toString(2).padStart(8, "0").slice(0, 4);
+}
+
+const state = { fmt: "bip39", sig: "single", ven: "one", hasDescriptor: false,
+  pass: "none", path: "std", scr: "segwit" };
+// the demo wallet that actually holds funds: these words, no passphrase,
+// m/84'/0'/0', native segwit. Everything else opens empty or not at all.
+const TRUE_WORDS = ["abandon","abandon","abandon","abandon","abandon","abandon",
+  "abandon","abandon","abandon","abandon","abandon","about"];
+const TRUE_FP = "73C5DA0A";
+let words = TRUE_WORDS.slice();
+let wordsValid = true, wordsMatch = true;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------- renderer / camera ----------
@@ -113,12 +135,25 @@ const glowDisc = new THREE.Mesh(new THREE.CircleGeometry(3.2, 48),
 glowDisc.position.set(0, 3.4, -13.15); scene.add(glowDisc);
 const glowLight = new THREE.PointLight(0xfbdc7b, 0, 20);
 glowLight.position.set(0, 3.4, -11.5); scene.add(glowLight);
+// what the door opens ONTO: a stack of coin, or nothing at all
+const vaultFunds = new THREE.Group();
+for (let i = 0; i < 5; i++){
+  const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.12, 32),
+    new THREE.MeshStandardMaterial({ color: 0xfbdc7b, metalness: 1, roughness: 0.25,
+      emissive: 0x6a5a20, emissiveIntensity: 0.4 }));
+  coin.position.set((i%2)*0.5-0.25, 2.2 + i*0.14, -12.6);
+  vaultFunds.add(coin);
+}
+vaultFunds.visible = false; scene.add(vaultFunds);
 // pedestals get added under plates in relayout
 
 
 // ---------- plates ----------
 const FACE = {
-  bip39: t => { t.font = "42px Georgia"; ["SEED PLATE","","abandon  ability  able","about  above  absent","...24 words on metal"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
+  bip39: t => { t.font = "30px Georgia";
+    const rows = ["SEED PLATE",""];
+    for (let i = 0; i < 12; i += 3) rows.push(words.slice(i, i+3).join("  "));
+    rows.forEach((l,i)=>t.fillText(l,36,64+i*52)); },
   bip32: t => { t.font = "40px Menlo, monospace"; ["KEY FILE","","raw BIP-32 material","no words exist","every copy spends"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
   codex32:t => { t.font = "38px Menlo, monospace"; ["CODEX32 PLATE","","MS12NAMEA320ZYXWV","checksummed by hand","no device trusted"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
   descriptor: t => { t.font = "38px Menlo, monospace"; ["THE DESCRIPTOR","","wsh(sortedmulti(2,","xpub1..., xpub2...))","quorum + paths + script"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
@@ -158,7 +193,17 @@ butler.scale.set(1.8, 3.6, 1); butler.position.set(-5.0, 1.8, 3.4); scene.add(bu
 // ---------- layout per state ----------
 const targets = new Map(); // mesh -> {p:Vector3, visible}
 function setTarget(m, x, y, z, visible = true){ targets.set(m, { p: new THREE.Vector3(x,y,z), visible }); m.visible = m.visible || visible; }
+const fpEl = document.getElementById("fp");
+function updateFp(){
+  // the fingerprint belongs to the seed. Different words, different root.
+  if (state.fmt !== "bip39"){ fpEl.textContent = "n/a"; fpEl.className = "fp"; return; }
+  if (!wordsValid){ fpEl.textContent = "no seed"; fpEl.className = "fp off"; return; }
+  if (wordsMatch && state.pass === "none"){ fpEl.textContent = TRUE_FP; fpEl.className = "fp"; }
+  else { fpEl.textContent = "unknown root"; fpEl.className = "fp off"; }
+}
+function closeDoor(){ doorTarget = 0; vaultFunds.visible = false; }
 function relayout(instant = false){
+  updateFp();
   const multi = state.sig === "multi";
   const tints = (multi && state.ven === "multi") ? VENDOR_TINTS_DIFF : VENDOR_TINTS_SAME;
   plates.forEach((m, i) => {
@@ -194,8 +239,22 @@ const L = {
   plate: {
     seed: "A seed plate. Fire-proof, flood-proof. It is not rot-proof against missing context: path, script type, fingerprint.",
     descriptor: "The descriptor: every cosigner's public key, the quorum, the paths. Without it, the seeds are three perfect keys to a door nobody can find." },
-  recoverSingleOk: ["The wheel turns, the door opens. One seed was enough, this time.",
-    "It opened because the wallet was simple. Path, script type and fingerprint were the defaults. Change any of them, and words alone open a correct-looking, empty wallet."],
+  pass: { none: "No passphrase. The words alone are the whole secret.",
+    butler: "A passphrase now stands beside the words. It is a second secret with no checksum: a typo is undetectable, and it opens a different, valid, empty wallet." },
+  path: { std: "The standard path. Wallets agree to look here by convention, nothing more.",
+    alt: "A different derivation path. Same seed, different neighborhood: the addresses that held your coin are no longer where the wallet looks." },
+  scr: { segwit: "Native SegWit. The script your funded addresses were built with.",
+    legacy: "Legacy script. Valid, older, and a different address for every key: your coin is not on these addresses." },
+  recoverFunded: ["The wheel turns, the door opens, and the coin is there.",
+    "Words, path, script and passphrase all matched the wallet that was funded. That is the full recovery set. Lose any one part, and watch what happens."],
+  recoverEmpty: st => ["The door opens... on nothing.",
+    "This is the trap. " + (st.pass !== "none" ? "The passphrase changed the seed's root, so this is a different, valid wallet that has never held a coin."
+      : st.path !== "std" ? "The path points the wallet at a different neighborhood of addresses. Your coin sits untouched somewhere this wallet will never look."
+      : st.scr !== "segwit" ? "The script type builds different addresses from the same keys. Correct seed, empty view."
+      : "These are valid words for a wallet that has never held a coin."),
+    "Nothing was destroyed. But a person restoring from backup would see an empty balance and believe the coin gone. Every part of the recovery set must survive, together."],
+  recoverNoSeed: ["The wheel will not even turn.",
+    "Those words fail the checksum. They are not a seed. No wallet, empty or full, exists behind them. Fix the words on the plate."],
   recoverMultiFail: ["Watch closely. Three seeds, all present, all correct...",
     "And the door does not move. Seeds alone are not enough for multisig. The wallet needs the descriptor: every cosigner's xpub, the quorum, the paths.",
     "Most people learn this too late. Tap the gold plate to add the descriptor, then try again."],
@@ -224,6 +283,11 @@ addEventListener("pointerup", e => {
   if (!hit){ focusOn(null); return; }
   const m = hit.object;
   pulse(m); focusOn(m);
+  if (m.userData.kind === "seed" && state.fmt === "bip39" && state.sig === "single"){
+    editor.hidden = false;
+    speak(["Read the plate. Change a word if you like. Then try the recovery and see which wallet, if any, those words open."]);
+    return;
+  }
   if (m.userData.kind === "descriptor" && state.sig === "multi" && !state.hasDescriptor && awaitingDescriptor){
     state.hasDescriptor = true; awaitingDescriptor = false;
     m.position.y += 0.001; setTarget(m, 0, 1.02, 1.4, true); m.userData.ry = 0;
@@ -262,17 +326,43 @@ function syncVendorLock(){
   const locked = state.sig === "single";
   document.querySelectorAll("#ven .chip").forEach(c => c.disabled = locked);
 }
-wireChips("fmt", "fmt", v => { relayout(); focusOn(null); speak([L.fmt[v]]); });
+wireChips("fmt", "fmt", v => { closeDoor(); relayout(); focusOn(null); speak([L.fmt[v]]); });
 wireChips("sig", "sig", v => {
   if (v === "single"){ state.ven = "one";
     document.querySelectorAll("#ven .chip").forEach(c => c.classList.toggle("on", c.dataset.v === "one")); }
-  syncVendorLock(); relayout(); resetSafe(); focusOn(null); speak([L.sig[v]]);
+  syncVendorLock(); closeDoor(); relayout(); resetSafe(); focusOn(null); speak([L.sig[v]]);
 });
 document.getElementById("ven").addEventListener("click", e => {
   if (state.sig === "single" && e.target.closest(".chip")) speak([L.venLocked]);
 });
 wireChips("ven", "ven", v => { relayout(); focusOn(null); speak([L.ven[v]]); });
+wireChips("pass", "pass", v => { closeDoor(); updateFp(); focusOn(null); speak([L.pass[v]]); });
+wireChips("path", "path", v => { closeDoor(); focusOn(null); speak([L.path[v]]); });
+wireChips("scr", "scr", v => { closeDoor(); focusOn(null); speak([L.scr[v]]); });
 syncVendorLock();
+
+// ---------- the editable plate ----------
+const editor = document.getElementById("editor"), edGrid = document.getElementById("ed-grid"),
+      edNote = document.getElementById("ed-note");
+words.forEach((w, i) => {
+  const inp = document.createElement("input");
+  inp.value = w; inp.dataset.i = i; inp.autocapitalize = "off"; inp.spellcheck = false;
+  edGrid.appendChild(inp);
+});
+async function reviewWords(){
+  words = [...edGrid.querySelectorAll("input")].map(i => i.value.trim().toLowerCase());
+  [...edGrid.querySelectorAll("input")].forEach(i =>
+    i.classList.toggle("bad", WORDS.indexOf(i.value.trim().toLowerCase()) < 0));
+  wordsValid = await validMnemonic(words);
+  wordsMatch = words.join(" ") === TRUE_WORDS.join(" ");
+  edNote.textContent = !wordsValid
+    ? "These words fail the checksum. They are not a seed, and no wallet exists for them."
+    : wordsMatch ? "The original seed. The funded wallet exists behind these words."
+    : "Valid words, different seed. A wallet exists for them. It has never held a coin.";
+  closeDoor(); relayout(); updateFp();
+}
+edGrid.addEventListener("input", () => { clearTimeout(edGrid._t); edGrid._t = setTimeout(reviewWords, 350); });
+document.getElementById("ed-close").addEventListener("click", () => { editor.hidden = true; });
 
 // recovery
 let recovering = false, awaitingDescriptor = false, failFlash = 0;
@@ -289,9 +379,19 @@ btn.addEventListener("click", () => {
     if (!ok){ awaitingDescriptor = true; focusOn(descPlate, 6); }
     else setTimeout(() => focusOn(null), 2600);
   }, 2400);
-  if (state.sig === "single"){ speak(L.recoverSingleOk); animateRebuild(true); done(true); }
+  if (state.sig === "single"){
+    if (state.fmt === "bip39" && !wordsValid){
+      speak(L.recoverNoSeed); animateRebuild(false); done(false);
+    } else {
+      const rightContext = state.pass === "none" && state.path === "std" && state.scr === "segwit";
+      const funded = (state.fmt !== "bip39" || wordsMatch) && rightContext;
+      vaultFunds.visible = funded;
+      speak(funded ? L.recoverFunded : L.recoverEmpty(state));
+      animateRebuild(true); done(true);
+    }
+  }
   else if (!state.hasDescriptor){ speak(L.recoverMultiFail); animateRebuild(false); done(false); }
-  else { speak(L.recoverMultiOk); animateRebuild(true); done(true); }
+  else { vaultFunds.visible = true; speak(L.recoverMultiOk); animateRebuild(true); done(true); }
 });
 let rebuildOk = null, rebuildT = 0;
 function animateRebuild(ok){ rebuildOk = ok; rebuildT = 0; wheelVel = 6; doorTarget = 0; }
