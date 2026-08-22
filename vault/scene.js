@@ -139,13 +139,24 @@ for (let i = 0; i < 3; i++) makePlate();
 const descPlate = new THREE.Mesh(plateGeo, new THREE.MeshStandardMaterial({ metalness: 0.8, roughness: 0.3 }));
 descPlate.userData.kind = "descriptor"; descPlate.castShadow = true; scene.add(descPlate);
 // pedestals: one per possible plate position, shown/hidden with layout
-const pedMat = new THREE.MeshStandardMaterial({ color: 0x1a212c, metalness: 0.5, roughness: 0.45 });
+// each tool is presented the butler's way: on a tray, on a slim stand
+const trayMat = new THREE.MeshStandardMaterial({ color: 0xd8d3c6, metalness: 0.95, roughness: 0.22 });
+const trayRimMat = new THREE.MeshStandardMaterial({ color: 0xfbdc7b, metalness: 1, roughness: 0.3 });
+const standMat = new THREE.MeshStandardMaterial({ color: 0x0a0c10, metalness: 0.7, roughness: 0.4 });
 const peds = [];
 for (let i = 0; i < 5; i++){
-  const p = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.35, 0.5, 32), pedMat);
-  p.receiveShadow = true; p.visible = false; scene.add(p); peds.push(p);
+  const g = new THREE.Group();
+  const tray = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.45, 0.07, 40), trayMat);
+  tray.position.y = 0.62; tray.receiveShadow = true; g.add(tray);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.45, 0.045, 10, 48), trayRimMat);
+  rim.rotation.x = Math.PI/2; rim.position.y = 0.66; g.add(rim);
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.62, 12), standMat);
+  stem.position.y = 0.31; g.add(stem);
+  const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 0.08, 24), standMat);
+  foot.position.y = 0.04; foot.receiveShadow = true; g.add(foot);
+  g.visible = false; scene.add(g); peds.push(g);
 }
-function placePed(i, x, z, visible){ peds[i].position.set(x, 0.25, z); peds[i].visible = visible; }
+function placePed(i, x, z, visible){ peds[i].position.set(x, 0, z); peds[i].visible = visible; }
 
 // the safe: what recovery rebuilds
 const safeGeo = new THREE.BoxGeometry(2.6, 2.6, 2.6);
@@ -174,12 +185,12 @@ function relayout(instant = false){
   const tints = (multi && state.ven === "multi") ? VENDOR_TINTS_DIFF : VENDOR_TINTS_SAME;
   plates.forEach((m, i) => {
     m.material.map = plateTexture(state.fmt, tints[i]); m.material.needsUpdate = true;
-    if (multi){ setTarget(m, (i-1)*3.4, 0.62, 2.2 + (i===1?0.8:0)); placePed(i, (i-1)*3.4, 2.2 + (i===1?0.8:0), true); }
-    else { setTarget(m, 0, 0.62 + i*0.18, 2.4, i === 0); placePed(i, 0, 2.4, i === 0); }
+    if (multi){ setTarget(m, (i-1)*3.4, 0.76, 2.2 + (i===1?0.8:0)); placePed(i, (i-1)*3.4, 2.2 + (i===1?0.8:0), true); }
+    else { setTarget(m, 0, 0.76 + i*0.18, 2.4, i === 0); placePed(i, 0, 2.4, i === 0); }
   });
   descPlate.material.map = plateTexture("descriptor", "#2c2a20"); descPlate.material.needsUpdate = true;
-  if (multi){ setTarget(descPlate, 5.2, 0.62, -0.4, true); placePed(3, 5.2, -0.4, true); }
-  else { setTarget(descPlate, 5.2, 0.62, -0.4, false); placePed(3, 0, 0, false); state.hasDescriptor = false; }
+  if (multi){ setTarget(descPlate, 5.2, 0.76, -0.4, true); placePed(3, 5.2, -0.4, true); }
+  else { setTarget(descPlate, 5.2, 0.76, -0.4, false); placePed(3, 0, 0, false); state.hasDescriptor = false; }
   drawMap(multi);
   if (instant) for (const [m,t] of targets){ m.position.copy(t.p); m.visible = t.visible; }
 }
@@ -235,7 +246,7 @@ addEventListener("pointerup", e => {
   pulse(m);
   if (m.userData.kind === "descriptor" && state.sig === "multi" && !state.hasDescriptor && awaitingDescriptor){
     state.hasDescriptor = true; awaitingDescriptor = false;
-    m.position.y += 0.001; setTarget(m, 0, 0.62, 0.2, true); placePed(4, 0, 0.2, true); placePed(3, 0, 0, false);
+    m.position.y += 0.001; setTarget(m, 0, 0.76, 0.2, true); placePed(4, 0, 0.2, true); placePed(3, 0, 0, false);
     speak(["The descriptor joins the seeds. Try the recovery again."]);
   } else speak([L.plate[m.userData.kind]]);
 });

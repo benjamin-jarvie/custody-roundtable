@@ -5,7 +5,7 @@
 export function makeButlerTexture(){
   const c=document.createElement("canvas"); c.width=512; c.height=1024;
   const x=c.getContext("2d");
-  const GOLD="#FBDC7B", INK="#0d1016", SUIT="#1a2029", SUIT2="#232b38", SKIN="#e8d6b8", SHIRT="#EDE8DA";
+  const GOLD="#FBDC7B", INK="#0d1016", SUIT="#0a0c10", SUIT2="#16181d", SKIN="#e8d6b8", SHIRT="#F5F2E9", BLACK="#050608";
   x.clearRect(0,0,512,1024);
   // shadow under feet
   x.fillStyle="rgba(0,0,0,.45)"; x.beginPath(); x.ellipse(256,990,120,18,0,0,7); x.fill();
@@ -27,18 +27,18 @@ export function makeButlerTexture(){
   // coat opening / shirt
   x.fillStyle=SHIRT;
   x.beginPath(); x.moveTo(256,318); x.lineTo(222,470); x.lineTo(256,640); x.lineTo(290,470); x.closePath(); x.fill();
-  // lapels
-  x.fillStyle=INK;
+  // lapels, satin black
+  x.fillStyle=BLACK;
   x.beginPath(); x.moveTo(256,318); x.lineTo(198,360); x.lineTo(232,480); x.lineTo(256,380); x.closePath(); x.fill();
   x.beginPath(); x.moveTo(256,318); x.lineTo(314,360); x.lineTo(280,480); x.lineTo(256,380); x.closePath(); x.fill();
-  // gold piping on lapels
-  x.strokeStyle=GOLD; x.lineWidth=3;
+  // satin lapel sheen
+  x.strokeStyle="#2a2e36"; x.lineWidth=3;
   x.beginPath(); x.moveTo(202,362); x.lineTo(234,474); x.moveTo(310,362); x.lineTo(278,474); x.stroke();
   // buttons
-  x.fillStyle=GOLD;
-  for(const y of [500,545,590]){ x.beginPath(); x.arc(256,y,6,0,7); x.fill(); }
-  // bow tie
-  x.fillStyle=GOLD;
+  for(const y of [500,545,590]){ x.fillStyle=BLACK; x.beginPath(); x.arc(256,y,6,0,7); x.fill();
+    x.strokeStyle=GOLD; x.lineWidth=1.5; x.beginPath(); x.arc(256,y,6,0,7); x.stroke(); }
+  // bow tie, black
+  x.fillStyle=BLACK;
   x.beginPath(); x.moveTo(256,332); x.lineTo(222,316); x.lineTo(222,350); x.closePath(); x.fill();
   x.beginPath(); x.moveTo(256,332); x.lineTo(290,316); x.lineTo(290,350); x.closePath(); x.fill();
   x.beginPath(); x.arc(256,332,8,0,7); x.fill();
