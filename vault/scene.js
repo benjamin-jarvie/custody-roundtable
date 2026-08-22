@@ -28,15 +28,18 @@ let distT = 11;
 const OVERVIEW = { p: new THREE.Vector3(0, 1.2, 0), d: 11 };
 function frame(p, d){ lookT.copy(p); distT = d; }
 function placeCamera(){
+  const d = dist * aspectPull;
   camera.position.set(
-    look.x + Math.sin(yaw)*dist*Math.cos(pitch),
-    look.y + 1.8 + Math.sin(pitch)*dist*0.6,
-    look.z + Math.cos(yaw)*dist*Math.cos(pitch));
+    look.x + Math.sin(yaw)*d*Math.cos(pitch),
+    look.y + 1.8 + Math.sin(pitch)*d*0.6,
+    look.z + Math.cos(yaw)*d*Math.cos(pitch));
   camera.lookAt(look);
 }
+let aspectPull = 1;
 function resize(){
   renderer.setSize(innerWidth, innerHeight, false);
   camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  aspectPull = camera.aspect < 1 ? 1.45 : 1;
 }
 addEventListener("resize", resize); resize();
 
@@ -176,7 +179,7 @@ relayout(true);
 // ---------- copy ----------
 const L = {
   welcome: ["Welcome to the vault. This is where your seed sleeps.",
-    "Choose a setup on the right, then try a recovery. I will tell you the truth about what survives."],
+    "Choose a setup, then try a recovery. I will tell you the truth about what survives."],
   fmt: {
     bip39: "BIP-39. Twenty-four words on metal. Remember: the words restore only the simplest wallet unless the path, script type and fingerprint survive beside them.",
     bip32: "Raw BIP-32. No words exist. The backup is a file, and every unencrypted copy is a full spend key.",
@@ -227,7 +230,23 @@ addEventListener("pointerup", e => {
     speak(["The descriptor joins the seeds. Try the recovery again."]);
   } else speak([L.plate[m.userData.kind]]);
 });
-addEventListener("wheel", e => { dist = THREE.MathUtils.clamp(dist + e.deltaY*0.01, 7, 16); });
+addEventListener("wheel", e => { distT = THREE.MathUtils.clamp(distT + e.deltaY*0.01, 6, 16); });
+// pinch: two active pointers change the camera distance
+const touches = new Map();
+canvas.addEventListener("pointerdown", e => touches.set(e.pointerId, [e.clientX, e.clientY]));
+addEventListener("pointermove", e => {
+  if (!touches.has(e.pointerId)) return;
+  if (touches.size === 2){
+    const pts = [...touches.values()];
+    const before = Math.hypot(pts[0][0]-pts[1][0], pts[0][1]-pts[1][1]);
+    touches.set(e.pointerId, [e.clientX, e.clientY]);
+    const now = [...touches.values()];
+    const after = Math.hypot(now[0][0]-now[1][0], now[0][1]-now[1][1]);
+    distT = THREE.MathUtils.clamp(distT + (before-after)*0.03, 6, 16);
+  } else touches.set(e.pointerId, [e.clientX, e.clientY]);
+});
+addEventListener("pointerup", e => touches.delete(e.pointerId));
+addEventListener("pointercancel", e => touches.delete(e.pointerId));
 
 function pulse(m){ m.userData.pulse = 1; }
 

@@ -41,6 +41,14 @@
     color:var(--ink);background:var(--gold);border:0;border-radius:6px;padding:.7rem 1.3rem;cursor:pointer}
   .act button:disabled{opacity:.5}
   @media(min-width:700px){.controls{max-width:230px}.bubble{max-width:560px}}
+  @media(max-width:600px){
+    .controls{top:auto;bottom:9.6rem;left:.75rem;right:.75rem;max-width:none;
+      flex-direction:row;overflow-x:auto;padding-bottom:.15rem}
+    .grp{flex:0 0 auto}
+    .act{bottom:14.4rem}
+    .caption{bottom:.6rem}
+    .bubble{font-size:.85rem;min-height:0;max-height:8.2rem;overflow-y:auto}
+  }
 </style>
 </head>
 <body>
