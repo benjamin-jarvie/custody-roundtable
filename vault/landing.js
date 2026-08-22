@@ -1,5 +1,14 @@
 import * as THREE from "three";
-import { makeButler, speak } from "./butler.js?v=2";
+import { speak, presentTool } from "./butler.js?v=4";
+import {
+  setupPhysicalRenderer,
+  brushedMetal,
+  blackMetal,
+  honedStone,
+  roundedBoxGeometry,
+  contactShadow,
+  castRealisticShadows
+} from "./visuals.js?v=4";
 
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const portrait = innerWidth <= 600;
@@ -15,6 +24,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b0e13);
 scene.fog = new THREE.Fog(0x0b0e13, 11, 27);
+setupPhysicalRenderer(THREE, renderer, scene, 1.14);
 const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 50);
 camera.position.set(0, portrait ? 4.3 : 3.6, portrait ? 13.5 : 11.2);
 camera.lookAt(0, 2.1, 0);
@@ -25,7 +35,7 @@ function resize(){
 }
 addEventListener("resize", resize);
 
-scene.add(new THREE.AmbientLight(0x748098, 0.48));
+scene.add(new THREE.AmbientLight(0x748098, 0.58));
 const key = new THREE.SpotLight(0xfff1d2, 250, 26, Math.PI / 5, 0.45, 1.4);
 key.position.set(0, 10, 6);
 key.target.position.set(0, 1.8, 0);
@@ -41,7 +51,7 @@ scene.add(cool);
 
 const floor = new THREE.Mesh(
   new THREE.CircleGeometry(12, 64),
-  new THREE.MeshStandardMaterial({ color: 0x11161e, metalness: 0.42, roughness: 0.43 })
+  honedStone(THREE, 0x11161e)
 );
 floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;
@@ -58,8 +68,9 @@ ring.position.y = 0.01;
 scene.add(ring);
 const wall = new THREE.Mesh(
   new THREE.CylinderGeometry(11.5, 11.5, 10, 48, 1, true),
-  new THREE.MeshStandardMaterial({ color: 0x151a22, roughness: 0.9, side: THREE.BackSide })
+  honedStone(THREE, 0x151a22)
 );
+wall.material.side = THREE.BackSide;
 wall.position.y = 5;
 scene.add(wall);
 
@@ -105,35 +116,45 @@ const spacing = portrait ? 1.18 : 2.35;
 definitions.forEach((definition, index) => {
   const group = new THREE.Group();
   const frame = new THREE.Mesh(
-    new THREE.BoxGeometry(doorWidth + 0.18, doorHeight + 0.2, 0.32),
-    new THREE.MeshStandardMaterial({
-      color: 0xfbdc7b, metalness: 1, roughness: 0.27,
-      emissive: 0x403510, emissiveIntensity: 0.15
-    })
+    roundedBoxGeometry(THREE, doorWidth + 0.18, doorHeight + 0.2, 0.32, 0.08),
+    brushedMetal(THREE, 0xe2bd5b, 0.2)
   );
+  frame.material.emissive = new THREE.Color(0x2f260a);
+  frame.material.emissiveIntensity = 0.1;
   frame.castShadow = true;
   group.add(frame);
+  const doorMap = doorTexture(definition.title, definition.subtitle);
+  const doorMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    map: doorMap,
+    metalness: 0.28,
+    roughness: 0.34,
+    clearcoat: 0.24,
+    clearcoatRoughness: 0.28,
+    emissive: 0x5b4922,
+    emissiveMap: doorMap,
+    emissiveIntensity: 0.1,
+    envMapIntensity: 0.8
+  });
   const face = new THREE.Mesh(
     new THREE.PlaneGeometry(doorWidth, doorHeight),
-    new THREE.MeshStandardMaterial({
-      map: doorTexture(definition.title, definition.subtitle),
-      metalness: 0.48, roughness: 0.42,
-      emissive: 0x171b22, emissiveIntensity: 0.16
-    })
+    doorMaterial
   );
-  face.position.z = 0.18;
+  face.position.z = 0.235;
   face.userData.href = definition.href;
   group.add(face);
   const x = (index - 1) * spacing;
   group.position.set(x, portrait ? 2.6 : 2.35, index === 1 ? -0.35 : 0);
   group.rotation.y = (index - 1) * -0.12;
+  castRealisticShadows(group);
   scene.add(group);
+  const shadow = contactShadow(THREE, doorWidth * 1.8, 1.45, 0.82);
+  shadow.position.set(x, 0.025, group.position.z + 0.15);
+  scene.add(shadow);
   doors.push(group);
   clickable.push(face);
 });
 
-const butler = makeButler(THREE);
-scene.add(butler);
 const ray = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 canvas.addEventListener("pointerup", event => {
@@ -159,4 +180,5 @@ speak([
   "Welcome to the Custody Vault. Every seed lives three lives.",
   "Choose a door. We will begin where trust begins, where judgment signs, or where recovery proves the truth."
 ], 450);
+presentTool("doors", "Choose", 1250);
 tick();

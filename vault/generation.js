@@ -1,6 +1,15 @@
 import * as THREE from "three";
-import { makeButler, speak } from "./butler.js?v=2";
+import { speak, presentTool } from "./butler.js?v=4";
 import { SCRIPTS } from "./script.js";
+import {
+  setupPhysicalRenderer,
+  brushedMetal,
+  blackMetal,
+  honedStone,
+  roundedBoxGeometry,
+  contactShadow,
+  castRealisticShadows
+} from "./visuals.js?v=4";
 
 const COPY = SCRIPTS.generation;
 const state = { fmt: "bip39", sig: "single", ven: "one" };
@@ -19,6 +28,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b0e13);
 scene.fog = new THREE.Fog(0x0b0e13, 14, 31);
+setupPhysicalRenderer(THREE, renderer, scene, 1.13);
 const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 60);
 let yaw = -0.08;
 let yawT = -0.08;
@@ -49,7 +59,7 @@ function resize(){
 }
 addEventListener("resize", resize);
 
-const ambient = new THREE.AmbientLight(0x748096, 0.5);
+const ambient = new THREE.AmbientLight(0x748096, 0.58);
 scene.add(ambient);
 const key = new THREE.SpotLight(0xfff1cf, 260, 30, Math.PI / 5, 0.45, 1.4);
 key.position.set(1, 10, 6);
@@ -73,60 +83,72 @@ function focusOn(object, distance = 6.2){
   else frame(new THREE.Vector3(0, 1.45, 0), 11);
 }
 
-const floorMat = new THREE.MeshStandardMaterial({
-  color: 0x11161e, metalness: 0.35, roughness: 0.5
-});
-const floor = new THREE.Mesh(new THREE.CircleGeometry(14, 64), floorMat);
+const floor = new THREE.Mesh(
+  new THREE.CircleGeometry(14, 64),
+  honedStone(THREE, 0x11161e)
+);
 floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;
 scene.add(floor);
 const floorRing = new THREE.Mesh(
   new THREE.RingGeometry(5.4, 5.52, 96),
-  new THREE.MeshStandardMaterial({
-    color: 0xfbdc7b, metalness: 1, roughness: 0.35,
-    emissive: 0x443712, emissiveIntensity: 0.22
-  })
+  brushedMetal(THREE, 0xd8b354, 0.21)
 );
+floorRing.material.emissive = new THREE.Color(0x3a2f0c);
+floorRing.material.emissiveIntensity = 0.14;
 floorRing.rotation.x = -Math.PI / 2;
 floorRing.position.y = 0.01;
 scene.add(floorRing);
 const wall = new THREE.Mesh(
   new THREE.CylinderGeometry(13.5, 13.5, 12, 48, 1, true),
-  new THREE.MeshStandardMaterial({ color: 0x141922, roughness: 0.9, side: THREE.BackSide })
+  honedStone(THREE, 0x141922)
 );
+wall.material.side = THREE.BackSide;
 wall.position.y = 6;
 scene.add(wall);
 
 const table = new THREE.Group();
 const top = new THREE.Mesh(
   new THREE.BoxGeometry(6.8, 0.28, 3.45),
-  new THREE.MeshStandardMaterial({
-    color: 0x2b323c, metalness: 0.72, roughness: 0.3,
-    emissive: 0x12161b, emissiveIntensity: 0.18
-  })
+  honedStone(THREE, 0x242830)
 );
 top.position.y = 1.34;
 top.castShadow = true;
 top.receiveShadow = true;
 table.add(top);
-const edge = new THREE.Mesh(
-  new THREE.BoxGeometry(6.95, 0.08, 3.6),
-  new THREE.MeshStandardMaterial({ color: 0xfbdc7b, metalness: 1, roughness: 0.28 })
-);
+const edge = new THREE.Group();
+const edgeMaterial = brushedMetal(THREE, 0xd8b354, 0.22);
+[
+  [6.95, 0.08, 0.07, 0, 0, -1.765],
+  [6.95, 0.08, 0.07, 0, 0, 1.765],
+  [0.07, 0.08, 3.46, -3.44, 0, 0],
+  [0.07, 0.08, 3.46, 3.44, 0, 0]
+].forEach(part => {
+  const bar = new THREE.Mesh(
+    new THREE.BoxGeometry(part[0], part[1], part[2]),
+    edgeMaterial
+  );
+  bar.position.set(part[3], part[4], part[5]);
+  edge.add(bar);
+});
 edge.position.y = 1.5;
 table.add(edge);
 for (const x of [-2.8, 2.8]){
   for (const z of [-1.25, 1.25]){
     const leg = new THREE.Mesh(
       new THREE.CylinderGeometry(0.11, 0.15, 1.35, 12),
-      new THREE.MeshStandardMaterial({ color: 0x171b22, metalness: 0.8, roughness: 0.35 })
+      blackMetal(THREE, 0x171b22, 0.28)
     );
     leg.position.set(x, 0.65, z);
     leg.castShadow = true;
     table.add(leg);
   }
 }
+castRealisticShadows(table);
 scene.add(table);
+const tableShadow = contactShadow(THREE, 7.8, 4.25, 0.68);
+tableShadow.position.y = 0.018;
+scene.add(tableShadow);
 
 function textTexture(lines, options = {}){
   const c = document.createElement("canvas");
@@ -173,8 +195,14 @@ function makeDevice(variant){
   const heights = [1.72, 1.42, 1.55];
   const colors = [0x252c37, 0x31423d, 0x3b332d];
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(widths[variant], heights[variant], 0.34 + variant * 0.04),
-    new THREE.MeshStandardMaterial({ color: colors[variant], metalness: 0.68, roughness: 0.3 })
+    roundedBoxGeometry(
+      THREE,
+      widths[variant],
+      heights[variant],
+      0.34 + variant * 0.04,
+      0.09
+    ),
+    blackMetal(THREE, colors[variant], 0.24)
   );
   body.castShadow = true;
   group.add(body);
@@ -182,10 +210,11 @@ function makeDevice(variant){
     new THREE.PlaneGeometry(widths[variant] * 0.76, heights[variant] * 0.42),
     new THREE.MeshStandardMaterial({
       map: textTexture(["RNG", "READY"], { background: "#080b0f" }),
-      emissive: 0xfbdc7b, emissiveIntensity: 0.16, metalness: 0.1, roughness: 0.55
+      emissive: 0xfbdc7b, emissiveIntensity: 0.16, metalness: 0.1,
+      roughness: 0.55, toneMapped: false
     })
   );
-  screen.position.set(0, heights[variant] * 0.17, 0.19 + variant * 0.02);
+  screen.position.set(0, heights[variant] * 0.17, 0.245 + variant * 0.025);
   group.add(screen);
   const button = new THREE.Mesh(
     new THREE.CylinderGeometry(0.11, 0.11, 0.045, 18),
@@ -204,8 +233,15 @@ function makeDevice(variant){
 function makeDie(index){
   const group = new THREE.Group();
   const die = new THREE.Mesh(
-    new THREE.BoxGeometry(0.46, 0.46, 0.46, 2, 2, 2),
-    new THREE.MeshStandardMaterial({ color: 0xe3ddce, metalness: 0.05, roughness: 0.46 })
+    roundedBoxGeometry(THREE, 0.46, 0.46, 0.46, 0.085),
+    new THREE.MeshPhysicalMaterial({
+      color: 0xeee8db,
+      metalness: 0.02,
+      roughness: 0.34,
+      clearcoat: 0.28,
+      clearcoatRoughness: 0.24,
+      envMapIntensity: 1.05
+    })
   );
   die.castShadow = true;
   group.add(die);
@@ -240,9 +276,16 @@ scene.add(diceGroup);
 
 const worksheet = new THREE.Group();
 const sheet = new THREE.Mesh(
-  new THREE.BoxGeometry(2.7, 0.06, 1.85),
-  new THREE.MeshStandardMaterial({ color: 0xd8d0bd, roughness: 0.76 })
+  roundedBoxGeometry(THREE, 2.7, 1.85, 0.06, 0.05),
+  new THREE.MeshPhysicalMaterial({
+    color: 0xd8d0bd,
+    roughness: 0.72,
+    sheen: 0.2,
+    sheenColor: 0xfff1d0,
+    envMapIntensity: 0.45
+  })
 );
+sheet.rotation.x = -Math.PI / 2;
 sheet.castShadow = true;
 worksheet.add(sheet);
 const sheetFace = new THREE.Mesh(
@@ -256,7 +299,7 @@ const sheetFace = new THREE.Mesh(
   })
 );
 sheetFace.rotation.x = -Math.PI / 2;
-sheetFace.position.y = 0.036;
+sheetFace.position.y = 0.058;
 worksheet.add(sheetFace);
 const pencil = new THREE.Mesh(
   new THREE.CylinderGeometry(0.035, 0.035, 2.25, 10),
@@ -273,9 +316,10 @@ scene.add(worksheet);
 
 const keyCard = new THREE.Group();
 const keyBase = new THREE.Mesh(
-  new THREE.BoxGeometry(2.2, 0.12, 1.35),
-  new THREE.MeshStandardMaterial({ color: 0x20262f, metalness: 0.72, roughness: 0.32 })
+  roundedBoxGeometry(THREE, 2.2, 1.35, 0.12, 0.08),
+  blackMetal(THREE, 0x20262f, 0.25)
 );
+keyBase.rotation.x = -Math.PI / 2;
 keyBase.castShadow = true;
 keyCard.add(keyBase);
 const keyFace = new THREE.Mesh(
@@ -289,7 +333,7 @@ const keyFace = new THREE.Mesh(
   })
 );
 keyFace.rotation.x = -Math.PI / 2;
-keyFace.position.y = 0.065;
+keyFace.position.y = 0.092;
 keyCard.add(keyFace);
 keyCard.userData.kind = "device";
 mark(keyCard, keyBase, "device");
@@ -297,10 +341,10 @@ mark(keyCard, keyFace, "device");
 scene.add(keyCard);
 
 const devices = [makeDevice(0), makeDevice(1), makeDevice(2)];
-devices.forEach(device => scene.add(device));
-const butler = makeButler(THREE);
-scene.add(butler);
-
+devices.forEach(device => {
+  castRealisticShadows(device);
+  scene.add(device);
+});
 const targets = new Map();
 let rolling = false;
 let rollTime = 0;
@@ -308,7 +352,7 @@ function setTarget(object, x, y, z, visible = true){
   const wasVisible = object.visible;
   targets.set(object, { position: new THREE.Vector3(x, y, z), visible });
   if (visible && !wasVisible){
-    object.position.copy(butler.userData.tray);
+    object.position.set(x, y, z);
     object.visible = true;
   }
 }
@@ -344,6 +388,7 @@ function relayout(){
 relayout();
 document.getElementById("device-entropy").addEventListener("click", () => {
   rolling = false;
+  presentTool("device", "Seed", 850);
   devices.filter(device => device.visible).forEach(device => setDeviceScreen(device, ["SEED", "SEALED"]));
   readout.textContent = "Device entropy accepted";
   focusOn(devices[0], 5.7);
@@ -352,6 +397,7 @@ document.getElementById("device-entropy").addEventListener("click", () => {
 });
 document.getElementById("roll-dice").addEventListener("click", () => {
   rolling = true;
+  presentTool("dice", "Entropy", 900);
   rollTime = 0;
   dice.forEach((die, index) => {
     die.userData.velocity.set(5 + index * 0.32, 6.2 - index * 0.21, 4.5 + index * 0.18);
@@ -376,7 +422,9 @@ function syncVendorLock(){
   document.querySelectorAll("#ven .chip").forEach(chip => chip.disabled = locked);
 }
 wireChips("fmt", "fmt", value => {
-  relayout();
+  const trayKind = value === "codex32" ? "paper" : value === "bip32" ? "device" : "dice";
+  presentTool(trayKind, value, 800);
+  setTimeout(relayout, reduced ? 0 : 420);
   speak(COPY.format[value]);
 });
 wireChips("sig", "sig", value => {
@@ -387,6 +435,7 @@ wireChips("sig", "sig", value => {
     });
   }
   syncVendorLock();
+  presentTool("device", value === "multi" ? "Three signers" : "One signer", 800);
   relayout();
   speak(COPY.signers[value]);
 });
@@ -463,7 +512,7 @@ function tick(){
     key.intensity += (95 - key.intensity) * dt * 3;
   } else {
     follow.intensity += (0 - follow.intensity) * dt * 3;
-    ambient.intensity += (0.5 - ambient.intensity) * dt * 3;
+    ambient.intensity += (0.58 - ambient.intensity) * dt * 3;
     key.intensity += (260 - key.intensity) * dt * 3;
   }
   if (rolling){
@@ -486,4 +535,5 @@ function tick(){
   renderer.render(scene, camera);
 }
 speak(COPY.welcome, 500);
+presentTool("dice", "Entropy", 1200);
 tick();

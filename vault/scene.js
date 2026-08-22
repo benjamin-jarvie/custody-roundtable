@@ -3,10 +3,17 @@
 // makes that visible.
 
 import * as THREE from "three";
-import { makeButler, speak } from "./butler.js?v=2";
+import { speak, presentTool } from "./butler.js?v=4";
 import { SCRIPTS, emptyWalletLines } from "./script.js";
 import { WORDS } from "./vendor/bip39-en.js";
 import { masterFromMnemonic } from "./vendor/bip32.js";
+import {
+  setupPhysicalRenderer,
+  brushedMetal,
+  blackMetal,
+  honedStone,
+  castRealisticShadows
+} from "./visuals.js?v=4";
 
 // real BIP-39 checksum: 12 words = 128 bits entropy + 4-bit checksum
 // the 12th word carries the checksum: 7 entropy bits + 4 checksum bits.
@@ -62,6 +69,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0c0f14);
 scene.fog = new THREE.Fog(0x0c0f14, 14, 30);
+setupPhysicalRenderer(THREE, renderer, scene, 1.16);
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 60);
 let yaw = 0, pitch = 0.35, dist = 11, yawT = 0;
 // the frame: what the camera and the light are giving to the visitor
@@ -87,7 +95,7 @@ function resize(){
 addEventListener("resize", resize); resize();
 
 // ---------- lights ----------
-const amb = new THREE.AmbientLight(0x6a7484, 0.5); scene.add(amb);
+const amb = new THREE.AmbientLight(0x6a7484, 0.56); scene.add(amb);
 // the follow spot: whatever it holds is the one thing in focus
 const spot = new THREE.SpotLight(0xfff2cf, 0, 22, Math.PI/8, 0.35, 1.5);
 spot.position.set(0, 9, 6); scene.add(spot, spot.target);
@@ -109,32 +117,27 @@ scene.add(doorSpot, doorSpot.target);
 
 // ---------- room ----------
 const floor = new THREE.Mesh(new THREE.CircleGeometry(14, 64),
-  new THREE.MeshStandardMaterial({ color: 0x10141b, metalness: 0.4, roughness: 0.32 }));
+  honedStone(THREE, 0x10141b));
 floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
 // inlaid gold ring on the floor
 const ring = new THREE.Mesh(new THREE.RingGeometry(5.6, 5.75, 96),
-  new THREE.MeshStandardMaterial({ color: 0xfbdc7b, metalness: 1, roughness: 0.35,
-    emissive: 0x7a6a2e, emissiveIntensity: 0.25 }));
+  brushedMetal(THREE, 0xd8b354, 0.2));
+ring.material.emissive = new THREE.Color(0x46380e);
+ring.material.emissiveIntensity = 0.16;
 ring.rotation.x = -Math.PI/2; ring.position.y = 0.01; scene.add(ring);
 // curved back wall
-const wallMat = new THREE.MeshStandardMaterial({ color: 0x141922, roughness: 0.85, side: THREE.BackSide });
+const wallMat = honedStone(THREE, 0x141922);
+wallMat.side = THREE.BackSide;
 const wall = new THREE.Mesh(new THREE.CylinderGeometry(13.5, 13.5, 12, 48, 1, true), wallMat);
 wall.position.y = 6; scene.add(wall);
 // The vault door is a working mechanical landmark: housing, jamb, hinges,
 // locking dogs, wheel, and a deep strongroom behind it.
-const steel = new THREE.MeshStandardMaterial({
-  color: 0x545d69, metalness: 0.93, roughness: 0.27
-});
-const darkSteel = new THREE.MeshStandardMaterial({
-  color: 0x252c35, metalness: 0.9, roughness: 0.34
-});
-const edgeSteel = new THREE.MeshStandardMaterial({
-  color: 0x939ba6, metalness: 0.96, roughness: 0.22
-});
-const goldSteel = new THREE.MeshStandardMaterial({
-  color: 0xfbdc7b, metalness: 1, roughness: 0.24,
-  emissive: 0x554716, emissiveIntensity: 0.16
-});
+const steel = brushedMetal(THREE, 0x66707b, 0.2);
+const darkSteel = blackMetal(THREE, 0x252c35, 0.26);
+const edgeSteel = brushedMetal(THREE, 0xaeb5bd, 0.17);
+const goldSteel = brushedMetal(THREE, 0xd8b354, 0.18);
+goldSteel.emissive = new THREE.Color(0x40330c);
+goldSteel.emissiveIntensity = 0.12;
 const vaultHousing = new THREE.Group();
 const housingParts = [
   [0, 7.15, -13.3, 8.6, 0.75, 1.5],
@@ -154,11 +157,9 @@ housingParts.forEach(part => {
 });
 const jamb = new THREE.Mesh(
   new THREE.CylinderGeometry(3.62, 3.62, 1.7, 72, 1, true),
-  new THREE.MeshStandardMaterial({
-    color: 0x333b46, metalness: 0.94, roughness: 0.28,
-    side: THREE.DoubleSide
-  })
+  blackMetal(THREE, 0x333b46, 0.22)
 );
+jamb.material.side = THREE.DoubleSide;
 jamb.rotation.x = Math.PI / 2;
 jamb.position.set(0, 3.4, -13.28);
 vaultHousing.add(jamb);
@@ -167,25 +168,23 @@ frameRing.position.set(0, 3.4, -12.48);
 frameRing.castShadow = true;
 vaultHousing.add(frameRing);
 scene.add(vaultHousing);
+castRealisticShadows(vaultHousing);
 
 const vaultTunnel = new THREE.Mesh(
   new THREE.CylinderGeometry(3.18, 3.18, 5.1, 72, 1, true),
-  new THREE.MeshStandardMaterial({
-    color: 0x1d232c, metalness: 0.72, roughness: 0.48,
-    side: THREE.BackSide
-  })
+  blackMetal(THREE, 0x1d232c, 0.42)
 );
+vaultTunnel.material.side = THREE.BackSide;
 vaultTunnel.rotation.x = Math.PI / 2;
 vaultTunnel.position.set(0, 3.4, -15.75);
 scene.add(vaultTunnel);
 const depositWall = new THREE.Group();
+const depositMaterial = brushedMetal(THREE, 0x59616d, 0.24);
 for (let row = 0; row < 4; row++){
   for (let col = 0; col < 5; col++){
     const box = new THREE.Mesh(
       new THREE.BoxGeometry(0.8, 0.62, 0.12),
-      new THREE.MeshStandardMaterial({
-        color: 0x454d58, metalness: 0.9, roughness: 0.31
-      })
+      depositMaterial
     );
     box.position.set((col - 2) * 0.9, 2.25 + row * 0.72, -18.15);
     depositWall.add(box);
@@ -198,6 +197,7 @@ for (let row = 0; row < 4; row++){
     depositWall.add(keyhole);
   }
 }
+castRealisticShadows(depositWall);
 scene.add(depositWall);
 
 const doorPivot = new THREE.Group();
@@ -238,9 +238,7 @@ const hub = new THREE.Mesh(
 hub.rotation.x = Math.PI / 2;
 hub.position.z = 0.67;
 wheelG.add(hub);
-const spokeMat = new THREE.MeshStandardMaterial({
-  color: 0xc8cdd2, metalness: 0.96, roughness: 0.2
-});
+const spokeMat = brushedMetal(THREE, 0xd0d5da, 0.16);
 for (let i = 0; i < 3; i++){
   const angle = i * Math.PI / 3;
   const spoke = new THREE.Mesh(
@@ -275,6 +273,7 @@ for (let i = 0; i < 12; i++){
   doorG.add(bolt);
 }
 doorG.add(wheelG);
+castRealisticShadows(doorG);
 for (const y of [-1.85, 0, 1.85]){
   const arm = new THREE.Mesh(
     new THREE.BoxGeometry(1.15, 0.28, 0.42),
@@ -316,15 +315,15 @@ vaultFunds.add(coinPedestal);
 for (let i = 0; i < 7; i++){
   const coin = new THREE.Mesh(
     new THREE.CylinderGeometry(0.54, 0.54, 0.11, 40),
-    new THREE.MeshStandardMaterial({
-      color: 0xfbdc7b, metalness: 1, roughness: 0.22,
-      emissive: 0x5c4b18, emissiveIntensity: 0.38
-    })
+    brushedMetal(THREE, 0xe2bd5b, 0.16)
   );
+  coin.material.emissive = new THREE.Color(0x3e320d);
+  coin.material.emissiveIntensity = 0.18;
   coin.position.set((i % 2) * 0.46 - 0.23, 2.13 + i * 0.11, -16.2);
   coin.rotation.z = (i % 2 ? -1 : 1) * 0.03;
   vaultFunds.add(coin);
 }
+castRealisticShadows(vaultFunds);
 vaultFunds.visible = false;
 scene.add(vaultFunds);
 
@@ -346,7 +345,7 @@ const FACE = {
 function plateTexture(kind, tint){
   const c = document.createElement("canvas"); c.width = 512; c.height = 512;
   const t = c.getContext("2d");
-  const g = t.createLinearGradient(0,0,512,384);
+  const g = t.createLinearGradient(0,0,512,512);
   g.addColorStop(0, "#d8dadd");
   g.addColorStop(0.42, tint);
   g.addColorStop(1, "#7b8188");
@@ -401,9 +400,7 @@ function makePlateAssembly(kind){
   group.userData.kind = kind;
   const back = new THREE.Mesh(
     plateBodyGeo,
-    new THREE.MeshStandardMaterial({
-      color: 0x6f767e, metalness: 0.96, roughness: 0.3
-    })
+    brushedMetal(THREE, 0x777f88, 0.24)
   );
   back.position.set(-0.08, 0.08, -0.11);
   back.rotation.z = -0.025;
@@ -411,26 +408,24 @@ function makePlateAssembly(kind){
   group.add(back);
   const front = new THREE.Mesh(
     plateBodyGeo,
-    new THREE.MeshStandardMaterial({
-      color: 0xb8bdc2, metalness: 0.96, roughness: 0.26
-    })
+    brushedMetal(THREE, 0xc2c7cc, 0.19)
   );
   front.castShadow = true;
   front.userData.owner = group;
   group.add(front);
   const face = new THREE.Mesh(
     new THREE.PlaneGeometry(2.12, 2.12),
-    new THREE.MeshStandardMaterial({
-      metalness: 0.76, roughness: 0.38,
+    new THREE.MeshPhysicalMaterial({
+      metalness: 0.45, roughness: 0.34,
+      clearcoat: 0.14, clearcoatRoughness: 0.28,
+      envMapIntensity: 0.92,
       emissive: 0x000000, emissiveIntensity: 1
     })
   );
-  face.position.z = 0.082;
+  face.position.z = 0.098;
   face.userData.owner = group;
   group.add(face);
-  const screwMaterial = new THREE.MeshStandardMaterial({
-    color: 0x3f454c, metalness: 0.98, roughness: 0.2
-  });
+  const screwMaterial = brushedMetal(THREE, 0x3f454c, 0.14);
   for (const x of [0.94]){
     for (const y of [-0.86, 0.86]){
       const screw = new THREE.Mesh(
@@ -453,14 +448,12 @@ function makePlateAssembly(kind){
   }
   group.userData.faceMesh = face;
   group.rotation.x = -0.12;
+  castRealisticShadows(group);
   scene.add(group);
   return group;
 }
 for (let i = 0; i < 3; i++) plates.push(makePlateAssembly("seed"));
 const descPlate = makePlateAssembly("descriptor");
-
-const butler = makeButler(THREE);
-scene.add(butler);
 
 // ---------- layout per state ----------
 const targets = new Map(); // mesh -> {p:Vector3, visible}
@@ -558,6 +551,7 @@ addEventListener("pointerup", e => {
   if (m.userData.kind === "descriptor" && state.sig === "multi" && !state.hasDescriptor && awaitingDescriptor){
     state.hasDescriptor = true; awaitingDescriptor = false;
     m.position.y += 0.001; setTarget(m, 0, 1.02, 1.4, true); m.userData.ry = 0;
+    presentTool("plate", "Descriptor", 850);
     speak(["The descriptor joins the seeds. Try the recovery again."]);
   } else speak([L.plate[m.userData.kind]]);
 });
@@ -593,7 +587,13 @@ function syncVendorLock(){
   const locked = state.sig === "single";
   document.querySelectorAll("#ven .chip").forEach(c => c.disabled = locked);
 }
-wireChips("fmt", "fmt", v => { closeDoor(); relayout(); focusOn(null); speak([L.fmt[v]]); });
+wireChips("fmt", "fmt", v => {
+  closeDoor();
+  presentTool("plate", v, 800);
+  setTimeout(relayout, reduced ? 0 : 420);
+  focusOn(null);
+  speak([L.fmt[v]]);
+});
 wireChips("sig", "sig", v => {
   if (v === "single"){ state.ven = "one";
     document.querySelectorAll("#ven .chip").forEach(c => c.classList.toggle("on", c.dataset.v === "one")); }
@@ -670,6 +670,7 @@ function resetSafe(){ awaitingDescriptor = false; state.hasDescriptor = false; d
 let doorTarget = 0;
 btn.addEventListener("click", () => {
   if (recovering) return;
+  presentTool("plate", "Recovery", 760);
   recovering = true; btn.disabled = true;
   focusObj = null; frame(new THREE.Vector3(0, 3.4, -12.9), 9.5);
   const done = ok => setTimeout(() => {
@@ -715,7 +716,7 @@ function tick(){
     key.intensity += (90 - key.intensity)*dt*3;
   } else {
     spot.intensity += (0 - spot.intensity)*dt*3;
-    amb.intensity += (0.5 - amb.intensity)*dt*3;
+    amb.intensity += (0.56 - amb.intensity)*dt*3;
     key.intensity += (260 - key.intensity)*dt*3;
   }
   for (const [m,t] of targets){
@@ -761,4 +762,5 @@ function tick(){
   renderer.render(scene, camera);
 }
 speak(L.welcome, 600);
+presentTool("plate", "Seed plate", 1200);
 tick();

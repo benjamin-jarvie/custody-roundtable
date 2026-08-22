@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Vault, Bitcoin Butlers</title>
 <meta name="description" content="Where your Bitcoin seed sleeps. Walk the vault with a Butler and see what a backup must really survive.">
-<link rel="preload" href="butler-host.webp" as="image">
+<link rel="preload" href="butler-host-v2.webp" as="image">
+<link rel="stylesheet" href="scene-shared.css?v=3">
 <style>
   :root{
     --ink:#0C0F14; --panel:#151A22; --gold:#FBDC7B; --bone:#E9E4D6;
@@ -88,6 +89,7 @@
 </head>
 <body>
 <canvas id="c"></canvas>
+<div class="butler-host" aria-hidden="true"><img src="butler-host-v2.webp" alt=""><span class="tray-prop" id="tray-prop"></span></div>
 <div class="hud top">
   <div class="nav">
     <a href="index.html"><img src="logo.png" alt="Bitcoin Butlers" class="logo"></a>
@@ -152,7 +154,7 @@
       ||document.createElement("canvas").getContext("webgl");
     if(!gl) location.replace("fallback.html");
   }catch(e){location.replace("fallback.html")}
-  import("./scene.js?v=6").catch(error => {
+  import("./scene.js?v=10").catch(error => {
     console.error("AT-REST SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });

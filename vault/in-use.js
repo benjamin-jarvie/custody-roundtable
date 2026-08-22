@@ -1,6 +1,15 @@
 import * as THREE from "three";
-import { makeButler, speak } from "./butler.js?v=2";
+import { speak, presentTool } from "./butler.js?v=4";
 import { SCRIPTS } from "./script.js";
+import {
+  setupPhysicalRenderer,
+  brushedMetal,
+  blackMetal,
+  honedStone,
+  roundedBoxGeometry,
+  contactShadow,
+  castRealisticShadows
+} from "./visuals.js?v=4";
 
 const COPY = SCRIPTS.inUse;
 const state = { fmt: "bip39", sig: "single", ven: "one" };
@@ -20,6 +29,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b0e13);
 scene.fog = new THREE.Fog(0x0b0e13, 13, 30);
+setupPhysicalRenderer(THREE, renderer, scene, 1.12);
 const camera = new THREE.PerspectiveCamera(53, innerWidth / innerHeight, 0.1, 60);
 let yaw = 0.08;
 let yawT = 0.08;
@@ -50,7 +60,7 @@ function resize(){
 }
 addEventListener("resize", resize);
 
-const ambient = new THREE.AmbientLight(0x718099, 0.5);
+const ambient = new THREE.AmbientLight(0x718099, 0.58);
 scene.add(ambient);
 const key = new THREE.SpotLight(0xfff1d2, 240, 30, Math.PI / 5, 0.45, 1.4);
 key.position.set(1, 10, 6);
@@ -76,7 +86,7 @@ function focusOn(object, distance = 5.8){
 
 const floor = new THREE.Mesh(
   new THREE.CircleGeometry(14, 64),
-  new THREE.MeshStandardMaterial({ color: 0x10151c, metalness: 0.42, roughness: 0.44 })
+  honedStone(THREE, 0x10151c)
 );
 floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;
@@ -93,41 +103,54 @@ floorRing.position.y = 0.01;
 scene.add(floorRing);
 const wall = new THREE.Mesh(
   new THREE.CylinderGeometry(13.5, 13.5, 12, 48, 1, true),
-  new THREE.MeshStandardMaterial({ color: 0x141922, roughness: 0.88, side: THREE.BackSide })
+  honedStone(THREE, 0x141922)
 );
+wall.material.side = THREE.BackSide;
 wall.position.y = 6;
 scene.add(wall);
 
 const desk = new THREE.Group();
 const deskTop = new THREE.Mesh(
   new THREE.BoxGeometry(7.8, 0.25, 2.75),
-  new THREE.MeshStandardMaterial({
-    color: 0x2b333e, metalness: 0.7, roughness: 0.31,
-    emissive: 0x11161d, emissiveIntensity: 0.18
-  })
+  honedStone(THREE, 0x242830)
 );
 deskTop.position.set(0, 1.23, -0.25);
 deskTop.castShadow = true;
 deskTop.receiveShadow = true;
 desk.add(deskTop);
-const deskEdge = new THREE.Mesh(
-  new THREE.BoxGeometry(7.95, 0.06, 2.88),
-  new THREE.MeshStandardMaterial({ color: 0xfbdc7b, metalness: 1, roughness: 0.26 })
-);
+const deskEdge = new THREE.Group();
+const deskEdgeMaterial = brushedMetal(THREE, 0xd8b354, 0.21);
+[
+  [7.95, 0.06, 0.07, 0, 0, -1.405],
+  [7.95, 0.06, 0.07, 0, 0, 1.405],
+  [0.07, 0.06, 2.74, -3.94, 0, 0],
+  [0.07, 0.06, 2.74, 3.94, 0, 0]
+].forEach(part => {
+  const bar = new THREE.Mesh(
+    new THREE.BoxGeometry(part[0], part[1], part[2]),
+    deskEdgeMaterial
+  );
+  bar.position.set(part[3], part[4], part[5]);
+  deskEdge.add(bar);
+});
 deskEdge.position.set(0, 1.38, -0.25);
 desk.add(deskEdge);
 for (const x of [-3.45, 3.45]){
   for (const z of [-1.15, 0.65]){
     const leg = new THREE.Mesh(
       new THREE.CylinderGeometry(0.1, 0.14, 1.2, 12),
-      new THREE.MeshStandardMaterial({ color: 0x171b22, metalness: 0.8, roughness: 0.35 })
+      blackMetal(THREE, 0x171b22, 0.28)
     );
     leg.position.set(x, 0.6, z);
     leg.castShadow = true;
     desk.add(leg);
   }
 }
+castRealisticShadows(desk);
 scene.add(desk);
+const deskShadow = contactShadow(THREE, 8.6, 3.8, 0.7);
+deskShadow.position.y = 0.018;
+scene.add(deskShadow);
 
 function screenTexture(lines, options = {}){
   const c = document.createElement("canvas");
@@ -192,8 +215,8 @@ function mark(group, mesh, kind){
 function makeMonitor(){
   const group = new THREE.Group();
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(2.35, 1.48, 0.2),
-    new THREE.MeshStandardMaterial({ color: 0x272e39, metalness: 0.75, roughness: 0.3 })
+    roundedBoxGeometry(THREE, 2.35, 1.48, 0.2, 0.08),
+    blackMetal(THREE, 0x272e39, 0.24)
   );
   body.castShadow = true;
   group.add(body);
@@ -201,10 +224,11 @@ function makeMonitor(){
     new THREE.PlaneGeometry(2.08, 1.2),
     new THREE.MeshStandardMaterial({
       map: screenTexture(["WATCH ONLY", "PSBT READY"]),
-      emissive: 0xfbdc7b, emissiveIntensity: 0.16, roughness: 0.52
+      emissive: 0xfbdc7b, emissiveIntensity: 0.16, roughness: 0.52,
+      toneMapped: false
     })
   );
-  screen.position.z = 0.11;
+  screen.position.z = 0.16;
   group.add(screen);
   const stand = new THREE.Mesh(
     new THREE.CylinderGeometry(0.08, 0.11, 0.8, 12),
@@ -237,8 +261,14 @@ function makeSigner(variant){
   const depths = [0.36, 0.42, 0.3];
   const colors = [0x252c37, 0x30423b, 0x40352e];
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(widths[variant], heights[variant], depths[variant]),
-    new THREE.MeshStandardMaterial({ color: colors[variant], metalness: 0.7, roughness: 0.3 })
+    roundedBoxGeometry(
+      THREE,
+      widths[variant],
+      heights[variant],
+      depths[variant],
+      0.09
+    ),
+    blackMetal(THREE, colors[variant], 0.24)
   );
   body.castShadow = true;
   group.add(body);
@@ -246,10 +276,11 @@ function makeSigner(variant){
     new THREE.PlaneGeometry(widths[variant] * 0.77, heights[variant] * 0.45),
     new THREE.MeshStandardMaterial({
       map: screenTexture(["BIP-39", "WAITING"]),
-      emissive: 0xfbdc7b, emissiveIntensity: 0.13, roughness: 0.55
+      emissive: 0xfbdc7b, emissiveIntensity: 0.13, roughness: 0.55,
+      toneMapped: false
     })
   );
-  screen.position.set(0, heights[variant] * 0.14, depths[variant] / 2 + 0.012);
+  screen.position.set(0, heights[variant] * 0.14, depths[variant] / 2 + 0.058);
   group.add(screen);
   for (let i = 0; i < 3; i++){
     const button = new THREE.Mesh(
@@ -279,18 +310,22 @@ function setSigner(signer, lines, color = "#FBDC7B"){
 
 const monitor = makeMonitor();
 monitor.position.set(-2.85, 2.75, -0.2);
+castRealisticShadows(monitor);
 scene.add(monitor);
 const signers = [makeSigner(0), makeSigner(1), makeSigner(2)];
-signers.forEach(signer => scene.add(signer));
+signers.forEach(signer => {
+  castRealisticShadows(signer);
+  scene.add(signer);
+});
 
 const psbt = new THREE.Group();
 const envelope = new THREE.Mesh(
-  new THREE.BoxGeometry(1.0, 0.12, 0.72),
-  new THREE.MeshStandardMaterial({
-    color: 0x303945, metalness: 0.78, roughness: 0.28,
-    emissive: 0x3e3412, emissiveIntensity: 0.35
-  })
+  roundedBoxGeometry(THREE, 1.0, 0.72, 0.12, 0.06),
+  brushedMetal(THREE, 0x4b5563, 0.22)
 );
+envelope.rotation.x = -Math.PI / 2;
+envelope.material.emissive = new THREE.Color(0x251f0a);
+envelope.material.emissiveIntensity = 0.16;
 envelope.castShadow = true;
 psbt.add(envelope);
 const qr = new THREE.Mesh(
@@ -314,14 +349,12 @@ const pathLine = new THREE.Line(
 pathLine.visible = false;
 scene.add(pathLine);
 
-const butler = makeButler(THREE);
-scene.add(butler);
 const targets = new Map();
 function setTarget(object, x, y, z, visible = true){
   const wasVisible = object.visible;
   targets.set(object, { position: new THREE.Vector3(x, y, z), visible });
   if (visible && !wasVisible){
-    object.position.copy(butler.userData.tray);
+    object.position.set(x, y, z);
     object.visible = true;
   }
 }
@@ -392,7 +425,12 @@ function startTransfer(){
   speak(COPY.transferStart);
   focusOn(psbt, 5.4);
 }
-walkButton.addEventListener("click", startTransfer);
+walkButton.addEventListener("click", () => {
+  if (transfer.active) return;
+  walkButton.disabled = true;
+  presentTool("psbt", "PSBT", 760);
+  setTimeout(startTransfer, reduced ? 0 : 480);
+});
 
 function arrive(owner){
   if (owner === monitor){
@@ -545,11 +583,12 @@ function tick(){
     key.intensity += (90 - key.intensity) * dt * 3;
   } else {
     follow.intensity += (0 - follow.intensity) * dt * 3;
-    ambient.intensity += (0.5 - ambient.intensity) * dt * 3;
+    ambient.intensity += (0.58 - ambient.intensity) * dt * 3;
     key.intensity += (240 - key.intensity) * dt * 3;
   }
   updateTransfer(dt);
   renderer.render(scene, camera);
 }
 speak(COPY.welcome, 500);
+presentTool("psbt", "PSBT", 1200);
 tick();

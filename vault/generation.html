@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Seed Generation, The Custody Vault</title>
 <meta name="description" content="Compare device and physical entropy inside a guided 3D seed generation ceremony.">
-<link rel="preload" href="butler-host.webp" as="image">
-<link rel="stylesheet" href="scene-shared.css">
+<link rel="preload" href="butler-host-v2.webp" as="image">
+<link rel="stylesheet" href="scene-shared.css?v=3">
 </head>
 <body>
 <canvas id="c"></canvas>
+<div class="butler-host" aria-hidden="true"><img src="butler-host-v2.webp" alt=""><span class="tray-prop" id="tray-prop"></span></div>
 <div class="hud top">
   <div class="nav">
     <a href="index.html"><img src="logo.png" alt="Bitcoin Butlers" class="logo"></a>
@@ -49,7 +50,7 @@
       || document.createElement("canvas").getContext("webgl");
     if (!gl) location.replace("fallback.html");
   } catch (error) { location.replace("fallback.html"); }
-  import("./generation.js?v=6").catch(error => {
+  import("./generation.js?v=12").catch(error => {
     console.error("GENERATION SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });
