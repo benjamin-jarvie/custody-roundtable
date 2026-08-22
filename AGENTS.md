@@ -11,7 +11,13 @@ order: start at its "Codex: build order" list, item by item. Read the
 "Section 12 amendments" block too: four entropy tools (dice, playing
 cards, chip, Codex32 worksheet), the seed paper is edited ON the paper
 (diegetic, no floating form), and the whole ceremony lives on one desk
-with named zones and visible object handoffs. Flow first, polish after.
+with named zones and visible object handoffs. Flow first, polish after. Third-pass amendment: this is a
+VISUALIZATION, not a simulator. No rolling/dealing animations; one
+button per entropy tool that instantly writes real random words +
+checksum onto the paper. No interactive Codex32 worksheet. No xpub
+visual, the Butler narrates it. Keep interaction only where the
+interaction is the lesson (paper editing, checksum fits, passphrase
+fingerprint, recovery drill, door verdict).
 
 Rules that have bitten us already:
 - No em dashes, no "not X, it's Y". Kiwi is editor of record.
