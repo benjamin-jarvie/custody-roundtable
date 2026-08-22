@@ -115,7 +115,7 @@ export const SCRIPTS = {
     },
     recoverFunded: [
       "The wheel turns and the door opens. The wallet identity matched the known test vector.",
-      "Balance is not scanned. Connect watch-only wallet data before showing a real balance."
+      "The vault checks its published watch-only address through mempool.space. Seed words and private keys stay here."
     ],
     recoverNoSeed: [
       "The wheel does not turn. The door refuses.",
@@ -129,7 +129,7 @@ export const SCRIPTS = {
     ],
     recoverMultiOk: [
       "Seeds and descriptor together. Now the door opens.",
-      "The policy identity can now be reconstructed. Balance is not scanned without watch-only wallet data."
+      "The policy identity can now be reconstructed. Connect its watch-only address to check live funds."
     ]
   }
 };

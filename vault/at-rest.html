@@ -158,7 +158,7 @@
       ||document.createElement("canvas").getContext("webgl");
     if(!gl) location.replace("fallback.html");
   }catch(e){location.replace("fallback.html")}
-  import("./scene.js?v=16").catch(error => {
+  import("./scene.js?v=17").catch(error => {
     console.error("AT-REST SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });

@@ -7,6 +7,7 @@ import { speak, presentTool } from "./butler.js?v=4";
 import { SCRIPTS, emptyWalletLines } from "./script.js?v=2";
 import { WORDS } from "./vendor/bip39-en.js";
 import { masterFromMnemonic } from "./vendor/bip32.js";
+import { loadWatchBalance, formatBtc, formatUsd } from "./balance.js?v=1";
 import {
   setupPhysicalRenderer,
   brushedMetal,
@@ -316,7 +317,7 @@ scene.add(glowDisc);
 const glowLight = new THREE.PointLight(0xfbdc7b, 0, 22);
 glowLight.position.set(0, 3.6, -15.2);
 scene.add(glowLight);
-function vaultStatusTexture(){
+function vaultStatusTexture(status = {}){
   const canvas = document.createElement("canvas");
   canvas.width = 768;
   canvas.height = 420;
@@ -330,15 +331,18 @@ function vaultStatusTexture(){
   context.lineWidth = 12;
   context.strokeRect(16, 16, 736, 388);
   context.textAlign = "center";
-  context.fillStyle = "#A9E1B2";
-  context.font = "700 54px -apple-system, sans-serif";
-  context.fillText("IDENTITY MATCHED", 384, 130);
+  context.fillStyle = status.error ? "#DE8A66" : "#A9E1B2";
+  context.font = "700 50px -apple-system, sans-serif";
+  context.fillText(status.heading || "IDENTITY MATCHED", 384, 116);
   context.fillStyle = "#E9E4D6";
-  context.font = "700 48px Menlo, monospace";
-  context.fillText("BALANCE: NOT SCANNED", 384, 220);
+  context.font = "700 46px Menlo, monospace";
+  context.fillText(status.primary || "BALANCE: READY", 384, 205);
   context.fillStyle = "#C4CBD5";
-  context.font = "30px -apple-system, sans-serif";
-  context.fillText("Watch-only data is required for a real balance.", 384, 306);
+  context.font = "28px -apple-system, sans-serif";
+  context.fillText(status.secondary || "Waiting for a watch-only address.", 384, 280);
+  context.fillStyle = "#8C95A4";
+  context.font = "22px -apple-system, sans-serif";
+  context.fillText(status.detail || "Only a public address may leave this browser.", 384, 338);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
@@ -359,6 +363,51 @@ vaultRecoveryStatus.position.set(0, 3.4, -12.78);
 castRealisticShadows(vaultRecoveryStatus);
 vaultRecoveryStatus.visible = false;
 scene.add(vaultRecoveryStatus);
+let balanceRun = 0;
+function setVaultStatus(status){
+  const oldMap = statusFace.material.map;
+  statusFace.material.map = vaultStatusTexture(status);
+  statusFace.material.needsUpdate = true;
+  oldMap?.dispose();
+}
+async function refreshVaultBalance({ allowDemo = false } = {}){
+  const run = ++balanceRun;
+  setVaultStatus({
+    primary: "BALANCE: CHECKING",
+    secondary: "mempool.space is reading one public address.",
+    detail: "Seed words and private keys stay in this browser."
+  });
+  try {
+    const result = await loadWatchBalance({ allowDemo });
+    if (run !== balanceRun) return;
+    if (!result){
+      setVaultStatus({
+        primary: "ADDRESS REQUIRED",
+        secondary: "Connect a watch-only address to check live funds.",
+        detail: "Bitcoin Butlers may supply it with the address URL parameter."
+      });
+      return;
+    }
+    const usdLine = result.usdValue === null
+      ? result.txCount + " transactions observed"
+      : formatUsd(result.usdValue) + "  |  BTC/USD " + formatUsd(result.usdPrice);
+    setVaultStatus({
+      heading: result.source === "demo" ? "DEMO ADDRESS BALANCE" : "CONNECTED ADDRESS",
+      primary: formatBtc(result.btc),
+      secondary: usdLine,
+      detail: "Live address data from mempool.space"
+    });
+  } catch (error){
+    if (run !== balanceRun) return;
+    setVaultStatus({
+      error: true,
+      heading: "BALANCE UNAVAILABLE",
+      primary: "TRY AGAIN LATER",
+      secondary: error.name === "AbortError" ? "The request timed out." : error.message,
+      detail: "Recovery identity remains valid without network data."
+    });
+  }
+}
 
 
 // ---------- plates ----------
@@ -529,7 +578,7 @@ async function updateFp(){
   fpEl.className = (state.fmt !== "bip39" || (wordsMatch && pass === "")) ? "fp" : "fp off";
   if (state.fmt === "bip32") relayoutPlates();
 }
-function closeDoor(){ doorTarget = 0; vaultRecoveryStatus.visible = false; }
+function closeDoor(){ doorTarget = 0; vaultRecoveryStatus.visible = false; balanceRun += 1; }
 function relayoutPlates(){
   const multi = state.sig === "multi";
   const tints = (multi && state.ven === "multi") ? VENDOR_TINTS_DIFF : VENDOR_TINTS_SAME;
@@ -791,6 +840,9 @@ btn.addEventListener("click", () => {
       const rightContext = state.pass === "" && state.scr === "segwit";
       const identityMatched = (state.fmt !== "bip39" || wordsMatch) && rightContext;
       vaultRecoveryStatus.visible = identityMatched;
+      if (identityMatched){
+        refreshVaultBalance({ allowDemo: state.fmt === "bip39" && wordsMatch });
+      }
       speak(identityMatched ? L.recoverFunded : emptyWalletLines(state));
       animateRebuild(true); done(true);
     }
@@ -798,6 +850,7 @@ btn.addEventListener("click", () => {
   else if (!state.hasDescriptor){ speak(L.recoverMultiFail); animateRebuild(false); done(false); }
   else {
     vaultRecoveryStatus.visible = true;
+    refreshVaultBalance({ allowDemo: false });
     speak(L.recoverMultiOk);
     animateRebuild(true);
     done(true);
