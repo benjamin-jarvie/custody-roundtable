@@ -57,7 +57,9 @@ const wallMat = new THREE.MeshStandardMaterial({ color: 0x141922, roughness: 0.8
 const wall = new THREE.Mesh(new THREE.CylinderGeometry(13.5, 13.5, 12, 48, 1, true), wallMat);
 wall.position.y = 6; scene.add(wall);
 // the vault door, the room's landmark
+const doorPivot = new THREE.Group();
 const doorG = new THREE.Group();
+const wheelG = new THREE.Group();
 const doorFace = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.4, 0.55, 48),
   new THREE.MeshStandardMaterial({ color: 0x232a36, metalness: 0.85, roughness: 0.3 }));
 doorFace.rotation.x = Math.PI/2; doorG.add(doorFace);
@@ -66,11 +68,11 @@ const doorRim = new THREE.Mesh(new THREE.TorusGeometry(3.4, 0.16, 16, 64),
 doorG.add(doorRim);
 const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.7, 24),
   new THREE.MeshStandardMaterial({ color: 0xfbdc7b, metalness: 1, roughness: 0.3 }));
-hub.rotation.x = Math.PI/2; hub.position.z = 0.35; doorG.add(hub);
+hub.rotation.x = Math.PI/2; hub.position.z = 0.35; wheelG.add(hub);
 for (let i = 0; i < 3; i++){
   const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 2.6, 12),
     new THREE.MeshStandardMaterial({ color: 0xe9e4d6, metalness: 0.9, roughness: 0.3 }));
-  spoke.rotation.z = i * Math.PI/3; spoke.position.z = 0.42; doorG.add(spoke);
+  spoke.rotation.z = i * Math.PI/3; spoke.position.z = 0.42; wheelG.add(spoke);
 }
 for (let i = 0; i < 8; i++){
   const a = i/8 * Math.PI*2;
@@ -79,7 +81,17 @@ for (let i = 0; i < 8; i++){
   bolt.rotation.x = Math.PI/2;
   bolt.position.set(Math.cos(a)*2.9, Math.sin(a)*2.9, 0.05); doorG.add(bolt);
 }
-doorG.position.set(0, 3.4, -12.9); scene.add(doorG);
+doorG.add(wheelG);
+// door hangs on a hinge at its left edge so it can swing open
+doorG.position.x = 3.4;
+doorPivot.add(doorG);
+doorPivot.position.set(-3.4, 3.4, -12.9); scene.add(doorPivot);
+// the lit strongroom behind the door, seen only when it opens
+const glowDisc = new THREE.Mesh(new THREE.CircleGeometry(3.2, 48),
+  new THREE.MeshBasicMaterial({ color: 0x9a7f35, transparent: true, opacity: 0 }));
+glowDisc.position.set(0, 3.4, -13.15); scene.add(glowDisc);
+const glowLight = new THREE.PointLight(0xfbdc7b, 0, 20);
+glowLight.position.set(0, 3.4, -11.5); scene.add(glowLight);
 // pedestals get added under plates in relayout
 
 // location map on the back wall
@@ -139,39 +151,8 @@ for (let i = 0; i < 3; i++) makePlate();
 const descPlate = new THREE.Mesh(plateGeo, new THREE.MeshStandardMaterial({ metalness: 0.8, roughness: 0.3 }));
 descPlate.userData.kind = "descriptor"; descPlate.castShadow = true; scene.add(descPlate);
 // pedestals: one per possible plate position, shown/hidden with layout
-// each tool is presented the butler's way: on a tray, on a slim stand
-const trayMat = new THREE.MeshStandardMaterial({ color: 0xd8d3c6, metalness: 0.95, roughness: 0.22 });
-const trayRimMat = new THREE.MeshStandardMaterial({ color: 0xfbdc7b, metalness: 1, roughness: 0.3 });
-const standMat = new THREE.MeshStandardMaterial({ color: 0x0a0c10, metalness: 0.7, roughness: 0.4 });
-const peds = [];
-for (let i = 0; i < 5; i++){
-  const g = new THREE.Group();
-  const tray = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.45, 0.07, 40), trayMat);
-  tray.position.y = 0.62; tray.receiveShadow = true; g.add(tray);
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.45, 0.045, 10, 48), trayRimMat);
-  rim.rotation.x = Math.PI/2; rim.position.y = 0.66; g.add(rim);
-  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.62, 12), standMat);
-  stem.position.y = 0.31; g.add(stem);
-  const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 0.08, 24), standMat);
-  foot.position.y = 0.04; foot.receiveShadow = true; g.add(foot);
-  g.visible = false; scene.add(g); peds.push(g);
-}
-function placePed(i, x, z, visible){ peds[i].position.set(x, 0, z); peds[i].visible = visible; }
 
-// the safe: what recovery rebuilds
-const safeGeo = new THREE.BoxGeometry(2.6, 2.6, 2.6);
-const safeWire = new THREE.LineSegments(new THREE.EdgesGeometry(safeGeo),
-  new THREE.LineBasicMaterial({ color: 0x8c95a4 }));
-safeWire.position.set(3.9, 1.52, -3.2); scene.add(safeWire);
-const safePad = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.3, 0.22, 32),
-  new THREE.MeshStandardMaterial({ color: 0x1a212c, metalness: 0.5, roughness: 0.45 }));
-safePad.position.set(3.9, 0.11, -3.2); safePad.receiveShadow = true; scene.add(safePad);
-const safeSolid = new THREE.Mesh(safeGeo, new THREE.MeshStandardMaterial({
-  color: 0x1b2230, metalness: 0.6, roughness: 0.4, transparent: true, opacity: 0 }));
-safeSolid.position.copy(safeWire.position); scene.add(safeSolid);
-const dial = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.09, 12, 32),
-  new THREE.MeshStandardMaterial({ color: 0xfbdc7b, metalness: 0.9, roughness: 0.2, transparent: true, opacity: 0 }));
-dial.position.set(3.9, 1.52, -1.85); scene.add(dial);
+
 
 // butler billboard
 const butler = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(makeButlerTexture()), transparent: true }));
@@ -185,12 +166,12 @@ function relayout(instant = false){
   const tints = (multi && state.ven === "multi") ? VENDOR_TINTS_DIFF : VENDOR_TINTS_SAME;
   plates.forEach((m, i) => {
     m.material.map = plateTexture(state.fmt, tints[i]); m.material.needsUpdate = true;
-    if (multi){ setTarget(m, (i-1)*3.4, 0.76, 2.2 + (i===1?0.8:0)); placePed(i, (i-1)*3.4, 2.2 + (i===1?0.8:0), true); }
-    else { setTarget(m, 0, 0.76 + i*0.18, 2.4, i === 0); placePed(i, 0, 2.4, i === 0); }
+    if (multi) setTarget(m, (i-1)*3.4, 0.09, 2.2 + (i===1?0.8:0));
+    else setTarget(m, 0, 0.09 + i*0.18, 2.4, i === 0);
   });
   descPlate.material.map = plateTexture("descriptor", "#2c2a20"); descPlate.material.needsUpdate = true;
-  if (multi){ setTarget(descPlate, 5.2, 0.76, -0.4, true); placePed(3, 5.2, -0.4, true); }
-  else { setTarget(descPlate, 5.2, 0.76, -0.4, false); placePed(3, 0, 0, false); state.hasDescriptor = false; }
+  if (multi) setTarget(descPlate, 5.2, 0.09, -0.4, true);
+  else { setTarget(descPlate, 5.2, 0.09, -0.4, false); state.hasDescriptor = false; }
   drawMap(multi);
   if (instant) for (const [m,t] of targets){ m.position.copy(t.p); m.visible = t.visible; }
 }
@@ -214,12 +195,12 @@ const L = {
   plate: {
     seed: "A seed plate. Fire-proof, flood-proof. It is not rot-proof against missing context: path, script type, fingerprint.",
     descriptor: "The descriptor: every cosigner's public key, the quorum, the paths. Without it, the seeds are three perfect keys to a door nobody can find." },
-  recoverSingleOk: ["The safe rebuilds. One seed was enough, this time.",
-    "It was enough because the wallet was simple. Path, script type and fingerprint were the defaults. Change any of them, and words alone open a correct-looking, empty wallet."],
+  recoverSingleOk: ["The wheel turns, the door opens. One seed was enough, this time.",
+    "It opened because the wallet was simple. Path, script type and fingerprint were the defaults. Change any of them, and words alone open a correct-looking, empty wallet."],
   recoverMultiFail: ["Watch closely. Three seeds, all present, all correct...",
-    "And the safe stays open bones. Seeds alone are not enough for multisig. The wallet needs the descriptor: every cosigner's xpub, the quorum, the paths.",
+    "And the door does not move. Seeds alone are not enough for multisig. The wallet needs the descriptor: every cosigner's xpub, the quorum, the paths.",
     "Most people learn this too late. Tap the gold plate to add the descriptor, then try again."],
-  recoverMultiOk: ["Seeds and descriptor together. Now the safe rebuilds.",
+  recoverMultiOk: ["Seeds and descriptor together. Now the door opens.",
     "This is the verdict: multisig costs more plates, more ceremony, and one more thing that must survive. It buys you the removal of every single point of failure. Decide with open eyes."],
 };
 
@@ -246,7 +227,7 @@ addEventListener("pointerup", e => {
   pulse(m);
   if (m.userData.kind === "descriptor" && state.sig === "multi" && !state.hasDescriptor && awaitingDescriptor){
     state.hasDescriptor = true; awaitingDescriptor = false;
-    m.position.y += 0.001; setTarget(m, 0, 0.76, 0.2, true); placePed(4, 0, 0.2, true); placePed(3, 0, 0, false);
+    m.position.y += 0.001; setTarget(m, 0, 0.09, 0.2, true);
     speak(["The descriptor joins the seeds. Try the recovery again."]);
   } else speak([L.plate[m.userData.kind]]);
 });
@@ -279,12 +260,14 @@ wireChips("ven", "ven", v => { relayout(); speak([L.ven[v]]); });
 syncVendorLock();
 
 // recovery
-let recovering = false, awaitingDescriptor = false, safeOpacity = 0, dialSpin = 0, failFlash = 0;
+let recovering = false, awaitingDescriptor = false, failFlash = 0;
+let doorOpenT = 0, wheelSpin = 0, wheelVel = 0, shakeT = 0;
 const btn = document.getElementById("recover");
-function resetSafe(){ safeOpacity = 0; awaitingDescriptor = false; state.hasDescriptor = false; }
+function resetSafe(){ awaitingDescriptor = false; state.hasDescriptor = false; doorTarget = 0; }
+let doorTarget = 0;
 btn.addEventListener("click", () => {
   if (recovering) return;
-  recovering = true; btn.disabled = true; safeOpacity = 0;
+  recovering = true; btn.disabled = true;
   const done = ok => setTimeout(() => {
     recovering = false; btn.disabled = false;
     if (!ok){ awaitingDescriptor = true; }
@@ -294,7 +277,7 @@ btn.addEventListener("click", () => {
   else { speak(L.recoverMultiOk); animateRebuild(true); done(true); }
 });
 let rebuildOk = null, rebuildT = 0;
-function animateRebuild(ok){ rebuildOk = ok; rebuildT = 0; }
+function animateRebuild(ok){ rebuildOk = ok; rebuildT = 0; wheelVel = 6; doorTarget = 0; }
 
 // ---------- loop ----------
 const clock = new THREE.Clock();
@@ -314,24 +297,27 @@ function tick(){
   if (awaitingDescriptor && descPlate.visible)
     descPlate.material.emissive = new THREE.Color(0xfbdc7b).multiplyScalar(0.25 + 0.2*Math.sin(clock.elapsedTime*4));
   else descPlate.material.emissive = new THREE.Color(0x000000);
+  // the wheel spins while recovery runs; the door decides
+  wheelSpin += wheelVel * dt; wheelG.rotation.z = wheelSpin;
   if (rebuildOk !== null){
     rebuildT += dt;
-    dialSpin += dt * 4;
-    dial.rotation.z = dialSpin;
-    if (rebuildOk){
-      safeOpacity = Math.min(1, rebuildT/1.6);
-      safeWire.material.color.set(0x8fc79a);
-    } else if (rebuildT > 1.2){
-      failFlash = 1; rebuildOk = null;
-      safeWire.material.color.set(0xde8a66);
+    if (rebuildT > 1.4){
+      if (rebuildOk){ doorTarget = 1; }
+      else { failFlash = 1; shakeT = 0.5; }
+      wheelVel = 0; rebuildOk = null;
     }
-    safeSolid.material.opacity = safeOpacity * 0.9;
-    dial.material.opacity = safeOpacity;
-    if (rebuildT > 2.2) rebuildOk = null;
-  }
+  } else wheelVel *= (1 - dt*2);
+  if (shakeT > 0){ shakeT -= dt;
+    doorPivot.position.x = -3.4 + Math.sin(shakeT*60)*0.06*shakeT;
+  } else doorPivot.position.x = -3.4;
+  doorOpenT += ((doorTarget) - doorOpenT) * (reduced ? 1 : dt*1.6);
+  doorPivot.rotation.y = doorOpenT * 1.15;
+  glowDisc.material.opacity = doorOpenT * 0.5;
+  glowLight.intensity = doorOpenT * 55;
   if (failFlash > 0){ failFlash -= dt;
-    rim.intensity = 60 + Math.sin(failFlash*20)*30;
-  } else rim.intensity = 60;
+    rim.intensity = 90 + Math.sin(failFlash*20)*40;
+    doorRim.material.color.setHex(0xde8a66);
+  } else { rim.intensity = 90; doorRim.material.color.setHex(0xfbdc7b); }
   renderer.render(scene, camera);
 }
 speak(L.welcome, 600);
