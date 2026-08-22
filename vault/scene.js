@@ -94,62 +94,38 @@ const glowLight = new THREE.PointLight(0xfbdc7b, 0, 20);
 glowLight.position.set(0, 3.4, -11.5); scene.add(glowLight);
 // pedestals get added under plates in relayout
 
-// location map on the back wall
-const mapCanvas = document.createElement("canvas"); mapCanvas.width = 512; mapCanvas.height = 256;
-const mapTex = new THREE.CanvasTexture(mapCanvas);
-const mapMesh = new THREE.Mesh(new THREE.PlaneGeometry(6, 3),
-  new THREE.MeshBasicMaterial({ map: mapTex, transparent: true }));
-mapMesh.position.set(-6.2, 3.6, -8.5); mapMesh.rotation.y = 0.55; scene.add(mapMesh);
-const mapFrame = new THREE.Mesh(new THREE.PlaneGeometry(6.3, 3.3),
-  new THREE.MeshStandardMaterial({ color: 0x0a0d12, metalness: 0.5, roughness: 0.5 }));
-mapFrame.position.copy(mapMesh.position); mapFrame.rotation.copy(mapMesh.rotation);
-mapFrame.position.x -= 0.02; mapFrame.translateZ(-0.03); scene.add(mapFrame);
-function drawMap(spread){
-  const x = mapCanvas.getContext("2d");
-  x.clearRect(0,0,512,256);
-  x.strokeStyle = "#2A3242"; x.lineWidth = 2; x.strokeRect(6,6,500,244);
-  x.strokeStyle = "#3a4456";
-  x.beginPath(); x.moveTo(40,180); x.bezierCurveTo(140,60,300,220,470,90); x.stroke();
-  x.fillStyle = "#8C95A4"; x.font = "16px Georgia";
-  x.fillText(spread ? "Three locations. One loss is survivable." : "One location. One fire is total.", 30, 236);
-  const pts = spread ? [[110,120],[260,150],[400,100]] : [[256,130]];
-  for (const [px,py] of pts){
-    x.fillStyle = "#FBDC7B"; x.beginPath(); x.arc(px,py,7,0,7); x.fill();
-    x.strokeStyle = "#FBDC7B"; x.beginPath(); x.arc(px,py,13,0,7); x.stroke();
-  }
-  mapTex.needsUpdate = true;
-}
 
 // ---------- plates ----------
 const FACE = {
-  bip39: t => { t.font = "22px Georgia"; ["abandon ability able","about above absent","absorb abstract absurd","...24 words"].forEach((l,i)=>t.fillText(l,20,54+i*34)); },
-  bip32: t => { t.font = "26px Menlo, monospace"; ["wallet.dat","descriptor backup","raw key material","no words exist"].forEach((l,i)=>t.fillText(l,20,58+i*36)); },
-  codex32:t => { t.font = "24px Menlo, monospace"; ["MS12NAMEA320ZYXWV","checksummed string","verify by hand","no device trusted"].forEach((l,i)=>t.fillText(l,20,56+i*36)); },
-  descriptor: t => { t.font = "20px Menlo, monospace"; ["wsh(sortedmulti(2,","xpub1...,xpub2...,","xpub3...))","quorum + paths + script"].forEach((l,i)=>t.fillText(l,18,52+i*34)); },
+  bip39: t => { t.font = "42px Georgia"; ["SEED PLATE","","abandon  ability  able","about  above  absent","...24 words on metal"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
+  bip32: t => { t.font = "40px Menlo, monospace"; ["KEY FILE","","raw BIP-32 material","no words exist","every copy spends"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
+  codex32:t => { t.font = "38px Menlo, monospace"; ["CODEX32 PLATE","","MS12NAMEA320ZYXWV","checksummed by hand","no device trusted"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
+  descriptor: t => { t.font = "38px Menlo, monospace"; ["THE DESCRIPTOR","","wsh(sortedmulti(2,","xpub1..., xpub2...))","quorum + paths + script"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
 };
 function plateTexture(kind, tint){
-  const c = document.createElement("canvas"); c.width = 256; c.height = 192;
+  const c = document.createElement("canvas"); c.width = 512; c.height = 384;
   const t = c.getContext("2d");
-  const g = t.createLinearGradient(0,0,256,192);
+  const g = t.createLinearGradient(0,0,512,384);
   g.addColorStop(0, tint); g.addColorStop(1, "#20262f");
-  t.fillStyle = g; t.fillRect(0,0,256,192);
-  t.strokeStyle = kind === "descriptor" ? "#FBDC7B" : "#3a4456";
-  t.lineWidth = 6; t.strokeRect(4,4,248,184);
+  t.fillStyle = g; t.fillRect(0,0,512,384);
+  t.strokeStyle = kind === "descriptor" ? "#FBDC7B" : "#4a5468";
+  t.lineWidth = 10; t.strokeRect(8,8,496,368);
   t.fillStyle = kind === "descriptor" ? "#FBDC7B" : "#c9c4b6";
   FACE[kind](t);
   return new THREE.CanvasTexture(c);
 }
 const VENDOR_TINTS_SAME = ["#39424f","#39424f","#39424f"];
 const VENDOR_TINTS_DIFF = ["#39424f","#4f4436","#36494a"];
-const plateGeo = new THREE.BoxGeometry(2.2, 0.16, 1.65);
+const plateGeo = new THREE.BoxGeometry(2.6, 1.95, 0.16);
 const plates = [];
 function makePlate(){
   const m = new THREE.Mesh(plateGeo, new THREE.MeshStandardMaterial({ metalness: 0.75, roughness: 0.35 }));
-  m.userData.kind = "seed"; m.castShadow = true; scene.add(m); plates.push(m); return m;
+  m.userData.kind = "seed"; m.castShadow = true; m.rotation.x = -0.12;
+  scene.add(m); plates.push(m); return m;
 }
 for (let i = 0; i < 3; i++) makePlate();
 const descPlate = new THREE.Mesh(plateGeo, new THREE.MeshStandardMaterial({ metalness: 0.8, roughness: 0.3 }));
-descPlate.userData.kind = "descriptor"; descPlate.castShadow = true; scene.add(descPlate);
+descPlate.userData.kind = "descriptor"; descPlate.castShadow = true; descPlate.rotation.x = -0.12; scene.add(descPlate);
 // pedestals: one per possible plate position, shown/hidden with layout
 
 
@@ -166,13 +142,12 @@ function relayout(instant = false){
   const tints = (multi && state.ven === "multi") ? VENDOR_TINTS_DIFF : VENDOR_TINTS_SAME;
   plates.forEach((m, i) => {
     m.material.map = plateTexture(state.fmt, tints[i]); m.material.needsUpdate = true;
-    if (multi) setTarget(m, (i-1)*3.4, 0.09, 2.2 + (i===1?0.8:0));
-    else setTarget(m, 0, 0.09 + i*0.18, 2.4, i === 0);
+    if (multi) setTarget(m, (i-1)*3.6, 1.02, 2.0 + (i===1?0.7:0));
+    else setTarget(m, 0, 1.02, 2.3, i === 0);
   });
   descPlate.material.map = plateTexture("descriptor", "#2c2a20"); descPlate.material.needsUpdate = true;
-  if (multi) setTarget(descPlate, 5.2, 0.09, -0.4, true);
-  else { setTarget(descPlate, 5.2, 0.09, -0.4, false); state.hasDescriptor = false; }
-  drawMap(multi);
+  if (multi) setTarget(descPlate, 5.4, 1.02, -0.2, true);
+  else { setTarget(descPlate, 5.4, 1.02, -0.2, false); state.hasDescriptor = false; }
   if (instant) for (const [m,t] of targets){ m.position.copy(t.p); m.visible = t.visible; }
 }
 relayout(true);
@@ -187,7 +162,7 @@ const L = {
     codex32: "Codex32. A checksummed string you can verify by hand, with no device trusted. The checksum protects the copy, not the context." },
   sig: {
     single: "One key, one plate. Whoever holds it holds everything. Protection and risk in one object.",
-    multi: "A quorum now guards the funds. Three plates, held apart. And notice the gold-edged plate: the descriptor. Remember it." },
+    multi: "A quorum now guards the funds. Three plates, and they must live in three different places: one fire, one burglary, one location lost, and the quorum survives. And notice the gold plate: the descriptor. Remember it." },
   ven: {
     one: "All devices from one maker. One firmware bug still touches every key.",
     multi: "Different makers for each key. No single company remains in your trust path. This is what vendor diversity buys." },
@@ -227,7 +202,7 @@ addEventListener("pointerup", e => {
   pulse(m);
   if (m.userData.kind === "descriptor" && state.sig === "multi" && !state.hasDescriptor && awaitingDescriptor){
     state.hasDescriptor = true; awaitingDescriptor = false;
-    m.position.y += 0.001; setTarget(m, 0, 0.09, 0.2, true);
+    m.position.y += 0.001; setTarget(m, 0, 1.02, 0.1, true);
     speak(["The descriptor joins the seeds. Try the recovery again."]);
   } else speak([L.plate[m.userData.kind]]);
 });
