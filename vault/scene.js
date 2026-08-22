@@ -21,9 +21,18 @@ scene.background = new THREE.Color(0x0c0f14);
 scene.fog = new THREE.Fog(0x0c0f14, 14, 30);
 const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 60);
 let yaw = 0, pitch = 0.35, dist = 11, yawT = 0;
+// the frame: what the camera and the light are giving to the visitor
+const look = new THREE.Vector3(0, 1.2, 0);
+const lookT = new THREE.Vector3(0, 1.2, 0);
+let distT = 11;
+const OVERVIEW = { p: new THREE.Vector3(0, 1.2, 0), d: 11 };
+function frame(p, d){ lookT.copy(p); distT = d; }
 function placeCamera(){
-  camera.position.set(Math.sin(yaw)*dist*Math.cos(pitch), 3+Math.sin(pitch)*dist*0.6, Math.cos(yaw)*dist*Math.cos(pitch));
-  camera.lookAt(0, 1.2, 0);
+  camera.position.set(
+    look.x + Math.sin(yaw)*dist*Math.cos(pitch),
+    look.y + 1.8 + Math.sin(pitch)*dist*0.6,
+    look.z + Math.cos(yaw)*dist*Math.cos(pitch));
+  camera.lookAt(look);
 }
 function resize(){
   renderer.setSize(innerWidth, innerHeight, false);
@@ -32,7 +41,16 @@ function resize(){
 addEventListener("resize", resize); resize();
 
 // ---------- lights ----------
-scene.add(new THREE.AmbientLight(0x6a7484, 0.5));
+const amb = new THREE.AmbientLight(0x6a7484, 0.5); scene.add(amb);
+// the follow spot: whatever it holds is the one thing in focus
+const spot = new THREE.SpotLight(0xfff2cf, 0, 22, Math.PI/8, 0.35, 1.5);
+spot.position.set(0, 9, 6); scene.add(spot, spot.target);
+let focusObj = null;
+function focusOn(obj, d = 5.5){
+  focusObj = obj;
+  if (obj){ frame(obj.position, d); }
+  else frame(OVERVIEW.p, OVERVIEW.d);
+}
 const rim = new THREE.PointLight(0xfbdc7b, 90, 34); rim.position.set(4, 7, 3); scene.add(rim);
 const cool = new THREE.PointLight(0x4a6a9a, 40, 28); cool.position.set(-6, 5, -2); scene.add(cool);
 const key = new THREE.SpotLight(0xfff4d6, 260, 30, Math.PI/5, 0.45, 1.4);
@@ -142,12 +160,15 @@ function relayout(instant = false){
   const tints = (multi && state.ven === "multi") ? VENDOR_TINTS_DIFF : VENDOR_TINTS_SAME;
   plates.forEach((m, i) => {
     m.material.map = plateTexture(state.fmt, tints[i]); m.material.needsUpdate = true;
-    if (multi) setTarget(m, (i-1)*3.6, 1.02, 2.0 + (i===1?0.7:0));
-    else setTarget(m, 0, 1.02, 2.3, i === 0);
+    if (multi){
+      const spots = [[-4.4, 0.2, 0.55],[0, 3.2, 0],[4.2, 0.4, -0.5]];
+      const [sx, sz, ry] = spots[i];
+      setTarget(m, sx, 1.02, sz, true); m.userData.ry = ry;
+    } else { setTarget(m, 0, 1.02, 2.6, i === 0); m.userData.ry = 0; }
   });
   descPlate.material.map = plateTexture("descriptor", "#2c2a20"); descPlate.material.needsUpdate = true;
-  if (multi) setTarget(descPlate, 5.4, 1.02, -0.2, true);
-  else { setTarget(descPlate, 5.4, 1.02, -0.2, false); state.hasDescriptor = false; }
+  if (multi){ setTarget(descPlate, 6.2, 1.02, -2.4, true); descPlate.userData.ry = -0.7; }
+  else { setTarget(descPlate, 6.2, 1.02, -2.4, false); state.hasDescriptor = false; }
   if (instant) for (const [m,t] of targets){ m.position.copy(t.p); m.visible = t.visible; }
 }
 relayout(true);
@@ -197,12 +218,12 @@ addEventListener("pointerup", e => {
   ptr.x = (e.clientX/innerWidth)*2-1; ptr.y = -(e.clientY/innerHeight)*2+1;
   ray.setFromCamera(ptr, camera);
   const hit = ray.intersectObjects([...plates, descPlate]).find(h => h.object.visible);
-  if (!hit) return;
+  if (!hit){ focusOn(null); return; }
   const m = hit.object;
-  pulse(m);
+  pulse(m); focusOn(m);
   if (m.userData.kind === "descriptor" && state.sig === "multi" && !state.hasDescriptor && awaitingDescriptor){
     state.hasDescriptor = true; awaitingDescriptor = false;
-    m.position.y += 0.001; setTarget(m, 0, 1.02, 0.1, true);
+    m.position.y += 0.001; setTarget(m, 0, 1.02, 1.4, true); m.userData.ry = 0;
     speak(["The descriptor joins the seeds. Try the recovery again."]);
   } else speak([L.plate[m.userData.kind]]);
 });
@@ -222,16 +243,16 @@ function syncVendorLock(){
   const locked = state.sig === "single";
   document.querySelectorAll("#ven .chip").forEach(c => c.disabled = locked);
 }
-wireChips("fmt", "fmt", v => { relayout(); speak([L.fmt[v]]); });
+wireChips("fmt", "fmt", v => { relayout(); focusOn(null); speak([L.fmt[v]]); });
 wireChips("sig", "sig", v => {
   if (v === "single"){ state.ven = "one";
     document.querySelectorAll("#ven .chip").forEach(c => c.classList.toggle("on", c.dataset.v === "one")); }
-  syncVendorLock(); relayout(); resetSafe(); speak([L.sig[v]]);
+  syncVendorLock(); relayout(); resetSafe(); focusOn(null); speak([L.sig[v]]);
 });
 document.getElementById("ven").addEventListener("click", e => {
   if (state.sig === "single" && e.target.closest(".chip")) speak([L.venLocked]);
 });
-wireChips("ven", "ven", v => { relayout(); speak([L.ven[v]]); });
+wireChips("ven", "ven", v => { relayout(); focusOn(null); speak([L.ven[v]]); });
 syncVendorLock();
 
 // recovery
@@ -243,9 +264,11 @@ let doorTarget = 0;
 btn.addEventListener("click", () => {
   if (recovering) return;
   recovering = true; btn.disabled = true;
+  focusObj = null; frame(new THREE.Vector3(0, 3.4, -12.9), 9.5);
   const done = ok => setTimeout(() => {
     recovering = false; btn.disabled = false;
-    if (!ok){ awaitingDescriptor = true; }
+    if (!ok){ awaitingDescriptor = true; focusOn(descPlate, 6); }
+    else setTimeout(() => focusOn(null), 2600);
   }, 2400);
   if (state.sig === "single"){ speak(L.recoverSingleOk); animateRebuild(true); done(true); }
   else if (!state.hasDescriptor){ speak(L.recoverMultiFail); animateRebuild(false); done(false); }
@@ -260,7 +283,22 @@ function tick(){
   requestAnimationFrame(tick);
   const dt = Math.min(clock.getDelta(), 0.05);
   if (!reduced && !dragging) yawT += Math.sin(clock.elapsedTime*0.15)*0.0003;
-  yaw += (yawT - yaw)*0.08; placeCamera();
+  yaw += (yawT - yaw)*0.08;
+  look.lerp(lookT, reduced ? 1 : dt*2.2);
+  dist += (distT - dist) * (reduced ? 1 : dt*2.2);
+  placeCamera();
+  // the follow spot holds the focused object; the room leans dark around it
+  if (focusObj){
+    spot.target.position.lerp(focusObj.position, dt*4);
+    spot.position.lerp(new THREE.Vector3(focusObj.position.x, 8, focusObj.position.z + 5), dt*4);
+    spot.intensity += (240 - spot.intensity)*dt*3;
+    amb.intensity += (0.22 - amb.intensity)*dt*3;
+    key.intensity += (90 - key.intensity)*dt*3;
+  } else {
+    spot.intensity += (0 - spot.intensity)*dt*3;
+    amb.intensity += (0.5 - amb.intensity)*dt*3;
+    key.intensity += (260 - key.intensity)*dt*3;
+  }
   for (const [m,t] of targets){
     if (t.visible) m.visible = true;
     m.position.lerp(t.p, reduced ? 1 : 0.12);
@@ -268,6 +306,9 @@ function tick(){
     if (m.userData.pulse > 0){ m.userData.pulse -= dt*2;
       m.scale.setScalar(1 + Math.sin(m.userData.pulse*Math.PI)*0.08); }
     else m.scale.setScalar(1);
+    // a focused plate turns square to the visitor; the rest hold their angle
+    const ry = (m === focusObj) ? yaw : (m.userData.ry || 0);
+    m.rotation.y += (ry - m.rotation.y) * (reduced ? 1 : dt*3);
   }
   if (awaitingDescriptor && descPlate.visible)
     descPlate.material.emissive = new THREE.Color(0xfbdc7b).multiplyScalar(0.25 + 0.2*Math.sin(clock.elapsedTime*4));
