@@ -344,14 +344,14 @@ const FACE = {
   descriptor: t => { t.font = "38px Menlo, monospace"; ["THE DESCRIPTOR","","wsh(sortedmulti(2,","xpub1..., xpub2...))","quorum + paths + script"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
 };
 function plateTexture(kind, tint){
-  const c = document.createElement("canvas"); c.width = 512; c.height = 384;
+  const c = document.createElement("canvas"); c.width = 512; c.height = 512;
   const t = c.getContext("2d");
   const g = t.createLinearGradient(0,0,512,384);
   g.addColorStop(0, "#d8dadd");
   g.addColorStop(0.42, tint);
   g.addColorStop(1, "#7b8188");
-  t.fillStyle = g; t.fillRect(0,0,512,384);
-  for (let y = 0; y < 384; y += 4){
+  t.fillStyle = g; t.fillRect(0,0,512,512);
+  for (let y = 0; y < 512; y += 4){
     t.strokeStyle = y % 12 === 0 ? "rgba(255,255,255,.10)" : "rgba(22,28,34,.035)";
     t.beginPath();
     t.moveTo(0, y + 0.5);
@@ -359,7 +359,7 @@ function plateTexture(kind, tint){
     t.stroke();
   }
   t.strokeStyle = kind === "descriptor" ? "#9b7f2d" : "#59616a";
-  t.lineWidth = 7; t.strokeRect(9,9,494,366);
+  t.lineWidth = 7; t.strokeRect(9,9,494,494);
   t.fillStyle = kind === "descriptor" ? "#3d3211" : "#252a30";
   t.textBaseline = "alphabetic";
   FACE[kind](t);
@@ -394,7 +394,7 @@ function roundedPlateGeometry(width, height, radius, depth){
   geometry.translate(0, 0, -depth / 2);
   return geometry;
 }
-const plateBodyGeo = roundedPlateGeometry(2.62, 1.96, 0.17, 0.09);
+const plateBodyGeo = roundedPlateGeometry(2.3, 2.3, 0.18, 0.09);
 const plates = [];
 function makePlateAssembly(kind){
   const group = new THREE.Group();
@@ -405,8 +405,8 @@ function makePlateAssembly(kind){
       color: 0x6f767e, metalness: 0.96, roughness: 0.3
     })
   );
-  back.position.set(0.07, -0.07, -0.11);
-  back.rotation.z = -0.018;
+  back.position.set(-0.08, 0.08, -0.11);
+  back.rotation.z = -0.025;
   back.castShadow = true;
   group.add(back);
   const front = new THREE.Mesh(
@@ -419,7 +419,7 @@ function makePlateAssembly(kind){
   front.userData.owner = group;
   group.add(front);
   const face = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.42, 1.75),
+    new THREE.PlaneGeometry(2.12, 2.12),
     new THREE.MeshStandardMaterial({
       metalness: 0.76, roughness: 0.38,
       emissive: 0x000000, emissiveIntensity: 1
@@ -431,8 +431,8 @@ function makePlateAssembly(kind){
   const screwMaterial = new THREE.MeshStandardMaterial({
     color: 0x3f454c, metalness: 0.98, roughness: 0.2
   });
-  for (const x of [-1.09, 1.09]){
-    for (const y of [-0.76, 0.76]){
+  for (const x of [0.94]){
+    for (const y of [-0.86, 0.86]){
       const screw = new THREE.Mesh(
         new THREE.CylinderGeometry(0.065, 0.065, 0.045, 18),
         screwMaterial
@@ -603,6 +603,10 @@ document.getElementById("ven").addEventListener("click", e => {
   if (state.sig === "single" && e.target.closest(".chip")) speak([L.venLocked]);
 });
 wireChips("ven", "ven", v => { relayout(); focusOn(null); speak([L.ven[v]]); });
+wireChips("pass", "pass", v => {
+  closeDoor(); updateFp(); focusOn(null);
+  speak([L.pass[v ? "butler" : "none"]]);
+});
 wireChips("path", "path", v => { closeDoor(); focusOn(null); speak([L.path[v]]); });
 wireChips("scr", "scr", v => { closeDoor(); focusOn(null); speak([L.scr[v]]); });
 syncVendorLock();
@@ -658,16 +662,6 @@ async function reviewWords(){
 }
 edGrid.addEventListener("input", () => { clearTimeout(edGrid._t); edGrid._t = setTimeout(reviewWords, 350); });
 document.getElementById("ed-close").addEventListener("click", () => { editor.hidden = true; });
-const passIn = document.getElementById("ed-passin");
-passIn.addEventListener("input", () => {
-  clearTimeout(passIn._t);
-  passIn._t = setTimeout(() => {
-    state.pass = passIn.value;
-    closeDoor(); updateFp();
-    if (state.pass) speak(["A passphrase now stands beside the words. Watch the fingerprint: it changed, because the passphrase changes the root itself. A typo here is undetectable and opens a different, valid, empty wallet."]);
-  }, 500);
-});
-
 // recovery
 let recovering = false, awaitingDescriptor = false, failFlash = 0;
 let doorOpenT = 0, wheelSpin = 0, wheelVel = 0, shakeT = 0;

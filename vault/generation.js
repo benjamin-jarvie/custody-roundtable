@@ -319,7 +319,7 @@ function resetCeremony(){
 }
 function relayout(){
   const multi = state.sig === "multi";
-  const showDice = state.fmt !== "bip32";
+  const showDice = true;
   const showWorksheet = state.fmt === "codex32";
   const showKeyCard = state.fmt === "bip32";
   setTarget(diceGroup, showWorksheet ? -1.8 : -1.25, 1.78, 0.25, showDice);

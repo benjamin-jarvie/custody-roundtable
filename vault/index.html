@@ -3,159 +3,55 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Vault, Bitcoin Butlers</title>
-<meta name="description" content="Where your Bitcoin seed sleeps. Walk the vault with a Butler and see what a backup must really survive.">
+<title>The Custody Vault, Bitcoin Butlers</title>
+<meta name="description" content="Follow a Bitcoin seed through generation, signing, and recovery with a Butler as your guide.">
 <link rel="preload" href="butler-host.webp" as="image">
+<link rel="stylesheet" href="scene-shared.css">
 <style>
-  :root{
-    --ink:#0C0F14; --panel:#151A22; --gold:#FBDC7B; --bone:#E9E4D6;
-    --slate:#8C95A4; --moss:#8FC79A; --ember:#DE8A66; --line:#2A3242;
-    --serif:Charter,Georgia,'Times New Roman',serif;
-    --sans:-apple-system,'Helvetica Neue',Arial,sans-serif;
-  }
-  *{box-sizing:border-box;margin:0}
-  html,body{height:100%}
-  body{background:var(--ink);color:var(--bone);font-family:var(--serif);overflow:hidden}
-  #c{position:fixed;inset:0;display:block;touch-action:none}
-
-  .hud{position:fixed;left:0;right:0;font-family:var(--sans)}
-  .top{top:0;padding:.9rem 1rem;display:flex;justify-content:space-between;align-items:center;
-    background:linear-gradient(rgba(12,15,20,.85),transparent)}
-  .top{align-items:flex-start}
-  .nav{display:flex;flex-direction:column;gap:.3rem}
-  .logo{width:64px;height:auto;margin-bottom:.5rem}
-  .scene-link{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);text-decoration:none}
-  .scene-link:hover{color:var(--gold)}
-  .scene-link.here{color:var(--gold);text-shadow:0 0 9px rgba(251,220,123,.3)}
-  @media(min-width:700px){.scene-link{font-size:1.02rem}}
-  .flat{font-size:.7rem;letter-spacing:.08em;color:var(--slate);text-decoration:underline}
-
-  .controls{position:fixed;top:3.4rem;right:.75rem;display:flex;flex-direction:column;gap:.55rem;max-width:46vw}
-  .grp{background:rgba(21,26,34,.88);border:1px solid var(--line);border-radius:10px;padding:.5rem .6rem}
-  .lbl{font-family:var(--sans);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);margin-bottom:.35rem}
-  .chips{display:flex;flex-wrap:wrap;gap:.35rem}
-  .chip{font-family:var(--sans);font-size:.68rem;padding:.32rem .6rem;border-radius:999px;border:1px solid var(--line);
-    background:transparent;color:var(--bone);cursor:pointer}
-  .chip.on{border-color:var(--gold);color:var(--gold);background:rgba(251,220,123,.09)}
-  .chip:disabled{opacity:.35;cursor:not-allowed}
-  .fp{font-family:Menlo,monospace;font-size:.8rem;color:var(--gold);letter-spacing:.12em}
-  .fp.off{color:var(--ember)}
-  .editor{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;
-    background:rgba(21,26,34,.97);border:1px solid var(--gold);border-radius:12px;
-    padding:1rem 1.1rem;width:min(92vw,460px)}
-  .ed-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--sans);
-    font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:.7rem}
-  .ed-head button{font-family:var(--sans);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--ink);background:var(--gold);border:0;border-radius:5px;padding:.4rem .8rem;cursor:pointer}
-  .ed-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
-  .ed-grid input{font-family:Menlo,monospace;font-size:.78rem;padding:.35rem .45rem;
-    background:var(--ink);border:1px solid var(--line);border-radius:5px;color:var(--bone);width:100%}
-  .ed-grid input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 1px rgba(251,220,123,.35)}
-  .ed-grid input::selection{background:rgba(251,220,123,.35);color:var(--bone)}
-  .ed-grid input.bad{border-color:var(--ember);color:var(--ember)}
-  .cs-pick{display:none;margin-top:.55rem;max-height:9.5rem;overflow-y:auto;
-    border:1px solid var(--line);border-radius:8px;padding:.45rem;
-    display:none;flex-wrap:wrap;gap:.3rem}
-  .cs-pick.open{display:flex}
-  .cs-pick button{font-family:Menlo,monospace;font-size:.72rem;padding:.25rem .5rem;
-    background:transparent;border:1px solid var(--line);border-radius:5px;color:var(--bone);cursor:pointer}
-  .cs-pick button:hover{border-color:var(--gold);color:var(--gold)}
-  .ed-note{font-family:var(--sans);font-size:.72rem;color:var(--slate);margin-top:.6rem;min-height:1.2em}
-  .ed-pass{margin-top:.6rem;font-family:var(--sans)}
-  .ed-pass label{display:block;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);margin-bottom:.3rem}
-  .ed-pass input{font-family:Menlo,monospace;font-size:.8rem;padding:.4rem .5rem;width:100%;
-    background:var(--ink);border:1px solid var(--line);border-radius:5px;color:var(--bone)}
-  .ed-pass input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 1px rgba(251,220,123,.35)}
-  .funds{position:fixed;top:3rem;left:50%;transform:translateX(-50%);z-index:4;
-    font-family:var(--sans);font-size:.85rem;letter-spacing:.06em;color:var(--gold);
-    background:rgba(21,26,34,.9);border:1px solid var(--gold);border-radius:999px;
-    padding:.45rem 1rem;display:none}
-  .funds.show{display:block}
-
-  .caption{position:fixed;left:.75rem;right:.75rem;bottom:.75rem;display:flex;gap:.7rem;align-items:flex-end}
-  .bubble{flex:1;background:rgba(21,26,34,.94);border:1px solid var(--line);border-left:2px solid var(--gold);
-    border-radius:10px;padding:.8rem .95rem;font-size:.92rem;line-height:1.5;min-height:3.4rem}
-  .bubble .who{font-family:var(--sans);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:.25rem}
-  .act{position:fixed;bottom:5.6rem;left:50%;transform:translateX(-50%)}
-  .act button{font-family:var(--sans);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--ink);background:var(--gold);border:0;border-radius:6px;padding:.7rem 1.3rem;cursor:pointer}
-  .act button:disabled{opacity:.5}
-  @media(min-width:700px){.controls{max-width:230px}.bubble{max-width:560px}}
+  .landing-mark{position:fixed;left:1rem;top:.9rem;z-index:3}
+  .landing-mark img{width:64px;height:auto}
+  .landing-title{position:fixed;top:1rem;left:50%;transform:translateX(-50%);z-index:2;
+    font-family:var(--sans);text-align:center;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--gold);font-size:.72rem;white-space:nowrap}
+  .landing-title strong{display:block;color:var(--bone);font-family:var(--serif);
+    font-size:1.5rem;font-weight:400;letter-spacing:.02em;text-transform:none;margin-top:.3rem}
+  .door-links{position:fixed;bottom:5.7rem;left:50%;transform:translateX(-50%);
+    z-index:3;display:flex;gap:.5rem;justify-content:center}
+  .door-links a{font-family:var(--sans);font-size:.72rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink);background:var(--gold);border-radius:6px;
+    padding:.7rem 1rem;text-decoration:none;white-space:nowrap}
+  .door-links a:nth-child(2),.door-links a:nth-child(3){
+    color:var(--bone);background:rgba(21,26,34,.94);border:1px solid var(--gold)}
   @media(max-width:600px){
-    .controls{top:auto;bottom:9.6rem;left:.75rem;right:.75rem;max-width:none;
-      flex-direction:row;overflow-x:auto;padding-bottom:.15rem}
-    .grp{flex:0 0 auto}
-    .act{bottom:14.4rem}
-    .caption{bottom:.6rem}
-    .bubble{font-size:.85rem;min-height:0;max-height:8.2rem;overflow-y:auto}
+    .landing-title{top:5.9rem}
+    .landing-title strong{font-size:1.15rem}
+    .door-links{bottom:8.7rem;gap:.35rem;width:96vw}
+    .door-links a{font-size:.62rem;padding:.58rem .62rem}
   }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div class="hud top">
-  <div class="nav">
-    <img src="logo.png" alt="Bitcoin Butlers" class="logo">
-    <a class="scene-link" href="generation.html">Seed Generation</a>
-    <a class="scene-link" href="in-use.html">Seed In Use</a>
-    <a class="scene-link here" href="index.html">Seed At Rest</a>
-  </div>
-  <a class="flat" href="fallback.html">2D version</a>
-</div>
-<div class="controls">
-  <div class="grp"><div class="lbl">Seed format</div>
-    <div class="chips" id="fmt">
-      <button class="chip on" data-v="bip39">BIP-39</button>
-      <button class="chip" data-v="bip32">BIP-32</button>
-      <button class="chip" data-v="codex32">Codex32</button>
-    </div></div>
-  <div class="grp"><div class="lbl">Signers</div>
-    <div class="chips" id="sig">
-      <button class="chip on" data-v="single">Single</button>
-      <button class="chip" data-v="multi">Multisig</button>
-    </div></div>
-  <div class="grp"><div class="lbl">Vendors</div>
-    <div class="chips" id="ven">
-      <button class="chip on" data-v="one">One</button>
-      <button class="chip" data-v="multi">Multi</button>
-    </div></div>
-  <div class="grp"><div class="lbl">Derivation path</div>
-    <div class="chips" id="path">
-      <button class="chip on" data-v="std">m/84'/0'/0'</button>
-      <button class="chip" data-v="alt">m/44'/0'/0'</button>
-    </div></div>
-  <div class="grp"><div class="lbl">Script type</div>
-    <div class="chips" id="scr">
-      <button class="chip on" data-v="segwit">Native SegWit</button>
-      <button class="chip" data-v="legacy">Legacy</button>
-    </div></div>
-  <div class="grp"><div class="lbl">Master fingerprint</div>
-    <div class="fp" id="fp">73C5DA0A</div></div>
-</div>
-<div class="funds" id="funds">0.21 BTC · $23,940</div>
-<div class="editor" id="editor" hidden>
-  <div class="ed-head">Engrave the plate <button id="ed-close">Done</button></div>
-  <div class="ed-grid" id="ed-grid"></div>
-  <div class="cs-pick" id="cs-pick"></div>
-  <div class="ed-pass"><label for="ed-passin">Passphrase (optional, BIP-39 only)</label>
-    <input id="ed-passin" type="text" autocapitalize="off" spellcheck="false" placeholder="none"></div>
-  <div class="ed-note" id="ed-note"></div>
-</div>
-<div class="act"><button id="recover">Try recovery</button></div>
-<div class="caption">
-  <div class="bubble"><span class="who">Your Butler</span><span id="say"></span></div>
-</div>
+<a class="landing-mark" href="index.html"><img src="logo.png" alt="Bitcoin Butlers"></a>
+<a class="flat" style="position:fixed;right:1rem;top:1rem;z-index:3" href="fallback.html">2D version</a>
+<div class="landing-title">The Custody Vault<strong>One seed. Three moments of truth.</strong></div>
+<nav class="door-links" aria-label="Choose a seed lifecycle scene">
+  <a href="generation.html">Generation</a>
+  <a href="in-use.html">In use</a>
+  <a href="at-rest.html">At rest</a>
+</nav>
+<div class="caption"><div class="bubble"><span class="who">Your Butler</span><span id="say"></span></div></div>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script type="module">
-  const force3d=new URLSearchParams(location.search).has("3d");
-  if(!force3d && navigator.connection && navigator.connection.saveData) location.replace("fallback.html");
-  try{
-    const gl=document.createElement("canvas").getContext("webgl2")
-      ||document.createElement("canvas").getContext("webgl");
-    if(!gl) location.replace("fallback.html");
-  }catch(e){location.replace("fallback.html")}
-  import("./scene.js?v=5").catch(error => {
-    console.error("AT-REST SCENE ERROR", error.message, error.stack);
+  const force3d = new URLSearchParams(location.search).has("3d");
+  if (!force3d && navigator.connection && navigator.connection.saveData) location.replace("fallback.html");
+  try {
+    const gl = document.createElement("canvas").getContext("webgl2")
+      || document.createElement("canvas").getContext("webgl");
+    if (!gl) location.replace("fallback.html");
+  } catch (error) { location.replace("fallback.html"); }
+  import("./landing.js?v=1").catch(error => {
+    console.error("LANDING SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });
 </script>

@@ -12,10 +12,10 @@
 <canvas id="c"></canvas>
 <div class="hud top">
   <div class="nav">
-    <img src="logo.png" alt="Bitcoin Butlers" class="logo">
+    <a href="index.html"><img src="logo.png" alt="Bitcoin Butlers" class="logo"></a>
     <a class="scene-link here" href="generation.html">Seed Generation</a>
     <a class="scene-link" href="in-use.html">Seed In Use</a>
-    <a class="scene-link" href="index.html">Seed At Rest</a>
+    <a class="scene-link" href="at-rest.html">Seed At Rest</a>
   </div>
   <a class="flat" href="fallback.html">2D version</a>
 </div>
@@ -49,7 +49,7 @@
       || document.createElement("canvas").getContext("webgl");
     if (!gl) location.replace("fallback.html");
   } catch (error) { location.replace("fallback.html"); }
-  import("./generation.js?v=5").catch(error => {
+  import("./generation.js?v=6").catch(error => {
     console.error("GENERATION SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });
