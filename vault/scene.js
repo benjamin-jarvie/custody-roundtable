@@ -303,7 +303,7 @@ addEventListener("pointerup", e => {
   const m = hit.object;
   pulse(m); focusOn(m);
   if (m.userData.kind === "seed" && state.fmt === "bip39" && state.sig === "single"){
-    editor.hidden = false;
+    editor.hidden = false; reviewWords();
     speak(["Read the plate. Change a word if you like. Then try the recovery and see which wallet, if any, those words open."]);
     return;
   }
@@ -363,9 +363,24 @@ syncVendorLock();
 // ---------- the editable plate ----------
 const editor = document.getElementById("editor"), edGrid = document.getElementById("ed-grid"),
       edNote = document.getElementById("ed-note");
+let lastOpts = [];
 words.forEach((w, i) => {
   const inp = document.createElement("input");
   inp.value = w; inp.dataset.i = i; inp.autocapitalize = "off"; inp.spellcheck = false;
+  // four letters name a BIP-39 word uniquely; finish it for the typist
+  inp.addEventListener("input", () => {
+    const v = inp.value.trim().toLowerCase();
+    if (v.length >= 4){
+      const hits = WORDS.filter(w2 => w2.startsWith(v));
+      if (hits.length === 1 && hits[0] !== v){ inp.value = hits[0]; }
+    }
+  });
+  inp.addEventListener("focus", () => inp.select());
+  if (i === 11){
+    inp.addEventListener("focus", () => document.getElementById("cs-pick").classList.add("open"));
+  } else {
+    inp.addEventListener("focus", () => document.getElementById("cs-pick").classList.remove("open"));
+  }
   edGrid.appendChild(inp);
 });
 async function reviewWords(){
@@ -378,13 +393,18 @@ async function reviewWords(){
   // must come from the 128 that fit. Offer them on the last input.
   const lastInp = edGrid.querySelector('input[data-i="11"]');
   const opts = await validLastWords(words.slice(0, 11));
-  const dl = document.getElementById("cs-options");
-  dl.replaceChildren(...opts.map(w => Object.assign(document.createElement("option"), { value: w })));
-  lastInp.setAttribute("list", "cs-options");
+  lastOpts = opts;
+  const pick = document.getElementById("cs-pick");
+  pick.replaceChildren(...opts.map(w => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = w;
+    b.addEventListener("click", () => { lastInp.value = w; pick.classList.remove("open"); reviewWords(); });
+    return b;
+  }));
   lastInp.classList.toggle("bad", opts.length > 0 && !opts.includes(words[11]));
+  if (!opts.length) pick.classList.remove("open");
   edNote.textContent = !wordsValid
-    ? (opts.length ? "The checksum lives in the last word. For these 11 words, 128 final words fit. Tap the last word to see them."
-                   : "A word in red is not on the BIP-39 list. No checksum exists for it.")
+    ? (opts.length ? "The checksum lives in the last word. For these 11 words, exactly 128 final words fit. Tap the last word to choose one."
+                   : "A word in red is not on the BIP-39 list, so no checksum can exist yet. Fix it first.")
     : wordsMatch ? "The original seed. The funded wallet exists behind these words."
     : "Valid words, different seed. A wallet exists for them. It has never held a coin.";
   closeDoor(); relayout(); updateFp();
@@ -404,7 +424,8 @@ btn.addEventListener("click", () => {
   focusObj = null; frame(new THREE.Vector3(0, 3.4, -12.9), 9.5);
   const done = ok => setTimeout(() => {
     recovering = false; btn.disabled = false;
-    if (!ok){ awaitingDescriptor = true; focusOn(descPlate, 6); }
+    if (!ok && state.sig === "multi"){ awaitingDescriptor = true; focusOn(descPlate, 6); }
+    else if (!ok) focusOn(null);
     else setTimeout(() => focusOn(null), 2600);
   }, 2400);
   if (state.sig === "single"){

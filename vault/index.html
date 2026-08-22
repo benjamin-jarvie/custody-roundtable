@@ -48,7 +48,16 @@
   .ed-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
   .ed-grid input{font-family:Menlo,monospace;font-size:.78rem;padding:.35rem .45rem;
     background:var(--ink);border:1px solid var(--line);border-radius:5px;color:var(--bone);width:100%}
+  .ed-grid input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 1px rgba(251,220,123,.35)}
+  .ed-grid input::selection{background:rgba(251,220,123,.35);color:var(--bone)}
   .ed-grid input.bad{border-color:var(--ember);color:var(--ember)}
+  .cs-pick{display:none;margin-top:.55rem;max-height:9.5rem;overflow-y:auto;
+    border:1px solid var(--line);border-radius:8px;padding:.45rem;
+    display:none;flex-wrap:wrap;gap:.3rem}
+  .cs-pick.open{display:flex}
+  .cs-pick button{font-family:Menlo,monospace;font-size:.72rem;padding:.25rem .5rem;
+    background:transparent;border:1px solid var(--line);border-radius:5px;color:var(--bone);cursor:pointer}
+  .cs-pick button:hover{border-color:var(--gold);color:var(--gold)}
   .ed-note{font-family:var(--sans);font-size:.72rem;color:var(--slate);margin-top:.6rem;min-height:1.2em}
 
   .caption{position:fixed;left:.75rem;right:.75rem;bottom:.75rem;display:flex;gap:.7rem;align-items:flex-end}
@@ -119,7 +128,7 @@
 <div class="editor" id="editor" hidden>
   <div class="ed-head">Engrave the plate <button id="ed-close">Done</button></div>
   <div class="ed-grid" id="ed-grid"></div>
-  <datalist id="cs-options"></datalist>
+  <div class="cs-pick" id="cs-pick"></div>
   <div class="ed-note" id="ed-note"></div>
 </div>
 <div class="act"><button id="recover">Try recovery</button></div>
