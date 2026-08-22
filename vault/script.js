@@ -9,7 +9,7 @@ export const SCRIPTS = {
     format: {
       bip39: "BIP-39 turns entropy into words with a checksum. The words are readable. The randomness behind them is still the ceremony.",
       bip32: "Raw BIP-32 keeps the seed as key material. No friendly words exist, so the generating machine owns the whole ceremony.",
-      codex32: "Codex32 can be generated and checked by hand. The worksheet makes the arithmetic visible without trusting a device."
+      codex32: "Codex32 is a draft backup format for a BIP-32 master seed. The worksheet makes generation, checksums, and optional threshold shares visible by hand."
     },
     signers: {
       single: "One signer means one seed ceremony and one root of trust.",
@@ -31,6 +31,7 @@ export const SCRIPTS = {
     object: {
       dice: "Physical entropy. Slow, observable, and only as fair as the dice and the way you roll them.",
       device: "A signing device can protect a seed well. Its random number generator still asks for trust at the first moment.",
+      keyfile: "Raw BIP-32 material has no recovery words. The file is the secret, and every unencrypted copy can spend.",
       worksheet: "The Codex32 worksheet turns generation into arithmetic a person can inspect and repeat."
     }
   },
@@ -40,9 +41,9 @@ export const SCRIPTS = {
       "Build the transaction outside, carry only the PSBT across the air gap, and make every screen earn your approval."
     ],
     format: {
-      bip39: "BIP-39 describes how the signer began. During a spend, the private seed remains inside while the PSBT carries only what must be signed.",
-      bip32: "Raw BIP-32 key material signs the same PSBT. The transport stays public. The key file must stay inside its boundary.",
-      codex32: "Codex32 changes the backup ceremony. The signing boundary stays the same: the seed remains inside and the PSBT crosses."
+      bip39: "BIP-39 is the human backup layer. Its words become the seed loaded into the signer; during a spend only the PSBT crosses the boundary.",
+      bip32: "BIP-32 is the HD key tree itself. Raw master key material can sign the same PSBT, but its file must never leave the signing boundary.",
+      codex32: "Codex32 is a draft backup encoding for a BIP-32 master seed. It must be decoded before signing, so the PSBT ceremony stays the same."
     },
     signers: {
       single: "One signer checks and approves the whole spend. One screen is the final witness.",
@@ -53,6 +54,10 @@ export const SCRIPTS = {
       multi: "Different makers inspect the same PSBT through unrelated code. No single company remains the only witness."
     },
     vendorLocked: "Vendor diversity becomes a real choice only when a quorum uses more than one signer.",
+    platform: {
+      desktop: "The watch-only wallet runs on a desktop. It builds and broadcasts transactions but holds no private seed.",
+      phone: "The watch-only wallet runs on a phone. The boundary is unchanged: the phone builds the request, the signer approves it."
+    },
     transferStart: "The watch-only wallet builds a PSBT. It contains the transaction, never the private seed.",
     transferStep: count => "Signature " + count + " joins the PSBT. The private key never crosses the air gap.",
     transferDone: [
@@ -90,22 +95,24 @@ export const SCRIPTS = {
     },
     pass: {
       none: "No passphrase. The words alone are the whole secret.",
-      butler: "A passphrase stands beside the words. It has no checksum. A typo opens a different, valid, empty wallet."
+      butler: "A passphrase changes the root and has no checksum. The field is shown on the recovery plate here, but a real backup should not store it beside the seed."
     },
     path: {
       std: "The standard path. Wallets agree to look here by convention.",
       alt: "A different derivation path. The same seed now points to a different neighborhood of addresses."
     },
     scr: {
-      segwit: "Native SegWit. This is the script used by the funded addresses.",
-      legacy: "Legacy is valid and older. It builds different addresses from the same keys."
+      segwit: "Native SegWit selects the m/84 single-sig preset, or the m/48 native multisig compatibility path.",
+      nested: "Nested SegWit selects m/49 for single-sig, or the m/48 nested multisig compatibility path.",
+      taproot: "Single-key Taproot selects m/86. This demo does not claim Taproot multisig or script-path policy support.",
+      legacy: "Legacy P2PKH selects the m/44 single-sig preset."
     },
     recoverFunded: [
-      "The wheel turns, the door opens, and the coin is there: 0.21 bitcoin. At $114,000 a coin, $23,940.",
-      "Words, path, script, and passphrase all matched the funded wallet. That is the full recovery set."
+      "The wheel turns and the door opens. The wallet identity matched the known test vector.",
+      "Balance is not scanned. Connect watch-only wallet data before showing a real balance."
     ],
     recoverNoSeed: [
-      "The wheel spins and stops. The door refuses.",
+      "The wheel does not turn. The door refuses.",
       "The last word failed its checksum. Wallet software rejects the phrase before it can load any wallet.",
       "Tap the plate. The last word offers the 128 words that fit."
     ],
@@ -116,23 +123,21 @@ export const SCRIPTS = {
     ],
     recoverMultiOk: [
       "Seeds and descriptor together. Now the door opens.",
-      "Multisig costs more plates, more ceremony, and one more thing that must survive. It removes every single point of failure."
+      "The policy identity can now be reconstructed. Balance is not scanned without watch-only wallet data."
     ]
   }
 };
 
 export function emptyWalletLines(state){
-  let reason = "These are valid words for a wallet that has never held a coin.";
+  let reason = "These inputs derive a different wallet identity. Its balance has not been scanned.";
   if (state.pass && state.pass !== "none") {
-    reason = "The passphrase changed the seed root. This valid wallet has never held a coin.";
-  } else if (state.path !== "std") {
-    reason = "The path points at different addresses. The funded coin remains somewhere this wallet will never look.";
+    reason = "The passphrase changed the seed root. This is a different valid wallet identity; balance is not scanned.";
   } else if (state.scr !== "segwit") {
-    reason = "The script type builds different addresses from the same keys.";
+    reason = "The selected script policy derives different addresses. Balance is not scanned.";
   }
   return [
-    "The door opens on an empty strongroom.",
+    "The door opens on a different wallet identity.",
     reason,
-    "Nothing was destroyed. Every part of the recovery set must survive together."
+    "Nothing was destroyed. Recovery needs the same seed, passphrase, and policy."
   ];
 }

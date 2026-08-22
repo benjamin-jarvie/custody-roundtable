@@ -8,7 +8,7 @@ import {
   roundedBoxGeometry,
   contactShadow,
   castRealisticShadows
-} from "./visuals.js?v=4";
+} from "./visuals.js?v=5";
 
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const portrait = innerWidth <= 600;

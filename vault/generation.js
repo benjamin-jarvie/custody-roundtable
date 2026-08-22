@@ -1,15 +1,16 @@
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS } from "./script.js";
+import { SCRIPTS } from "./script.js?v=2";
 import {
   setupPhysicalRenderer,
   brushedMetal,
   blackMetal,
   honedStone,
+  walnutWood,
   roundedBoxGeometry,
   contactShadow,
   castRealisticShadows
-} from "./visuals.js?v=4";
+} from "./visuals.js?v=5";
 
 const COPY = SCRIPTS.generation;
 const state = { fmt: "bip39", sig: "single", ven: "one" };
@@ -110,7 +111,7 @@ scene.add(wall);
 const table = new THREE.Group();
 const top = new THREE.Mesh(
   new THREE.BoxGeometry(6.8, 0.28, 3.45),
-  honedStone(THREE, 0x242830)
+  walnutWood(THREE)
 );
 top.position.y = 1.34;
 top.castShadow = true;
@@ -233,7 +234,7 @@ function makeDevice(variant){
 function makeDie(index){
   const group = new THREE.Group();
   const die = new THREE.Mesh(
-    roundedBoxGeometry(THREE, 0.46, 0.46, 0.46, 0.085),
+    roundedBoxGeometry(THREE, 0.3, 0.3, 0.3, 0.055),
     new THREE.MeshPhysicalMaterial({
       color: 0xeee8db,
       metalness: 0.02,
@@ -245,17 +246,17 @@ function makeDie(index){
   );
   die.castShadow = true;
   group.add(die);
-  const pipGeo = new THREE.SphereGeometry(0.038, 10, 6);
+  const pipGeo = new THREE.SphereGeometry(0.024, 10, 6);
   const pipMat = new THREE.MeshStandardMaterial({ color: 0x111317, roughness: 0.7 });
   const layouts = [
     [[0, 0]],
-    [[-0.12, -0.12], [0.12, 0.12]],
-    [[-0.12, -0.12], [0, 0], [0.12, 0.12]],
-    [[-0.12, -0.12], [-0.12, 0.12], [0.12, -0.12], [0.12, 0.12]]
+    [[-0.075, -0.075], [0.075, 0.075]],
+    [[-0.075, -0.075], [0, 0], [0.075, 0.075]],
+    [[-0.075, -0.075], [-0.075, 0.075], [0.075, -0.075], [0.075, 0.075]]
   ];
   layouts[index % layouts.length].forEach(point => {
     const pip = new THREE.Mesh(pipGeo, pipMat);
-    pip.position.set(point[0], 0.235, point[1]);
+    pip.position.set(point[0], 0.153, point[1]);
     group.add(pip);
   });
   group.userData.velocity = new THREE.Vector3();
@@ -264,9 +265,9 @@ function makeDie(index){
 }
 const diceGroup = new THREE.Group();
 const dice = [];
-for (let i = 0; i < 7; i++){
+for (let i = 0; i < 5; i++){
   const die = makeDie(i);
-  die.position.set((i % 4) * 0.52 - 0.78, 0, Math.floor(i / 4) * 0.58 - 0.3);
+  die.position.set((i % 3) * 0.34 - 0.34, 0, Math.floor(i / 3) * 0.36 - 0.18);
   die.rotation.set(i * 0.27, i * 0.51, i * 0.19);
   diceGroup.add(die);
   dice.push(die);
@@ -335,9 +336,9 @@ const keyFace = new THREE.Mesh(
 keyFace.rotation.x = -Math.PI / 2;
 keyFace.position.y = 0.092;
 keyCard.add(keyFace);
-keyCard.userData.kind = "device";
-mark(keyCard, keyBase, "device");
-mark(keyCard, keyFace, "device");
+keyCard.userData.kind = "keyfile";
+mark(keyCard, keyBase, "keyfile");
+mark(keyCard, keyFace, "keyfile");
 scene.add(keyCard);
 
 const devices = [makeDevice(0), makeDevice(1), makeDevice(2)];
@@ -348,6 +349,8 @@ devices.forEach(device => {
 const targets = new Map();
 let rolling = false;
 let rollTime = 0;
+const deviceAction = document.getElementById("device-entropy");
+const diceAction = document.getElementById("roll-dice");
 function setTarget(object, x, y, z, visible = true){
   const wasVisible = object.visible;
   targets.set(object, { position: new THREE.Vector3(x, y, z), visible });
@@ -359,48 +362,85 @@ function setTarget(object, x, y, z, visible = true){
 function resetCeremony(){
   readout.textContent = "Ceremony ready";
   rolling = false;
+  sheetFace.material.emissive.setHex(0x000000);
+  sheetFace.material.emissiveIntensity = 0;
   devices.forEach(device => setDeviceScreen(device, ["RNG", "READY"]));
+}
+function updateActions(){
+  if (state.fmt === "bip32"){
+    deviceAction.textContent = "Use key generator";
+    diceAction.textContent = "Add dice entropy";
+  } else if (state.fmt === "codex32"){
+    deviceAction.textContent = "Use worksheet";
+    diceAction.textContent = "Roll the dice";
+  } else {
+    deviceAction.textContent = "Trust the chip";
+    diceAction.textContent = "Roll the dice";
+  }
 }
 function relayout(){
   const multi = state.sig === "multi";
-  const showDice = true;
+  const showDice = state.fmt !== "bip32";
   const showWorksheet = state.fmt === "codex32";
   const showKeyCard = state.fmt === "bip32";
-  setTarget(diceGroup, showWorksheet ? -1.8 : -1.25, 1.78, 0.25, showDice);
-  setTarget(worksheet, 0.2, 1.72, 0.1, showWorksheet);
-  setTarget(keyCard, -0.75, 1.72, 0.15, showKeyCard);
+  const showDevices = state.fmt !== "codex32";
+  setTarget(diceGroup, showWorksheet ? -1.65 : -1.05, 1.66, 0.25, showDice);
+  setTarget(worksheet, 0.38, 1.72, 0.05, showWorksheet);
+  setTarget(keyCard, -0.65, 1.72, 0.12, showKeyCard);
   const spots = multi
     ? [[-1.9, 2.4, -0.75], [0.25, 2.42, -1.0], [2.35, 2.4, -0.68]]
     : [[1.25, 2.4, -0.35], [0, 2.4, -1], [0, 2.4, -1]];
   devices.forEach((device, index) => {
     const spot = spots[index];
-    setTarget(device, spot[0], spot[1], spot[2], multi || index === 0);
+    const shouldShow = showDevices && (multi || index === 0);
+    if (shouldShow) setTarget(device, spot[0], spot[1], spot[2], true);
+    else setTarget(device, index === 1 ? -3.5 : 3.5, 0.5, -1.4, false);
     const variant = multi && state.ven === "multi" ? index : 0;
     const body = device.children[0];
     body.material.color.setHex([0x252c37, 0x31423d, 0x3b332d][variant]);
     device.rotation.y = multi ? (index - 1) * -0.18 : -0.08;
+    if (multi && state.ven === "one"){
+      const normalizers = [[1,1,1],[1.19,1.21,0.9],[0.88,1.11,1.13]];
+      device.scale.set(...normalizers[index]);
+    } else device.scale.set(1,1,1);
   });
   const hero = showWorksheet ? worksheet : showKeyCard ? keyCard : diceGroup;
   focusOn(hero, 6.2);
   setTimeout(() => focusOn(null), reduced ? 0 : 1400);
+  updateActions();
   resetCeremony();
 }
 relayout();
-document.getElementById("device-entropy").addEventListener("click", () => {
+deviceAction.addEventListener("click", () => {
   rolling = false;
-  presentTool("device", "Seed", 850);
-  devices.filter(device => device.visible).forEach(device => setDeviceScreen(device, ["SEED", "SEALED"]));
-  readout.textContent = "Device entropy accepted";
-  focusOn(devices[0], 5.7);
-  speak(COPY.device);
+  if (state.fmt === "codex32"){
+    presentTool("paper", "Worksheet", 850);
+    readout.textContent = "Manual worksheet selected";
+    focusOn(worksheet, 5.5);
+    speak([COPY.object.worksheet]);
+  } else {
+    presentTool("device", "Seed", 850);
+    devices.filter(device => device.visible).forEach(device => setDeviceScreen(device, ["SEED", "SEALED"]));
+    readout.textContent = state.fmt === "bip32" ? "Raw key material generated" : "Device entropy accepted";
+    focusOn(devices[0], 5.7);
+    speak(COPY.device);
+  }
   setTimeout(() => focusOn(null), reduced ? 0 : 2600);
 });
-document.getElementById("roll-dice").addEventListener("click", () => {
+diceAction.addEventListener("click", () => {
   rolling = true;
+  if (!diceGroup.visible) setTarget(diceGroup, -2.55, 1.66, 0.28, true);
   presentTool("dice", "Entropy", 900);
   rollTime = 0;
+  const random = new Uint32Array(dice.length * 3);
+  crypto.getRandomValues(random);
   dice.forEach((die, index) => {
-    die.userData.velocity.set(5 + index * 0.32, 6.2 - index * 0.21, 4.5 + index * 0.18);
+    const offset = index * 3;
+    die.userData.velocity.set(
+      4.5 + (random[offset] % 300) / 100,
+      4.5 + (random[offset + 1] % 300) / 100,
+      4.5 + (random[offset + 2] % 300) / 100
+    );
   });
   readout.textContent = "Physical entropy in motion";
   focusOn(diceGroup, 5.4);
@@ -473,6 +513,7 @@ addEventListener("pointermove", event => {
 addEventListener("pointerup", event => {
   dragging = false;
   if (moved) return;
+  if (event.target !== canvas) return;
   pointer.x = event.clientX / innerWidth * 2 - 1;
   pointer.y = -(event.clientY / innerHeight) * 2 + 1;
   ray.setFromCamera(pointer, camera);
@@ -527,8 +568,11 @@ function tick(){
       rolling = false;
       dice.forEach(die => die.position.y = 0);
       devices.filter(device => device.visible).forEach(device => setDeviceScreen(device, ["DICE", "MIXED"]));
-      readout.textContent = "Observable entropy recorded";
-      if (state.fmt === "codex32") worksheet.children[1].material.emissive = new THREE.Color(0xfbdc7b);
+      readout.textContent = "Illustrative roll complete. Record enough real rolls outside this demo.";
+      if (state.fmt === "codex32"){
+        sheetFace.material.emissive.setHex(0xfbdc7b);
+        sheetFace.material.emissiveIntensity = 0.28;
+      }
       setTimeout(() => focusOn(null), reduced ? 0 : 1600);
     }
   }

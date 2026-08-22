@@ -4,7 +4,7 @@
 
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS, emptyWalletLines } from "./script.js";
+import { SCRIPTS, emptyWalletLines } from "./script.js?v=2";
 import { WORDS } from "./vendor/bip39-en.js";
 import { masterFromMnemonic } from "./vendor/bip32.js";
 import {
@@ -13,7 +13,7 @@ import {
   blackMetal,
   honedStone,
   castRealisticShadows
-} from "./visuals.js?v=4";
+} from "./visuals.js?v=5";
 
 // real BIP-39 checksum: 12 words = 128 bits entropy + 4-bit checksum
 // the 12th word carries the checksum: 7 entropy bits + 4 checksum bits.
@@ -46,14 +46,24 @@ async function validMnemonic(ws){
   return cs === h[0].toString(2).padStart(8, "0").slice(0, 4);
 }
 
+const SCRIPT_PRESETS = {
+  single: {
+    legacy: { path: "m/44'/0'/0'", label: "Legacy P2PKH" },
+    nested: { path: "m/49'/0'/0'", label: "Nested SegWit" },
+    segwit: { path: "m/84'/0'/0'", label: "Native SegWit" },
+    taproot: { path: "m/86'/0'/0'", label: "Single-key Taproot" }
+  },
+  multi: {
+    nested: { path: "m/48'/0'/0'/1'", label: "Nested multisig compatibility" },
+    segwit: { path: "m/48'/0'/0'/2'", label: "Native multisig compatibility" }
+  }
+};
 const state = { fmt: "bip39", sig: "single", ven: "one", hasDescriptor: false,
-  pass: "", path: "std", scr: "segwit" };
-const FUNDS_BTC = 0.21, BTC_USD = 114000;
-// the demo wallet that actually holds funds: these words, no passphrase,
-// m/84'/0'/0', native segwit. Everything else opens empty or not at all.
+  pass: "", path: SCRIPT_PRESETS.single.segwit.path, scr: "segwit" };
+// A published BIP test vector used only to verify deterministic wallet identity:
+// these words, no passphrase, m/84'/0'/0', native SegWit. No balance is implied.
 const TRUE_WORDS = ["abandon","abandon","abandon","abandon","abandon","abandon",
   "abandon","abandon","abandon","abandon","abandon","about"];
-const TRUE_FP = "73C5DA0A";
 let words = TRUE_WORDS.slice();
 let wordsValid = true, wordsMatch = true;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -138,17 +148,18 @@ const edgeSteel = brushedMetal(THREE, 0xaeb5bd, 0.17);
 const goldSteel = brushedMetal(THREE, 0xd8b354, 0.18);
 goldSteel.emissive = new THREE.Color(0x40330c);
 goldSteel.emissiveIntensity = 0.12;
+const housingSteel = brushedMetal(THREE, 0x59636e, 0.28);
 const vaultHousing = new THREE.Group();
 const housingParts = [
-  [0, 7.15, -13.3, 8.6, 0.75, 1.5],
-  [0, -0.35, -13.3, 8.6, 0.75, 1.5],
-  [-4.05, 3.4, -13.3, 0.75, 7.0, 1.5],
-  [4.05, 3.4, -13.3, 0.75, 7.0, 1.5]
+  [0, 7.2, -13.3, 9.0, 0.8, 1.5],
+  [0, 0.35, -13.3, 9.0, 0.7, 1.5],
+  [-4.25, 3.75, -13.3, 0.75, 7.5, 1.5],
+  [4.25, 3.75, -13.3, 0.75, 7.5, 1.5]
 ];
 housingParts.forEach(part => {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(part[3], part[4], part[5]),
-    darkSteel
+    housingSteel
   );
   mesh.position.set(part[0], part[1], part[2]);
   mesh.castShadow = true;
@@ -212,7 +223,7 @@ doorFace.castShadow = true;
 doorG.add(doorFace);
 const innerFace = new THREE.Mesh(
   new THREE.CylinderGeometry(2.62, 2.62, 0.12, 72),
-  darkSteel
+  brushedMetal(THREE, 0x858d96, 0.2)
 );
 innerFace.rotation.x = Math.PI / 2;
 innerFace.position.z = 0.48;
@@ -305,27 +316,49 @@ scene.add(glowDisc);
 const glowLight = new THREE.PointLight(0xfbdc7b, 0, 22);
 glowLight.position.set(0, 3.6, -15.2);
 scene.add(glowLight);
-const vaultFunds = new THREE.Group();
-const coinPedestal = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.9, 1.05, 0.65, 32),
-  darkSteel
-);
-coinPedestal.position.set(0, 1.75, -16.2);
-vaultFunds.add(coinPedestal);
-for (let i = 0; i < 7; i++){
-  const coin = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.54, 0.54, 0.11, 40),
-    brushedMetal(THREE, 0xe2bd5b, 0.16)
-  );
-  coin.material.emissive = new THREE.Color(0x3e320d);
-  coin.material.emissiveIntensity = 0.18;
-  coin.position.set((i % 2) * 0.46 - 0.23, 2.13 + i * 0.11, -16.2);
-  coin.rotation.z = (i % 2 ? -1 : 1) * 0.03;
-  vaultFunds.add(coin);
+function vaultStatusTexture(){
+  const canvas = document.createElement("canvas");
+  canvas.width = 768;
+  canvas.height = 420;
+  const context = canvas.getContext("2d");
+  const gradient = context.createLinearGradient(0, 0, 768, 420);
+  gradient.addColorStop(0, "#111821");
+  gradient.addColorStop(1, "#070b10");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 768, 420);
+  context.strokeStyle = "#FBDC7B";
+  context.lineWidth = 12;
+  context.strokeRect(16, 16, 736, 388);
+  context.textAlign = "center";
+  context.fillStyle = "#A9E1B2";
+  context.font = "700 54px -apple-system, sans-serif";
+  context.fillText("IDENTITY MATCHED", 384, 130);
+  context.fillStyle = "#E9E4D6";
+  context.font = "700 48px Menlo, monospace";
+  context.fillText("BALANCE: NOT SCANNED", 384, 220);
+  context.fillStyle = "#C4CBD5";
+  context.font = "30px -apple-system, sans-serif";
+  context.fillText("Watch-only data is required for a real balance.", 384, 306);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
-castRealisticShadows(vaultFunds);
-vaultFunds.visible = false;
-scene.add(vaultFunds);
+const vaultRecoveryStatus = new THREE.Group();
+const statusFrame = new THREE.Mesh(
+  new THREE.BoxGeometry(5.55, 3.2, 0.2),
+  brushedMetal(THREE, 0x707984, 0.2)
+);
+vaultRecoveryStatus.add(statusFrame);
+const statusFace = new THREE.Mesh(
+  new THREE.PlaneGeometry(5.25, 2.9),
+  new THREE.MeshBasicMaterial({ map: vaultStatusTexture(), toneMapped: false })
+);
+statusFace.position.z = 0.115;
+vaultRecoveryStatus.add(statusFace);
+vaultRecoveryStatus.position.set(0, 3.4, -12.78);
+castRealisticShadows(vaultRecoveryStatus);
+vaultRecoveryStatus.visible = false;
+scene.add(vaultRecoveryStatus);
 
 
 // ---------- plates ----------
@@ -334,11 +367,11 @@ const FACE = {
     const rows = ["SEED PLATE",""];
     for (let i = 0; i < 12; i += 3) rows.push(words.slice(i, i+3).join("  "));
     rows.forEach((l,i)=>t.fillText(l,36,64+i*52)); },
-  bip32: t => { t.font = "26px Menlo, monospace";
+  bip32: t => { t.font = "22px Menlo, monospace";
     const x = master ? master.xprv : "deriving...";
     const rows = ["KEY FILE", ""];
-    for (let i = 0; i < x.length; i += 26) rows.push(x.slice(i, i+26));
-    rows.slice(0, 6).forEach((l,i)=>t.fillText(l,30,58+i*52)); },
+    for (let i = 0; i < x.length; i += 24) rows.push(x.slice(i, i+24));
+    rows.slice(0, 7).forEach((l,i)=>t.fillText(l,30,50+i*58)); },
   codex32:t => { t.font = "38px Menlo, monospace"; ["CODEX32 PLATE","","MS12NAMEA320ZYXWV","checksummed by hand","no device trusted"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
   descriptor: t => { t.font = "38px Menlo, monospace"; ["THE DESCRIPTOR","","wsh(sortedmulti(2,","xpub1..., xpub2...))","quorum + paths + script"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
 };
@@ -402,8 +435,8 @@ function makePlateAssembly(kind){
     plateBodyGeo,
     brushedMetal(THREE, 0x777f88, 0.24)
   );
-  back.position.set(-0.08, 0.08, -0.11);
-  back.rotation.z = -0.025;
+  back.position.set(0, 0, -0.085);
+  back.rotation.z = 0;
   back.castShadow = true;
   group.add(back);
   const front = new THREE.Mesh(
@@ -459,6 +492,23 @@ const descPlate = makePlateAssembly("descriptor");
 const targets = new Map(); // mesh -> {p:Vector3, visible}
 function setTarget(m, x, y, z, visible = true){ targets.set(m, { p: new THREE.Vector3(x,y,z), visible }); m.visible = m.visible || visible; }
 const fpEl = document.getElementById("fp");
+const pathDisplay = document.getElementById("path-display");
+function activePolicy(){
+  const policies = SCRIPT_PRESETS[state.sig];
+  return policies[state.scr] || policies.segwit;
+}
+function syncPolicyControls(){
+  const multi = state.sig === "multi";
+  if (multi && !SCRIPT_PRESETS.multi[state.scr]) state.scr = "segwit";
+  const policy = activePolicy();
+  state.path = policy.path;
+  pathDisplay.textContent = policy.path;
+  document.querySelectorAll("#scr .chip").forEach(button => {
+    const supported = !multi || Boolean(SCRIPT_PRESETS.multi[button.dataset.v]);
+    button.disabled = !supported;
+    button.classList.toggle("on", button.dataset.v === state.scr);
+  });
+}
 let master = null; // { fp, xprv } of the current seed, computed for real
 let fpRun = 0;
 async function updateFp(){
@@ -479,8 +529,7 @@ async function updateFp(){
   fpEl.className = (state.fmt !== "bip39" || (wordsMatch && pass === "")) ? "fp" : "fp off";
   if (state.fmt === "bip32") relayoutPlates();
 }
-function closeDoor(){ doorTarget = 0; vaultFunds.visible = false; fundsEl.classList.remove("show"); }
-const fundsEl = document.getElementById("funds");
+function closeDoor(){ doorTarget = 0; vaultRecoveryStatus.visible = false; }
 function relayoutPlates(){
   const multi = state.sig === "multi";
   const tints = (multi && state.ven === "multi") ? VENDOR_TINTS_DIFF : VENDOR_TINTS_SAME;
@@ -492,6 +541,7 @@ function relayoutPlates(){
   });
 }
 function relayout(instant = false){
+  syncPolicyControls();
   updateFp();
   const multi = state.sig === "multi";
   const tints = (multi && state.ven === "multi") ? VENDOR_TINTS_DIFF : VENDOR_TINTS_SAME;
@@ -501,17 +551,22 @@ function relayout(instant = false){
     material.map = plateTexture(state.fmt, tints[i]);
     material.needsUpdate = true;
     if (multi){
-      const spots = [[-3.6, 0.2, 0.48],[0, 3.2, 0],[3.8, 0.4, -0.46]];
+      const spots = [[0, 2.65, 0],[-3.65, 0.45, 0.5],[3.65, 0.45, -0.5]];
       const [sx, sz, ry] = spots[i];
-      setTarget(m, sx, 1.02, sz, true); m.userData.ry = ry;
-    } else { setTarget(m, 0, 1.02, 2.6, i === 0); m.userData.ry = 0; }
+      setTarget(m, sx, 1.38, sz, true); m.userData.ry = ry;
+    } else if (i === 0){
+      setTarget(m, 0, 1.38, 2.6, true); m.userData.ry = 0;
+    } else {
+      const exitX = i === 1 ? -8.2 : 8.2;
+      setTarget(m, exitX, 1.38, -1.1, false); m.userData.ry = i === 1 ? 0.7 : -0.7;
+    }
   });
   const descriptorMaterial = descPlate.userData.faceMesh.material;
   if (descriptorMaterial.map) descriptorMaterial.map.dispose();
   descriptorMaterial.map = plateTexture("descriptor", "#b6ab86");
   descriptorMaterial.needsUpdate = true;
-  if (multi){ setTarget(descPlate, 6.2, 1.02, -2.4, true); descPlate.userData.ry = -0.7; }
-  else { setTarget(descPlate, 6.2, 1.02, -2.4, false); state.hasDescriptor = false; }
+  if (multi){ setTarget(descPlate, 5.8, 1.38, -2.1, true); descPlate.userData.ry = -0.62; }
+  else { setTarget(descPlate, 9.4, 1.38, -1.8, false); state.hasDescriptor = false; }
   if (instant) for (const [m,t] of targets){ m.position.copy(t.p); m.visible = t.visible; }
 }
 relayout(true);
@@ -544,13 +599,15 @@ addEventListener("pointerup", e => {
   const m = hit.object.userData.owner || hit.object;
   pulse(m); focusOn(m);
   if (m.userData.kind === "seed" && state.fmt === "bip39" && state.sig === "single"){
-    editor.hidden = false; reviewWords();
+    editor.hidden = false;
+    passInput.value = state.pass;
+    reviewWords();
     speak(["Read the plate. Change a word if you like. Then try the recovery and see which wallet, if any, those words open."]);
     return;
   }
   if (m.userData.kind === "descriptor" && state.sig === "multi" && !state.hasDescriptor && awaitingDescriptor){
     state.hasDescriptor = true; awaitingDescriptor = false;
-    m.position.y += 0.001; setTarget(m, 0, 1.02, 1.4, true); m.userData.ry = 0;
+    m.position.y += 0.001; setTarget(m, 0, 1.38, 1.4, true); m.userData.ry = 0;
     presentTool("plate", "Descriptor", 850);
     speak(["The descriptor joins the seeds. Try the recovery again."]);
   } else speak([L.plate[m.userData.kind]]);
@@ -589,32 +646,60 @@ function syncVendorLock(){
 }
 wireChips("fmt", "fmt", v => {
   closeDoor();
+  editor.hidden = true;
+  if (v !== "bip39"){
+    state.pass = "";
+    passInput.value = "";
+  }
   presentTool("plate", v, 800);
   setTimeout(relayout, reduced ? 0 : 420);
   focusOn(null);
   speak([L.fmt[v]]);
 });
 wireChips("sig", "sig", v => {
+  editor.hidden = true;
   if (v === "single"){ state.ven = "one";
     document.querySelectorAll("#ven .chip").forEach(c => c.classList.toggle("on", c.dataset.v === "one")); }
-  syncVendorLock(); closeDoor(); relayout(); resetSafe(); focusOn(null); speak([L.sig[v]]);
+  syncVendorLock(); syncPolicyControls(); closeDoor(); relayout(); resetSafe(); focusOn(null); speak([L.sig[v]]);
 });
 document.getElementById("ven").addEventListener("click", e => {
   if (state.sig === "single" && e.target.closest(".chip")) speak([L.venLocked]);
 });
 wireChips("ven", "ven", v => { relayout(); focusOn(null); speak([L.ven[v]]); });
-wireChips("pass", "pass", v => {
-  closeDoor(); updateFp(); focusOn(null);
-  speak([L.pass[v ? "butler" : "none"]]);
+wireChips("scr", "scr", v => {
+  syncPolicyControls();
+  closeDoor();
+  focusOn(null);
+  speak([L.scr[v]]);
 });
-wireChips("path", "path", v => { closeDoor(); focusOn(null); speak([L.path[v]]); });
-wireChips("scr", "scr", v => { closeDoor(); focusOn(null); speak([L.scr[v]]); });
 syncVendorLock();
+syncPolicyControls();
 
 // ---------- the editable plate ----------
 const editor = document.getElementById("editor"), edGrid = document.getElementById("ed-grid"),
       edNote = document.getElementById("ed-note");
-let lastOpts = [];
+const passInput = document.getElementById("ed-passin");
+let reviewRun = 0;
+function positionEditorOnPlate(){
+  if (editor.hidden) return;
+  const plate = plates[0];
+  plate.updateMatrixWorld(true);
+  const project = local => {
+    const point = plate.localToWorld(local.clone()).project(camera);
+    return {
+      x: (point.x * 0.5 + 0.5) * innerWidth,
+      y: (-point.y * 0.5 + 0.5) * innerHeight
+    };
+  };
+  const center = project(new THREE.Vector3(0, 0, 0.13));
+  const left = project(new THREE.Vector3(-1.15, 0, 0.13));
+  const right = project(new THREE.Vector3(1.15, 0, 0.13));
+  const plateWidth = Math.max(1, Math.hypot(right.x - left.x, right.y - left.y));
+  const scale = THREE.MathUtils.clamp(plateWidth / 430, 0.68, 1.16);
+  editor.style.left = center.x + "px";
+  editor.style.top = center.y + "px";
+  editor.style.transform = "translate(-50%,-50%) scale(" + scale + ")";
+}
 words.forEach((w, i) => {
   const inp = document.createElement("input");
   inp.value = w; inp.dataset.i = i; inp.autocapitalize = "off"; inp.spellcheck = false;
@@ -635,16 +720,19 @@ words.forEach((w, i) => {
   edGrid.appendChild(inp);
 });
 async function reviewWords(){
-  words = [...edGrid.querySelectorAll("input")].map(i => i.value.trim().toLowerCase());
-  [...edGrid.querySelectorAll("input")].forEach(i =>
-    i.classList.toggle("bad", WORDS.indexOf(i.value.trim().toLowerCase()) < 0));
-  wordsValid = await validMnemonic(words);
+  const run = ++reviewRun;
+  const nextWords = [...edGrid.querySelectorAll("input")].map(i => i.value.trim().toLowerCase());
+  const [nextValid, opts] = await Promise.all([
+    validMnemonic(nextWords),
+    validLastWords(nextWords.slice(0, 11))
+  ]);
+  if (run !== reviewRun) return;
+  words = nextWords;
+  wordsValid = nextValid;
   wordsMatch = words.join(" ") === TRUE_WORDS.join(" ");
-  // the checksum follows the first 11 words automatically; the last word
-  // must come from the 128 that fit. Offer them on the last input.
+  [...edGrid.querySelectorAll("input")].forEach(input =>
+    input.classList.toggle("bad", WORDS.indexOf(input.value.trim().toLowerCase()) < 0));
   const lastInp = edGrid.querySelector('input[data-i="11"]');
-  const opts = await validLastWords(words.slice(0, 11));
-  lastOpts = opts;
   const pick = document.getElementById("cs-pick");
   pick.replaceChildren(...opts.map(w => {
     const b = document.createElement("button"); b.type = "button"; b.textContent = w;
@@ -656,12 +744,24 @@ async function reviewWords(){
   edNote.textContent = !wordsValid
     ? (opts.length ? "The checksum lives in the last word. For these 11 words, exactly 128 final words fit. Tap the last word to choose one."
                    : "A word in red is not on the BIP-39 list, so no checksum can exist yet. Fix it first.")
-    : wordsMatch ? "The original seed. The funded wallet exists behind these words."
-    : "Valid words, different seed. A wallet exists for them. It has never held a coin.";
-  closeDoor(); relayout(); updateFp();
+    : wordsMatch ? "Known test vector. Wallet identity can be derived; balance has not been scanned."
+    : "Valid words, different wallet identity. Balance has not been scanned.";
+  closeDoor(); relayout();
 }
 edGrid.addEventListener("input", () => { clearTimeout(edGrid._t); edGrid._t = setTimeout(reviewWords, 350); });
-document.getElementById("ed-close").addEventListener("click", () => { editor.hidden = true; });
+passInput.addEventListener("input", () => {
+  clearTimeout(passInput._t);
+  passInput._t = setTimeout(() => {
+    state.pass = passInput.value;
+    closeDoor();
+    updateFp();
+    speak([state.pass ? L.pass.butler : L.pass.none]);
+  }, 350);
+});
+document.getElementById("ed-close").addEventListener("click", () => {
+  editor.hidden = true;
+  focusOn(null);
+});
 // recovery
 let recovering = false, awaitingDescriptor = false, failFlash = 0;
 let doorOpenT = 0, wheelSpin = 0, wheelVel = 0, shakeT = 0;
@@ -672,7 +772,7 @@ btn.addEventListener("click", () => {
   if (recovering) return;
   presentTool("plate", "Recovery", 760);
   recovering = true; btn.disabled = true;
-  focusObj = null; frame(new THREE.Vector3(0, 3.4, -12.9), 9.5);
+  focusObj = null; frame(new THREE.Vector3(0, 3.4, -12.9), 11.5);
   const done = ok => setTimeout(() => {
     recovering = false; btn.disabled = false;
     if (!ok && state.sig === "multi"){ awaitingDescriptor = true; focusOn(descPlate, 6); }
@@ -681,18 +781,27 @@ btn.addEventListener("click", () => {
   }, 2400);
   if (state.sig === "single"){
     if (state.fmt === "bip39" && !wordsValid){
-      speak(L.recoverNoSeed); animateRebuild(false); done(false);
+      speak(L.recoverNoSeed);
+      wheelVel = 0;
+      rebuildOk = null;
+      failFlash = 1;
+      shakeT = 0.22;
+      done(false);
     } else {
-      const rightContext = state.pass === "" && state.path === "std" && state.scr === "segwit";
-      const funded = (state.fmt !== "bip39" || wordsMatch) && rightContext;
-      vaultFunds.visible = funded;
-      fundsEl.classList.toggle("show", funded);
-      speak(funded ? L.recoverFunded : emptyWalletLines(state));
+      const rightContext = state.pass === "" && state.scr === "segwit";
+      const identityMatched = (state.fmt !== "bip39" || wordsMatch) && rightContext;
+      vaultRecoveryStatus.visible = identityMatched;
+      speak(identityMatched ? L.recoverFunded : emptyWalletLines(state));
       animateRebuild(true); done(true);
     }
   }
   else if (!state.hasDescriptor){ speak(L.recoverMultiFail); animateRebuild(false); done(false); }
-  else { vaultFunds.visible = true; fundsEl.classList.add("show"); speak(L.recoverMultiOk); animateRebuild(true); done(true); }
+  else {
+    vaultRecoveryStatus.visible = true;
+    speak(L.recoverMultiOk);
+    animateRebuild(true);
+    done(true);
+  }
 });
 let rebuildOk = null, rebuildT = 0;
 function animateRebuild(ok){ rebuildOk = ok; rebuildT = 0; wheelVel = 6; doorTarget = 0; }
@@ -721,7 +830,7 @@ function tick(){
   }
   for (const [m,t] of targets){
     if (t.visible) m.visible = true;
-    m.position.lerp(t.p, reduced ? 1 : 0.12);
+    m.position.lerp(t.p, reduced ? 1 : 1 - Math.exp(-dt * 5.2));
     if (!t.visible && m.position.distanceTo(t.p) < 0.05) m.visible = false;
     if (m.userData.pulse > 0){ m.userData.pulse -= dt*2;
       m.scale.setScalar(1 + Math.sin(m.userData.pulse*Math.PI)*0.08); }
@@ -730,6 +839,7 @@ function tick(){
     const ry = (m === focusObj) ? yaw : (m.userData.ry || 0);
     m.rotation.y += (ry - m.rotation.y) * (reduced ? 1 : dt*3);
   }
+  positionEditorOnPlate();
   const descriptorFace = descPlate.userData.faceMesh.material;
   if (awaitingDescriptor && descPlate.visible){
     descriptorFace.emissive.setHex(0xfbdc7b);
@@ -752,7 +862,7 @@ function tick(){
     doorPivot.position.x = -3.4 + Math.sin(shakeT*60)*0.06*shakeT;
   } else doorPivot.position.x = -3.4;
   doorOpenT += ((doorTarget) - doorOpenT) * (reduced ? 1 : dt*1.6);
-  doorPivot.rotation.y = doorOpenT * 1.15;
+  doorPivot.rotation.y = -doorOpenT * 1.28;
   glowDisc.material.opacity = doorOpenT * 0.5;
   glowLight.intensity = doorOpenT * 55;
   if (failFlash > 0){ failFlash -= dt;

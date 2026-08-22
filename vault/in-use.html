@@ -6,7 +6,7 @@
 <title>Seed In Use, The Custody Vault</title>
 <meta name="description" content="Walk a PSBT across an air gap and see how one signer differs from a multi-vendor quorum.">
 <link rel="preload" href="butler-host-v2.webp" as="image">
-<link rel="stylesheet" href="scene-shared.css?v=3">
+<link rel="stylesheet" href="scene-shared.css?v=4">
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -27,14 +27,22 @@
     <button class="chip" data-v="bip32">BIP-32</button>
     <button class="chip" data-v="codex32">Codex32</button>
   </div></div>
+  <div class="grp"><div class="lbl">Watch-only device</div><div class="chips" id="platform">
+    <button class="chip on" data-v="desktop">Desktop</button>
+    <button class="chip" data-v="phone">Phone</button>
+  </div>
+  <div class="axis-note">This device builds and broadcasts the PSBT. It holds no private seed.</div>
+  </div>
   <div class="grp"><div class="lbl">Signers</div><div class="chips" id="sig">
     <button class="chip on" data-v="single">Single</button>
     <button class="chip" data-v="multi">Multisig</button>
   </div></div>
-  <div class="grp"><div class="lbl">Vendors</div><div class="chips" id="ven">
-    <button class="chip on" data-v="one">One</button>
-    <button class="chip" data-v="multi">Multi</button>
-  </div></div>
+  <div class="grp"><div class="lbl">Signer manufacturers</div><div class="chips" id="ven">
+    <button class="chip on" data-v="one">Same maker</button>
+    <button class="chip" data-v="multi">Mixed makers</button>
+  </div>
+  <div class="axis-note">Vendor diversity matters only when multiple signers form a quorum.</div>
+  </div>
 </div>
 <div class="act"><button id="walk-psbt">Walk the PSBT</button></div>
 <div class="caption"><div class="bubble"><span class="who">Your Butler</span><span id="say"></span></div></div>
@@ -47,7 +55,7 @@
       || document.createElement("canvas").getContext("webgl");
     if (!gl) location.replace("fallback.html");
   } catch (error) { location.replace("fallback.html"); }
-  import("./in-use.js?v=12").catch(error => {
+  import("./in-use.js?v=14").catch(error => {
     console.error("IN-USE SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });

@@ -1,18 +1,19 @@
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS } from "./script.js";
+import { SCRIPTS } from "./script.js?v=2";
 import {
   setupPhysicalRenderer,
   brushedMetal,
   blackMetal,
   honedStone,
+  walnutWood,
   roundedBoxGeometry,
   contactShadow,
   castRealisticShadows
-} from "./visuals.js?v=4";
+} from "./visuals.js?v=5";
 
 const COPY = SCRIPTS.inUse;
-const state = { fmt: "bip39", sig: "single", ven: "one" };
+const state = { fmt: "bip39", sig: "single", ven: "one", platform: "desktop" };
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const canvas = document.getElementById("c");
 const readout = document.getElementById("readout");
@@ -112,7 +113,7 @@ scene.add(wall);
 const desk = new THREE.Group();
 const deskTop = new THREE.Mesh(
   new THREE.BoxGeometry(7.8, 0.25, 2.75),
-  honedStone(THREE, 0x242830)
+  walnutWood(THREE)
 );
 deskTop.position.set(0, 1.23, -0.25);
 deskTop.castShadow = true;
@@ -247,12 +248,40 @@ function makeMonitor(){
   mark(group, screen, "monitor");
   return group;
 }
-function setMonitor(lines, color = "#FBDC7B"){
-  const oldMap = monitor.userData.screen.material.map;
-  monitor.userData.screen.material.map = screenTexture(lines, { border: color, color });
-  monitor.userData.screen.material.emissive.set(color);
-  monitor.userData.screen.material.needsUpdate = true;
+function setWatchScreen(lines, color = "#FBDC7B"){
+  const oldMap = activeWatch.userData.screen.material.map;
+  activeWatch.userData.screen.material.map = screenTexture(lines, { border: color, color });
+  activeWatch.userData.screen.material.emissive.set(color);
+  activeWatch.userData.screen.material.needsUpdate = true;
   if (oldMap) oldMap.dispose();
+}
+function makePhone(){
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(
+    roundedBoxGeometry(THREE, 0.88, 1.62, 0.16, 0.14),
+    blackMetal(THREE, 0x202833, 0.22)
+  );
+  group.add(body);
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.7, 1.24),
+    new THREE.MeshStandardMaterial({
+      map: screenTexture(["WATCH ONLY", "PSBT READY"]),
+      emissive: 0xfbdc7b, emissiveIntensity: 0.16, roughness: 0.5,
+      toneMapped: false
+    })
+  );
+  screen.position.z = 0.125;
+  group.add(screen);
+  const stand = new THREE.Mesh(
+    new THREE.BoxGeometry(0.66, 0.08, 0.5),
+    blackMetal(THREE, 0x171d25, 0.26)
+  );
+  stand.position.set(0, -0.86, 0.13);
+  group.add(stand);
+  group.userData.screen = screen;
+  mark(group, body, "monitor");
+  mark(group, screen, "monitor");
+  return group;
 }
 function makeSigner(variant){
   const group = new THREE.Group();
@@ -312,6 +341,11 @@ const monitor = makeMonitor();
 monitor.position.set(-2.85, 2.75, -0.2);
 castRealisticShadows(monitor);
 scene.add(monitor);
+const phone = makePhone();
+phone.position.set(-2.85, 2.22, -0.2);
+castRealisticShadows(phone);
+scene.add(phone);
+let activeWatch = monitor;
 const signers = [makeSigner(0), makeSigner(1), makeSigner(2)];
 signers.forEach(signer => {
   castRealisticShadows(signer);
@@ -358,8 +392,10 @@ function setTarget(object, x, y, z, visible = true){
     object.visible = true;
   }
 }
-function formatLabel(){
-  return state.fmt === "bip39" ? "BIP-39" : state.fmt === "bip32" ? "BIP-32" : "CODEX32";
+function formatStateLines(){
+  if (state.fmt === "bip32") return ["BIP-32", "RAW KEY LOADED"];
+  if (state.fmt === "codex32") return ["CODEX32", "DECODED"];
+  return ["BIP-39", "WORDS LOADED"];
 }
 function resetSigning(){
   transfer.active = false;
@@ -367,14 +403,22 @@ function resetSigning(){
   transfer.step = 0;
   pathLine.visible = false;
   walkButton.disabled = false;
-  psbt.position.set(-1.75, 1.76, 0.45);
+  const start = activeWatch.position.clone().add(
+    state.platform === "desktop"
+      ? new THREE.Vector3(1.1, -0.98, 0.62)
+      : new THREE.Vector3(0.9, -0.42, 0.58)
+  );
+  psbt.position.copy(start);
   psbt.rotation.set(0, 0, 0);
-  setMonitor(["WATCH ONLY", "PSBT READY"]);
-  signers.forEach(signer => setSigner(signer, [formatLabel(), "WAITING"]));
+  setWatchScreen(["WATCH ONLY", "PSBT READY"]);
+  signers.forEach(signer => setSigner(signer, formatStateLines()));
   readout.textContent = "PSBT unsigned";
 }
 function relayout(){
   const multi = state.sig === "multi";
+  activeWatch = state.platform === "phone" ? phone : monitor;
+  setTarget(monitor, -2.85, 2.75, -0.2, state.platform === "desktop");
+  setTarget(phone, -2.85, 2.22, -0.2, state.platform === "phone");
   const spots = multi
     ? [[-0.65, 2.22, -0.5], [1.15, 2.2, -0.85], [2.85, 2.28, -0.4]]
     : [[1.1, 2.25, -0.5], [0, 2.2, -0.8], [0, 2.2, -0.8]];
@@ -385,6 +429,10 @@ function relayout(){
     const variant = multi && state.ven === "multi" ? index : 0;
     body.material.color.setHex([0x252c37, 0x30423b, 0x40352e][variant]);
     signer.rotation.y = multi ? (index - 1) * -0.18 : -0.05;
+    if (multi && state.ven === "one"){
+      const normalizers = [[1,1,1],[0.82,1.16,0.86],[1.16,0.92,1.18]];
+      signer.scale.set(...normalizers[index]);
+    } else signer.scale.set(1,1,1);
   });
   resetSigning();
   focusOn(null);
@@ -402,15 +450,19 @@ const transfer = {
 function startTransfer(){
   if (transfer.active) return;
   const required = state.sig === "multi" ? 2 : 1;
-  const start = new THREE.Vector3(-1.75, 1.76, 0.45);
+  const start = activeWatch.position.clone().add(
+    state.platform === "desktop"
+      ? new THREE.Vector3(1.1, -0.98, 0.62)
+      : new THREE.Vector3(0.9, -0.42, 0.58)
+  );
   const points = [start];
-  const owners = [monitor];
+  const owners = [activeWatch];
   for (let i = 0; i < required; i++){
     points.push(signers[i].position.clone().add(new THREE.Vector3(0, 0.2, 0.6)));
     owners.push(signers[i]);
   }
   points.push(start.clone());
-  owners.push(monitor);
+  owners.push(activeWatch);
   transfer.active = true;
   transfer.points = points;
   transfer.owners = owners;
@@ -421,7 +473,7 @@ function startTransfer(){
   psbt.position.copy(points[0]);
   walkButton.disabled = true;
   readout.textContent = "PSBT crossing the air gap";
-  setMonitor(["PSBT", "IN FLIGHT"]);
+  setWatchScreen(["PSBT", "IN FLIGHT"]);
   speak(COPY.transferStart);
   focusOn(psbt, 5.4);
 }
@@ -433,9 +485,9 @@ walkButton.addEventListener("click", () => {
 });
 
 function arrive(owner){
-  if (owner === monitor){
+  if (owner === activeWatch){
     if (transfer.step + 1 === transfer.points.length - 1){
-      setMonitor(["READY TO", "BROADCAST"], "#8FC79A");
+      setWatchScreen(["READY TO", "BROADCAST"], "#8FC79A");
       readout.textContent = "Signed transaction ready";
       speak(COPY.transferDone);
       transfer.active = false;
@@ -468,6 +520,11 @@ function syncVendorLock(){
 wireChips("fmt", "fmt", value => {
   relayout();
   speak(COPY.format[value]);
+});
+wireChips("platform", "platform", value => {
+  relayout();
+  presentTool(value === "phone" ? "device" : "psbt", value, 800);
+  speak([COPY.platform[value]]);
 });
 wireChips("sig", "sig", value => {
   if (value === "single"){
@@ -515,6 +572,7 @@ addEventListener("pointermove", event => {
 addEventListener("pointerup", event => {
   dragging = false;
   if (moved || transfer.active) return;
+  if (event.target !== canvas) return;
   pointer.x = event.clientX / innerWidth * 2 - 1;
   pointer.y = -(event.clientY / innerHeight) * 2 + 1;
   ray.setFromCamera(pointer, camera);

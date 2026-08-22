@@ -6,7 +6,7 @@
 <title>The Vault, Bitcoin Butlers</title>
 <meta name="description" content="Where your Bitcoin seed sleeps. Walk the vault with a Butler and see what a backup must really survive.">
 <link rel="preload" href="butler-host-v2.webp" as="image">
-<link rel="stylesheet" href="scene-shared.css?v=3">
+<link rel="stylesheet" href="scene-shared.css?v=4">
 <style>
   :root{
     --ink:#0C0F14; --panel:#151A22; --gold:#FBDC7B; --bone:#E9E4D6;
@@ -41,32 +41,35 @@
   .chip:disabled{opacity:.35;cursor:not-allowed}
   .fp{font-family:Menlo,monospace;font-size:.8rem;color:var(--gold);letter-spacing:.12em}
   .fp.off{color:var(--ember)}
-  .editor{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;
-    background:rgba(21,26,34,.97);border:1px solid var(--gold);border-radius:12px;
-    padding:1rem 1.1rem;width:min(92vw,460px)}
+  .editor{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:8;
+    transform-origin:center;background:linear-gradient(145deg,#d7dadd,#8a9199);
+    border:2px solid #313842;border-radius:12px;padding:.62rem .68rem;width:430px;
+    color:#171b20;box-shadow:0 18px 45px rgba(0,0,0,.58),inset 0 0 0 2px rgba(255,255,255,.28)}
   .ed-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--sans);
-    font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:.7rem}
+    font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:#252c34;margin-bottom:.45rem}
   .ed-head button{font-family:var(--sans);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--ink);background:var(--gold);border:0;border-radius:5px;padding:.4rem .8rem;cursor:pointer}
-  .ed-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
-  .ed-grid input{font-family:Menlo,monospace;font-size:.78rem;padding:.35rem .45rem;
-    background:var(--ink);border:1px solid var(--line);border-radius:5px;color:var(--bone);width:100%}
-  .ed-grid input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 1px rgba(251,220,123,.35)}
-  .ed-grid input::selection{background:rgba(251,220,123,.35);color:var(--bone)}
-  .ed-grid input.bad{border-color:var(--ember);color:var(--ember)}
+    color:#f8efd0;background:#20262f;border:0;border-radius:5px;padding:.32rem .68rem;cursor:pointer}
+  .ed-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.28rem}
+  .ed-grid input{font-family:Menlo,monospace;font-size:.72rem;padding:.28rem .36rem;
+    background:rgba(242,244,245,.48);border:1px solid rgba(38,45,53,.36);
+    border-radius:4px;color:#161a1f;width:100%;box-shadow:inset 0 1px 2px rgba(255,255,255,.35)}
+  .ed-grid input:focus{outline:none;border-color:#5f4b0e;background:rgba(255,250,223,.82);
+    box-shadow:0 0 0 1px rgba(95,75,14,.35)}
+  .ed-grid input::selection{background:rgba(95,75,14,.3);color:#111}
+  .ed-grid input.bad{border-color:#9c3f2c;color:#8a2717;background:#f2d2c8}
   .cs-pick{display:none;margin-top:.55rem;max-height:9.5rem;overflow-y:auto;
     border:1px solid var(--line);border-radius:8px;padding:.45rem;
     display:none;flex-wrap:wrap;gap:.3rem}
   .cs-pick.open{display:flex}
-  .cs-pick button{font-family:Menlo,monospace;font-size:.72rem;padding:.25rem .5rem;
-    background:transparent;border:1px solid var(--line);border-radius:5px;color:var(--bone);cursor:pointer}
-  .cs-pick button:hover{border-color:var(--gold);color:var(--gold)}
-  .ed-note{font-family:var(--sans);font-size:.72rem;color:var(--slate);margin-top:.6rem;min-height:1.2em}
-  .funds{position:fixed;top:3rem;left:50%;transform:translateX(-50%);z-index:4;
-    font-family:var(--sans);font-size:.85rem;letter-spacing:.06em;color:var(--gold);
-    background:rgba(21,26,34,.9);border:1px solid var(--gold);border-radius:999px;
-    padding:.45rem 1rem;display:none}
-  .funds.show{display:block}
+  .cs-pick button{font-family:Menlo,monospace;font-size:.68rem;padding:.23rem .42rem;
+    background:rgba(255,255,255,.42);border:1px solid #5c646d;border-radius:5px;color:#171b20;cursor:pointer}
+  .cs-pick button:hover{border-color:#5f4b0e;color:#5f4b0e}
+  .plate-pass{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.32rem .5rem;
+    margin-top:.45rem;font-family:var(--sans);font-size:.61rem;color:#29313a}
+  .plate-pass input{font-family:Menlo,monospace;font-size:.72rem;padding:.28rem .36rem;
+    background:rgba(242,244,245,.5);border:1px solid rgba(38,45,53,.36);border-radius:4px;color:#161a1f}
+  .plate-pass small{grid-column:1/-1;color:#4a525a;line-height:1.25}
+  .ed-note{font-family:var(--sans);font-size:.66rem;color:#303840;margin-top:.42rem;min-height:1.2em}
 
   .caption{position:fixed;left:.75rem;right:.75rem;bottom:.75rem;display:flex;gap:.7rem;align-items:flex-end}
   .bubble{flex:1;background:rgba(21,26,34,.94);border:1px solid var(--line);border-left:2px solid var(--gold);
@@ -111,34 +114,35 @@
       <button class="chip on" data-v="single">Single</button>
       <button class="chip" data-v="multi">Multisig</button>
     </div></div>
-  <div class="grp"><div class="lbl">Vendors</div>
+  <div class="grp"><div class="lbl">Signer manufacturers</div>
     <div class="chips" id="ven">
-      <button class="chip on" data-v="one">One</button>
-      <button class="chip" data-v="multi">Multi</button>
-    </div></div>
-  <div class="grp"><div class="lbl">Passphrase</div>
-    <div class="chips" id="pass">
-      <button class="chip on" data-v="">None</button>
-      <button class="chip" data-v="butler">"butler"</button>
-    </div></div>
+      <button class="chip on" data-v="one">Same maker</button>
+      <button class="chip" data-v="multi">Mixed makers</button>
+    </div>
+    <div class="axis-note">Vendor diversity only exists with multiple signers. Choose Multisig to compare manufacturers.</div>
+  </div>
   <div class="grp"><div class="lbl">Derivation path</div>
-    <div class="chips" id="path">
-      <button class="chip on" data-v="std">m/84'/0'/0'</button>
-      <button class="chip" data-v="alt">m/44'/0'/0'</button>
-    </div></div>
+    <div class="fp" id="path-display">m/84'/0'/0'</div>
+    <div class="axis-note">Selected automatically from script type and signer policy.</div>
+  </div>
   <div class="grp"><div class="lbl">Script type</div>
     <div class="chips" id="scr">
       <button class="chip on" data-v="segwit">Native SegWit</button>
+      <button class="chip" data-v="nested">Nested SegWit</button>
+      <button class="chip" data-v="taproot">Taproot</button>
       <button class="chip" data-v="legacy">Legacy</button>
     </div></div>
   <div class="grp"><div class="lbl">Master fingerprint</div>
     <div class="fp" id="fp">73C5DA0A</div></div>
 </div>
-<div class="funds" id="funds">0.21 BTC · $23,940</div>
 <div class="editor" id="editor" hidden>
-  <div class="ed-head">Engrave the plate <button id="ed-close">Done</button></div>
+  <div class="ed-head">Recovery plate input <button id="ed-close">Done</button></div>
   <div class="ed-grid" id="ed-grid"></div>
   <div class="cs-pick" id="cs-pick"></div>
+  <label class="plate-pass"><span>Passphrase</span>
+    <input id="ed-passin" type="text" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="optional">
+    <small>Recovery input only. Do not engrave a passphrase beside its seed in a real setup.</small>
+  </label>
   <div class="ed-note" id="ed-note"></div>
 </div>
 <div class="act"><button id="recover">Try recovery</button></div>
@@ -154,7 +158,7 @@
       ||document.createElement("canvas").getContext("webgl");
     if(!gl) location.replace("fallback.html");
   }catch(e){location.replace("fallback.html")}
-  import("./scene.js?v=10").catch(error => {
+  import("./scene.js?v=16").catch(error => {
     console.error("AT-REST SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });

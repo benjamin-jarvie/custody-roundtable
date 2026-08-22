@@ -74,6 +74,64 @@ function stoneDataTexture(THREE){
   });
 }
 
+function woodColorTexture(THREE){
+  return textureFromCanvas(THREE, "walnut-color", (context, width, height) => {
+    const base = context.createLinearGradient(0, 0, 0, height);
+    base.addColorStop(0, "#7a4727");
+    base.addColorStop(0.48, "#58301d");
+    base.addColorStop(1, "#3a2016");
+    context.fillStyle = base;
+    context.fillRect(0, 0, width, height);
+
+    const plankHeight = height / 4;
+    for (let plank = 0; plank < 4; plank++){
+      const y = plank * plankHeight;
+      context.fillStyle = plank % 2 ? "rgba(25,10,4,.12)" : "rgba(255,194,116,.055)";
+      context.fillRect(0, y, width, plankHeight);
+      context.fillStyle = "rgba(18,8,4,.58)";
+      context.fillRect(0, y, width, 2);
+      for (let grain = 0; grain < 34; grain++){
+        const seed = plank * 100 + grain;
+        const gy = y + 8 + seeded(seed + 4100) * (plankHeight - 16);
+        const drift = seeded(seed + 4200) * 16 - 8;
+        context.strokeStyle = grain % 3 === 0
+          ? "rgba(34,13,5,.34)"
+          : "rgba(218,133,70,.18)";
+        context.lineWidth = 0.7 + seeded(seed + 4300) * 1.5;
+        context.beginPath();
+        context.moveTo(-20, gy);
+        context.bezierCurveTo(width * 0.28, gy + drift, width * 0.68, gy - drift, width + 20, gy + drift * 0.35);
+        context.stroke();
+      }
+    }
+
+    for (let knot = 0; knot < 5; knot++){
+      const x = 60 + seeded(knot + 5100) * (width - 120);
+      const y = 35 + seeded(knot + 5200) * (height - 70);
+      context.strokeStyle = "rgba(28,10,4,.34)";
+      context.lineWidth = 2;
+      context.beginPath();
+      context.ellipse(x, y, 11 + seeded(knot + 5300) * 18, 4 + seeded(knot + 5400) * 7, 0, 0, Math.PI * 2);
+      context.stroke();
+    }
+  }, true);
+}
+
+function woodDataTexture(THREE){
+  return textureFromCanvas(THREE, "walnut-height", (context, width, height) => {
+    context.fillStyle = "#858585";
+    context.fillRect(0, 0, width, height);
+    for (let y = 0; y < height; y++){
+      const wave = Math.sin(y * 0.18) * 7 + Math.sin(y * 0.047) * 11;
+      const value = Math.round(120 + wave + seeded(y + 6100) * 12);
+      context.fillStyle = `rgb(${value},${value},${value})`;
+      context.fillRect(0, y, width, 1);
+    }
+    context.fillStyle = "#464646";
+    for (let plank = 0; plank < 4; plank++) context.fillRect(0, plank * height / 4, width, 2);
+  });
+}
+
 export function setupPhysicalRenderer(THREE, renderer, scene, exposure = 1.08){
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -168,6 +226,27 @@ export function honedStone(THREE, color = 0x171b21){
     clearcoat: 0.04,
     clearcoatRoughness: 0.72,
     envMapIntensity: 0.56
+  });
+}
+
+export function walnutWood(THREE){
+  const colorMap = woodColorTexture(THREE).clone();
+  const grainMap = woodDataTexture(THREE).clone();
+  colorMap.repeat.set(3.2, 1.5);
+  grainMap.repeat.set(3.2, 1.5);
+  colorMap.needsUpdate = true;
+  grainMap.needsUpdate = true;
+  return new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    map: colorMap,
+    roughness: 0.46,
+    roughnessMap: grainMap,
+    bumpMap: grainMap,
+    bumpScale: 0.035,
+    metalness: 0,
+    clearcoat: 0.32,
+    clearcoatRoughness: 0.38,
+    envMapIntensity: 0.9
   });
 }
 

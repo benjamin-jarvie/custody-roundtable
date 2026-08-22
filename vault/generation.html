@@ -6,7 +6,7 @@
 <title>Seed Generation, The Custody Vault</title>
 <meta name="description" content="Compare device and physical entropy inside a guided 3D seed generation ceremony.">
 <link rel="preload" href="butler-host-v2.webp" as="image">
-<link rel="stylesheet" href="scene-shared.css?v=3">
+<link rel="stylesheet" href="scene-shared.css?v=4">
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -31,10 +31,12 @@
     <button class="chip on" data-v="single">Single</button>
     <button class="chip" data-v="multi">Multisig</button>
   </div></div>
-  <div class="grp"><div class="lbl">Vendors</div><div class="chips" id="ven">
-    <button class="chip on" data-v="one">One</button>
-    <button class="chip" data-v="multi">Multi</button>
-  </div></div>
+  <div class="grp"><div class="lbl">Signer manufacturers</div><div class="chips" id="ven">
+    <button class="chip on" data-v="one">Same maker</button>
+    <button class="chip" data-v="multi">Mixed makers</button>
+  </div>
+  <div class="axis-note">Vendor diversity only exists with multiple signers. Choose Multisig to compare manufacturers.</div>
+  </div>
 </div>
 <div class="act">
   <button id="device-entropy">Trust the chip</button>
@@ -50,7 +52,7 @@
       || document.createElement("canvas").getContext("webgl");
     if (!gl) location.replace("fallback.html");
   } catch (error) { location.replace("fallback.html"); }
-  import("./generation.js?v=12").catch(error => {
+  import("./generation.js?v=16").catch(error => {
     console.error("GENERATION SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });
