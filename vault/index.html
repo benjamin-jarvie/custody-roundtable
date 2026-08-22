@@ -22,10 +22,10 @@
     background:linear-gradient(rgba(12,15,20,.85),transparent)}
   .top{align-items:flex-start}
   .nav{display:flex;flex-direction:column;gap:.3rem}
-  .logo{width:120px;height:auto;margin-bottom:.4rem}
-  .scene-link{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);cursor:default}
-  .scene-link.here{color:var(--gold);border-left:2px solid var(--gold);padding-left:.4rem}
-  .scene-link.soon{opacity:.55}
+  .logo{width:64px;height:auto;margin-bottom:.5rem}
+  .scene-link{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);cursor:default}
+  .scene-link.here{color:var(--gold);text-shadow:0 0 9px rgba(251,220,123,.3)}
+  @media(min-width:700px){.scene-link{font-size:1.02rem}}
   .flat{font-size:.7rem;letter-spacing:.08em;color:var(--slate);text-decoration:underline}
 
   .controls{position:fixed;top:3.4rem;right:.75rem;display:flex;flex-direction:column;gap:.55rem;max-width:46vw}
@@ -75,8 +75,8 @@
 <div class="hud top">
   <div class="nav">
     <img src="logo.png" alt="Bitcoin Butlers" class="logo">
-    <a class="scene-link soon">Seed Generation</a>
-    <a class="scene-link soon">Seed In Use</a>
+    <a class="scene-link">Seed Generation</a>
+    <a class="scene-link">Seed In Use</a>
     <a class="scene-link here">Seed At Rest</a>
   </div>
   <a class="flat" href="fallback.html">2D version</a>
@@ -119,6 +119,7 @@
 <div class="editor" id="editor" hidden>
   <div class="ed-head">Engrave the plate <button id="ed-close">Done</button></div>
   <div class="ed-grid" id="ed-grid"></div>
+  <datalist id="cs-options"></datalist>
   <div class="ed-note" id="ed-note"></div>
 </div>
 <div class="act"><button id="recover">Try recovery</button></div>

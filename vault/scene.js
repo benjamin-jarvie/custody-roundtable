@@ -7,6 +7,24 @@ import { makeButlerTexture, speak } from "./butler.js";
 import { WORDS } from "./vendor/bip39-en.js";
 
 // real BIP-39 checksum: 12 words = 128 bits entropy + 4-bit checksum
+// the 12th word carries the checksum: 7 entropy bits + 4 checksum bits.
+// For any first 11 words there are exactly 128 valid final words.
+async function validLastWords(first11){
+  const idx = first11.map(w => WORDS.indexOf(w));
+  if (idx.some(i => i < 0)) return [];
+  let bits = "";
+  for (const i of idx) bits += i.toString(2).padStart(11, "0"); // 121 bits
+  const out = [];
+  for (let v = 0; v < 128; v++){
+    const ent = bits + v.toString(2).padStart(7, "0"); // 128 bits
+    const bytes = new Uint8Array(16);
+    for (let i = 0; i < 16; i++) bytes[i] = parseInt(ent.slice(i*8, i*8+8), 2);
+    const h = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    const cs = h[0] >> 4;
+    out.push(WORDS[(v << 4) | cs]);
+  }
+  return out;
+}
 async function validMnemonic(ws){
   const idx = ws.map(w => WORDS.indexOf(w));
   if (idx.some(i => i < 0)) return false;
@@ -253,8 +271,9 @@ const L = {
       : st.scr !== "segwit" ? "The script type builds different addresses from the same keys. Correct seed, empty view."
       : "These are valid words for a wallet that has never held a coin."),
     "Nothing was destroyed. But a person restoring from backup would see an empty balance and believe the coin gone. Every part of the recovery set must survive, together."],
-  recoverNoSeed: ["The wheel will not even turn.",
-    "Those words fail the checksum. They are not a seed. No wallet, empty or full, exists behind them. Fix the words on the plate."],
+  recoverNoSeed: ["The wheel spins... and stops. The door refuses.",
+    "The last word failed its arithmetic. The checksum inside it does not match the other eleven, so wallet software rejects the whole phrase before trying. No wallet, empty or full, exists behind these words.",
+    "Tap the plate: the last word offers the 128 words that would fit."],
   recoverMultiFail: ["Watch closely. Three seeds, all present, all correct...",
     "And the door does not move. Seeds alone are not enough for multisig. The wallet needs the descriptor: every cosigner's xpub, the quorum, the paths.",
     "Most people learn this too late. Tap the gold plate to add the descriptor, then try again."],
@@ -355,8 +374,17 @@ async function reviewWords(){
     i.classList.toggle("bad", WORDS.indexOf(i.value.trim().toLowerCase()) < 0));
   wordsValid = await validMnemonic(words);
   wordsMatch = words.join(" ") === TRUE_WORDS.join(" ");
+  // the checksum follows the first 11 words automatically; the last word
+  // must come from the 128 that fit. Offer them on the last input.
+  const lastInp = edGrid.querySelector('input[data-i="11"]');
+  const opts = await validLastWords(words.slice(0, 11));
+  const dl = document.getElementById("cs-options");
+  dl.replaceChildren(...opts.map(w => Object.assign(document.createElement("option"), { value: w })));
+  lastInp.setAttribute("list", "cs-options");
+  lastInp.classList.toggle("bad", opts.length > 0 && !opts.includes(words[11]));
   edNote.textContent = !wordsValid
-    ? "These words fail the checksum. They are not a seed, and no wallet exists for them."
+    ? (opts.length ? "The checksum lives in the last word. For these 11 words, 128 final words fit. Tap the last word to see them."
+                   : "A word in red is not on the BIP-39 list. No checksum exists for it.")
     : wordsMatch ? "The original seed. The funded wallet exists behind these words."
     : "Valid words, different seed. A wallet exists for them. It has never held a coin.";
   closeDoor(); relayout(); updateFp();
