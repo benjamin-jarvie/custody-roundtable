@@ -7,7 +7,11 @@ The master spec is OUTSIDE this repo:
 Read it before any change. Sections 2 (locked decisions), 9 (tux and
 trays), 10 (cinematography), 11 (the recovery set) bind every scene.
 Section 12 (the Journey: one room, ten stations) is the current build
-order: start at its "Codex: build order" list, item by item.
+order: start at its "Codex: build order" list, item by item. Read the
+"Section 12 amendments" block too: four entropy tools (dice, playing
+cards, chip, Codex32 worksheet), the seed paper is edited ON the paper
+(diegetic, no floating form), and the whole ceremony lives on one desk
+with named zones and visible object handoffs. Flow first, polish after.
 
 Rules that have bitten us already:
 - No em dashes, no "not X, it's Y". Kiwi is editor of record.
