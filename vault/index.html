@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Vault, Bitcoin Butlers</title>
+<meta name="description" content="Where your Bitcoin seed sleeps. Walk the vault with a Butler and see what a backup must really survive.">
+<style>
+  :root{
+    --ink:#0C0F14; --panel:#151A22; --gold:#FBDC7B; --bone:#E9E4D6;
+    --slate:#8C95A4; --moss:#8FC79A; --ember:#DE8A66; --line:#2A3242;
+    --serif:Charter,Georgia,'Times New Roman',serif;
+    --sans:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%}
+  body{background:var(--ink);color:var(--bone);font-family:var(--serif);overflow:hidden}
+  #c{position:fixed;inset:0;display:block;touch-action:none}
+
+  .hud{position:fixed;left:0;right:0;font-family:var(--sans)}
+  .top{top:0;padding:.9rem 1rem;display:flex;justify-content:space-between;align-items:center;
+    background:linear-gradient(rgba(12,15,20,.85),transparent)}
+  .brand{font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+  .flat{font-size:.7rem;letter-spacing:.08em;color:var(--slate);text-decoration:underline}
+
+  .controls{position:fixed;top:3.4rem;right:.75rem;display:flex;flex-direction:column;gap:.55rem;max-width:46vw}
+  .grp{background:rgba(21,26,34,.88);border:1px solid var(--line);border-radius:10px;padding:.5rem .6rem}
+  .lbl{font-family:var(--sans);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);margin-bottom:.35rem}
+  .chips{display:flex;flex-wrap:wrap;gap:.35rem}
+  .chip{font-family:var(--sans);font-size:.68rem;padding:.32rem .6rem;border-radius:999px;border:1px solid var(--line);
+    background:transparent;color:var(--bone);cursor:pointer}
+  .chip.on{border-color:var(--gold);color:var(--gold);background:rgba(251,220,123,.09)}
+  .chip:disabled{opacity:.35;cursor:not-allowed}
+
+  .caption{position:fixed;left:.75rem;right:.75rem;bottom:.75rem;display:flex;gap:.7rem;align-items:flex-end}
+  .bubble{flex:1;background:rgba(21,26,34,.94);border:1px solid var(--line);border-left:2px solid var(--gold);
+    border-radius:10px;padding:.8rem .95rem;font-size:.92rem;line-height:1.5;min-height:3.4rem}
+  .bubble .who{font-family:var(--sans);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:.25rem}
+  .act{position:fixed;bottom:5.6rem;left:50%;transform:translateX(-50%)}
+  .act button{font-family:var(--sans);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink);background:var(--gold);border:0;border-radius:6px;padding:.7rem 1.3rem;cursor:pointer}
+  .act button:disabled{opacity:.5}
+  @media(min-width:700px){.controls{max-width:230px}.bubble{max-width:560px}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud top">
+  <span class="brand">Bitcoin Butlers · The Vault</span>
+  <a class="flat" href="fallback.html">2D version</a>
+</div>
+<div class="controls">
+  <div class="grp"><div class="lbl">Seed format</div>
+    <div class="chips" id="fmt">
+      <button class="chip on" data-v="bip39">BIP-39</button>
+      <button class="chip" data-v="bip32">BIP-32</button>
+      <button class="chip" data-v="codex32">Codex32</button>
+    </div></div>
+  <div class="grp"><div class="lbl">Signers</div>
+    <div class="chips" id="sig">
+      <button class="chip on" data-v="single">Single</button>
+      <button class="chip" data-v="multi">Multisig</button>
+    </div></div>
+  <div class="grp"><div class="lbl">Vendors</div>
+    <div class="chips" id="ven">
+      <button class="chip on" data-v="one">One</button>
+      <button class="chip" data-v="multi">Multi</button>
+    </div></div>
+</div>
+<div class="act"><button id="recover">Try recovery</button></div>
+<div class="caption">
+  <div class="bubble"><span class="who">Your Butler</span><span id="say"></span></div>
+</div>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+<script type="module">
+  try{
+    const gl=document.createElement("canvas").getContext("webgl2")
+      ||document.createElement("canvas").getContext("webgl");
+    if(!gl) location.replace("fallback.html");
+  }catch(e){location.replace("fallback.html")}
+  import("./scene.js").catch(()=>location.replace("fallback.html"));
+</script>
+</body>
+</html>

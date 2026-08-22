@@ -1,0 +1,190 @@
+<title>The Custody Grid</title>
+<style>
+  :root{
+    --ink:#0C0F14; --panel:#151A22;
+    --gold:#FBDC7B; --bone:#E9E4D6; --slate:#8C95A4;
+    --moss:#8FC79A; --ember:#DE8A66; --line:#2A3242;
+    --serif:Charter,Georgia,'Times New Roman',serif;
+    --sans:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--ink);color:var(--bone);font-family:var(--serif);line-height:1.6;font-size:17px}
+  .wrap{max-width:680px;margin:0 auto;padding:2.5rem 1.25rem 5rem}
+  .eyebrow{font-family:var(--sans);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+  h1{font-size:clamp(2rem,7vw,2.9rem);line-height:1.1;font-weight:400;margin:.5rem 0 1rem;text-wrap:balance}
+  .onramp{color:var(--slate);max-width:60ch}
+  .onramp em{color:var(--bone);font-style:italic}
+  .rule{border:0;border-top:1px solid var(--line);margin:2.2rem 0}
+
+  input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+  .axis{margin-bottom:1.4rem}
+  .axis-label{font-family:var(--sans);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);margin-bottom:.5rem}
+  .chips{display:flex;flex-wrap:wrap;gap:.5rem}
+  .chip{font-family:var(--sans);font-size:.82rem;letter-spacing:.04em;padding:.55rem .95rem;border-radius:999px;
+    border:1px solid var(--line);background:var(--panel);color:var(--bone);cursor:pointer;user-select:none;
+    transition:border-color .15s,color .15s,background .15s}
+  .chip:hover{border-color:var(--gold)}
+  #f39:checked~.wrap [for=f39],#f32:checked~.wrap [for=f32],#fcx:checked~.wrap [for=fcx],
+  #ss:checked~.wrap [for=ss],#sm:checked~.wrap [for=sm],
+  #v1:checked~.wrap [for=v1],#vm:checked~.wrap [for=vm]{
+    border-color:var(--gold);color:var(--gold);background:rgba(251,220,123,.09)}
+  #ss:checked~.wrap .ven-chips .chip{opacity:.35;pointer-events:none}
+  .axis-note{font-family:var(--sans);font-size:.75rem;color:var(--slate);margin-top:.45rem;min-height:1.1em;display:none}
+  #ss:checked~.wrap .axis-note{display:block}
+
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:1.15rem 1.25rem;margin-top:1rem}
+  .stage h2{font-family:var(--sans);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:.55rem}
+  .stage p{font-size:.95rem}
+  .truth{display:block;margin-top:.6rem;font-size:.85rem;color:var(--slate);border-left:2px solid var(--gold);padding-left:.7rem}
+
+  .v{display:none}
+  #f39:checked~.wrap .g39,#f32:checked~.wrap .g32,#fcx:checked~.wrap .gcx{display:block}
+  #ss:checked~.wrap .u-s{display:block}
+  body:has(#sm:checked):has(#v1:checked) .u-m1{display:block}
+  body:has(#sm:checked):has(#vm:checked) .u-mm{display:block}
+  body:has(#ss:checked):has(#f39:checked) .r-s39{display:block}
+  body:has(#ss:checked):has(#f32:checked) .r-s32{display:block}
+  body:has(#ss:checked):has(#fcx:checked) .r-scx{display:block}
+  body:has(#sm:checked):has(#f39:checked) .r-m39{display:block}
+  body:has(#sm:checked):has(#f32:checked) .r-m32{display:block}
+  body:has(#sm:checked):has(#fcx:checked) .r-mcx{display:block}
+
+  .score{margin-top:2rem;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .score-head{font-family:var(--sans);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--slate);padding:.9rem 1.25rem;border-bottom:1px solid var(--line)}
+  .row{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;padding:.8rem 1.25rem;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .row dt{font-family:var(--sans);font-size:.8rem;letter-spacing:.05em;color:var(--slate);flex:0 0 auto}
+  .row dd{font-size:.88rem;text-align:right;max-width:38ch}
+  .good{color:var(--moss)} .bad{color:var(--ember)} .mid{color:var(--bone)}
+  .pips{font-family:var(--sans);letter-spacing:.15em;font-size:.8rem}
+  .row dd.v{display:none}
+  body:has(#ss:checked) .c-s{display:block}
+  body:has(#sm:checked):has(#v1:checked) .c-m1{display:block}
+  body:has(#sm:checked):has(#vm:checked) .c-mm{display:block}
+  body:has(#ss:checked):has(#f39:checked) .x-s39{display:block}
+  body:has(#ss:checked):has(#f32:checked) .x-s32{display:block}
+  body:has(#ss:checked):has(#fcx:checked) .x-scx{display:block}
+  body:has(#sm:checked) .x-m{display:block}
+  body:has(#ss:checked):has(#f39:checked) .b-s{display:block}
+  body:has(#ss:checked):has(#f32:checked) .b-s32{display:block}
+  body:has(#ss:checked):has(#fcx:checked) .b-scx{display:block}
+  body:has(#sm:checked) .b-m{display:block}
+  body:has(#fcx:checked) .w-cx{display:block}
+  body:has(#f39:checked):has(#v1:checked) .w-one39{display:block}
+  body:has(#sm:checked):has(#vm:checked):not(:has(#fcx:checked)) .w-mm{display:block}
+  body:has(#f39:checked):has(#vm:checked):has(#ss:checked) .w-one39{display:block}
+  body:has(#f32:checked):not(:has(#sm:checked)) .w-one32{display:block}
+  body:has(#f32:checked):has(#sm:checked):has(#v1:checked) .w-one32{display:block}
+  body:has(#ss:checked) .i-s{display:block}
+  body:has(#sm:checked) .i-m{display:block}
+
+  .cta{margin-top:2.2rem;text-align:center}
+  .cta a{display:inline-block;font-family:var(--sans);font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink);background:var(--gold);padding:.85rem 1.6rem;border-radius:6px;text-decoration:none}
+  .cta p{font-size:.8rem;color:var(--slate);margin-top:.6rem;font-family:var(--sans)}
+</style>
+
+<input type="radio" name="fmt" id="f39" checked>
+<input type="radio" name="fmt" id="f32">
+<input type="radio" name="fmt" id="fcx">
+<input type="radio" name="sig" id="ss" checked>
+<input type="radio" name="sig" id="sm">
+<input type="radio" name="ven" id="v1" checked>
+<input type="radio" name="ven" id="vm">
+
+<div class="wrap">
+  <p class="eyebrow">Bitcoin Butlers · Prototype</p>
+  <h1>One seed. Three moments of truth.</h1>
+  <p class="onramp">Most guides rank custody setups on a ladder, level one to level five. The ladder hides the truth: a seed lives three separate lives, and every choice you make is judged three times. When the seed is <em>generated</em>. When it is <em>in use</em>, signing. And when it is <em>at rest</em>, backed up against fire, theft and your own death. Choose a setup below and read what each moment actually demands of you.</p>
+  <hr class="rule">
+
+  <div class="axis">
+    <div class="axis-label">Seed format</div>
+    <div class="chips">
+      <label class="chip" for="f39">BIP-39 words</label>
+      <label class="chip" for="f32">Raw BIP-32</label>
+      <label class="chip" for="fcx">Codex32</label>
+    </div>
+  </div>
+  <div class="axis">
+    <div class="axis-label">Signers</div>
+    <div class="chips">
+      <label class="chip" for="ss">Single-sig</label>
+      <label class="chip" for="sm">Multisig</label>
+    </div>
+  </div>
+  <div class="axis">
+    <div class="axis-label">Vendors</div>
+    <div class="chips ven-chips">
+      <label class="chip" for="v1">One vendor</label>
+      <label class="chip" for="vm">Multi-vendor</label>
+    </div>
+    <div class="axis-note">Locked: vendor diversity only becomes a choice once more than one device signs. Pick Multisig to open it.</div>
+  </div>
+
+  <section class="stage"><h2>Generation</h2>
+    <div class="v g39"><p>A hardware device turns 128 or 256 bits of entropy into 12 or 24 English words with a built-in checksum. You can add your own dice rolls on devices that allow it.</p>
+      <span class="truth">The words are only as honest as the entropy behind them. You cannot verify randomness after the fact. You can only control its source.</span></div>
+    <div class="v g32"><p>No word list. The seed is raw key material handled by wallet software such as Bitcoin Core, driving a descriptor wallet directly.</p>
+      <span class="truth">Nothing human-readable exists at this stage. Whatever generates the bytes is the whole ceremony, so you must trust or reproduce that machine.</span></div>
+    <div class="v gcx"><p>The seed is written in a checksummed character string you can generate and verify entirely on paper, by hand, with no electronics present.</p>
+      <span class="truth">This is the only format where generation itself can be performed and checked without trusting any device at all.</span></div>
+  </section>
+
+  <section class="stage"><h2>In use</h2>
+    <div class="v u-s"><p>One device signs. The transaction is built on a watch-only wallet, passed to the signer, approved on its screen, and returned signed.</p>
+      <span class="truth">Every spend depends on one screen telling you the truth. Verify the address on the device, never only on the computer.</span></div>
+    <div class="v u-m1"><p>A quorum of devices signs, all from the same manufacturer. A PSBT moves between them by QR, SD card or USB until enough signatures land.</p>
+      <span class="truth">One firmware bug or one coerced vendor still touches every key. The quorum protects you from loss, less so from the vendor.</span></div>
+    <div class="v u-mm"><p>A quorum of devices signs, each from a different manufacturer. The same PSBT is checked independently by unrelated codebases before it is valid.</p>
+      <span class="truth">No single company's mistake, backdoor or discontinued product line can move or strand your funds. This is what vendor diversity actually buys.</span></div>
+  </section>
+
+  <section class="stage"><h2>At rest</h2>
+    <div class="v r-s39"><p>One backup set: words on metal, plus the derivation path, script type and master fingerprint.</p>
+      <span class="truth">Seed words alone restore only the simplest wallet. Anything beyond that silently derives the wrong addresses and shows a correct-looking, empty balance.</span></div>
+    <div class="v r-s32"><p>One backup set: a wallet or descriptor backup file. There are no words to engrave.</p>
+      <span class="truth">A file is easy to copy and easy to lose track of. Every copy is a full spend key unless it is encrypted, and then the passphrase becomes a second secret.</span></div>
+    <div class="v r-scx"><p>One backup set: the checksummed string on metal. Errors in copying are detectable and correctable by hand.</p>
+      <span class="truth">The checksum protects the copy, not the context. Path, script type and fingerprint still have to survive beside it.</span></div>
+    <div class="v r-m39"><p>One backup set per key, held apart: words on metal, plus the full wallet descriptor.</p>
+      <span class="truth">Multisig recovery needs the descriptor: every cosigner's xpub, the quorum, the paths. Seeds alone are not enough, and most people learn this too late.</span></div>
+    <div class="v r-m32"><p>One backup set per key, held apart, as files or exported descriptors, plus the full wallet descriptor.</p>
+      <span class="truth">Multisig recovery needs the descriptor: every cosigner's xpub, the quorum, the paths. Seeds alone are not enough, and most people learn this too late.</span></div>
+    <div class="v r-mcx"><p>One checksummed string per key on metal, held apart, plus the full wallet descriptor.</p>
+      <span class="truth">Multisig recovery needs the descriptor: every cosigner's xpub, the quorum, the paths. Seeds alone are not enough, and most people learn this too late.</span></div>
+  </section>
+
+  <div class="score">
+    <div class="score-head">What this setup costs you</div>
+    <dl>
+      <div class="row"><dt>Cost</dt>
+        <dd class="v good c-s"><span class="pips">●○○</span> one device, one backup</dd>
+        <dd class="v mid c-m1"><span class="pips">●●○</span> three devices, three backups</dd>
+        <dd class="v bad c-mm"><span class="pips">●●●</span> three devices from three makers, three backups</dd></div>
+      <div class="row"><dt>Complexity</dt>
+        <dd class="v good x-s39"><span class="pips">●○○</span> one signing ceremony to learn</dd>
+        <dd class="v mid x-s32"><span class="pips">●●○</span> node software and descriptors, no friendly words</dd>
+        <dd class="v good x-scx"><span class="pips">●○○</span> one ceremony, one unfamiliar format</dd>
+        <dd class="v bad x-m"><span class="pips">●●●</span> quorum ceremony, descriptor management</dd></div>
+      <div class="row"><dt>Must survive on backup</dt>
+        <dd class="v good b-s"><span class="pips">●○○</span> seed + path, script type, fingerprint</dd>
+        <dd class="v mid b-s32"><span class="pips">●●○</span> the wallet file, and its passphrase if encrypted</dd>
+        <dd class="v good b-scx"><span class="pips">●○○</span> string + path, script type, fingerprint</dd>
+        <dd class="v bad b-m"><span class="pips">●●●</span> seeds + full descriptor + quorum</dd></div>
+      <div class="row"><dt>Verifiability</dt>
+        <dd class="v good w-cx"><span class="pips">●●●</span> checkable by hand, no device trusted</dd>
+        <dd class="v good w-mm"><span class="pips">●●●</span> cross-checked across unrelated vendors</dd>
+        <dd class="v mid w-one39"><span class="pips">●●○</span> rests on one vendor's honesty</dd>
+        <dd class="v mid w-one32"><span class="pips">●●○</span> rests on one codebase's honesty</dd></div>
+      <div class="row"><dt>Inheritance</dt>
+        <dd class="v bad i-s">one seed hands everything to whoever finds it: protection and risk in one</dd>
+        <dd class="v mid i-m">heirs need the descriptor and a quorum: plan it, or it is a locked door</dd></div>
+    </dl>
+  </div>
+
+  <div class="cta">
+    <a href="https://www.bitcoinbutlers.com/booking">Walk through it with a Butler</a>
+    <p>We hold your hand, not your keys.</p>
+  </div>
+</div>
