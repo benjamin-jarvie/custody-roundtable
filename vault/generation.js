@@ -1,13 +1,17 @@
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS } from "./script.js?v=4";
+import { SCRIPTS } from "./script.js?v=5";
 import {
   getJourneyState,
   updateJourney,
   journeyChoicePatch,
   syncChoiceControls,
-  mountJourneyStations
-} from "./journey.js?v=1";
+  mountJourneyStations,
+  completeStation,
+  getSessionMnemonic,
+  setSessionMnemonic
+} from "./journey.js?v=2";
+import { WORDS, generateMnemonic, validLastWords, validMnemonic } from "./mnemonic.js?v=1";
 import {
   setupPhysicalRenderer,
   brushedMetal,
@@ -22,6 +26,9 @@ import {
 const COPY = SCRIPTS.generation;
 const savedJourney = getJourneyState();
 const state = { fmt: savedJourney.format, sig: savedJourney.signers, ven: savedJourney.vendors };
+const DEMO_WORDS = ["abandon","abandon","abandon","abandon","abandon","abandon",
+  "abandon","abandon","abandon","abandon","abandon","about"];
+let paperWords = getSessionMnemonic(DEMO_WORDS);
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const canvas = document.getElementById("c");
 const readout = document.getElementById("readout");
@@ -323,6 +330,72 @@ mark(worksheet, sheet, "worksheet");
 mark(worksheet, sheetFace, "worksheet");
 scene.add(worksheet);
 
+function seedPaperTexture(words){
+  const canvas = document.createElement("canvas");
+  canvas.width = 768;
+  canvas.height = 480;
+  const context = canvas.getContext("2d");
+  const paperGradient = context.createLinearGradient(0, 0, 768, 480);
+  paperGradient.addColorStop(0, "#f2e8c9");
+  paperGradient.addColorStop(1, "#d8c8a1");
+  context.fillStyle = paperGradient;
+  context.fillRect(0, 0, 768, 480);
+  context.strokeStyle = "rgba(101,74,39,.16)";
+  context.lineWidth = 2;
+  for (let y = 112; y < 440; y += 78){
+    context.beginPath(); context.moveTo(46, y); context.lineTo(722, y); context.stroke();
+  }
+  context.fillStyle = "#4f3b26";
+  context.font = "600 24px -apple-system, sans-serif";
+  context.fillText("WORKING SEED PAPER", 46, 58);
+  context.font = "34px Bradley Hand, Chalkboard, Georgia, serif";
+  words.forEach((word, index) => {
+    const column = index % 3;
+    const row = Math.floor(index / 3);
+    context.fillText((index + 1) + ". " + word, 50 + column * 236, 102 + row * 78);
+  });
+  context.fillStyle = "#8b7454";
+  context.font = "20px -apple-system, sans-serif";
+  context.fillText("Working copy. Prove it, then move it to steel.", 46, 455);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+const seedPaper = new THREE.Group();
+const paperBase = new THREE.Mesh(
+  roundedBoxGeometry(THREE, 3.25, 2.1, 0.07, 0.025),
+  new THREE.MeshPhysicalMaterial({
+    color: 0xd8c8a1,
+    roughness: 0.9,
+    clearcoat: 0.02,
+    sheen: 0.18,
+    sheenColor: 0xfff1d0,
+    envMapIntensity: 0.42
+  })
+);
+paperBase.rotation.x = -Math.PI / 2;
+seedPaper.add(paperBase);
+const paperFace = new THREE.Mesh(
+  new THREE.PlaneGeometry(3.12, 1.98),
+  new THREE.MeshBasicMaterial({ map: seedPaperTexture(paperWords), toneMapped: false })
+);
+paperFace.rotation.x = -Math.PI / 2;
+paperFace.position.y = 0.045;
+seedPaper.add(paperFace);
+seedPaper.userData.kind = "paper";
+mark(seedPaper, paperBase, "paper");
+mark(seedPaper, paperFace, "paper");
+castRealisticShadows(seedPaper);
+scene.add(seedPaper);
+
+function updatePaperTexture(){
+  const oldMap = paperFace.material.map;
+  paperFace.material.map = seedPaperTexture(paperWords);
+  paperFace.material.needsUpdate = true;
+  oldMap?.dispose();
+}
+
 const keyCard = new THREE.Group();
 const keyBase = new THREE.Mesh(
   roundedBoxGeometry(THREE, 2.2, 1.35, 0.12, 0.08),
@@ -355,8 +428,7 @@ devices.forEach(device => {
   scene.add(device);
 });
 const targets = new Map();
-let rolling = false;
-let rollTime = 0;
+let journeyStations = null;
 const deviceAction = document.getElementById("device-entropy");
 const diceAction = document.getElementById("roll-dice");
 function setTarget(object, x, y, z, visible = true){
@@ -369,7 +441,6 @@ function setTarget(object, x, y, z, visible = true){
 }
 function resetCeremony(){
   readout.textContent = "Ceremony ready";
-  rolling = false;
   sheetFace.material.emissive.setHex(0x000000);
   sheetFace.material.emissiveIntensity = 0;
   devices.forEach(device => setDeviceScreen(device, ["RNG", "READY"]));
@@ -391,13 +462,15 @@ function relayout(){
   const showDice = state.fmt !== "bip32";
   const showWorksheet = state.fmt === "codex32";
   const showKeyCard = state.fmt === "bip32";
+  const showPaper = state.fmt === "bip39";
   const showDevices = state.fmt !== "codex32";
-  setTarget(diceGroup, showWorksheet ? -1.65 : -1.05, 1.66, 0.25, showDice);
-  setTarget(worksheet, 0.38, 1.72, 0.05, showWorksheet);
+  setTarget(diceGroup, -2.45, 1.66, 0.32, showDice);
+  setTarget(worksheet, -0.45, 1.72, 0.05, showWorksheet);
   setTarget(keyCard, -0.65, 1.72, 0.12, showKeyCard);
+  setTarget(seedPaper, 0, 1.72, 0.22, showPaper);
   const spots = multi
     ? [[-1.9, 2.4, -0.75], [0.25, 2.42, -1.0], [2.35, 2.4, -0.68]]
-    : [[1.25, 2.4, -0.35], [0, 2.4, -1], [0, 2.4, -1]];
+    : [[2.45, 2.4, -0.35], [0, 2.4, -1], [0, 2.4, -1]];
   devices.forEach((device, index) => {
     const spot = spots[index];
     const shouldShow = showDevices && (multi || index === 0);
@@ -412,15 +485,33 @@ function relayout(){
       device.scale.set(...normalizers[index]);
     } else device.scale.set(1,1,1);
   });
-  const hero = showWorksheet ? worksheet : showKeyCard ? keyCard : diceGroup;
+  const hero = showWorksheet ? worksheet : showKeyCard ? keyCard : seedPaper;
   focusOn(hero, 6.2);
   setTimeout(() => focusOn(null), reduced ? 0 : 1400);
   updateActions();
   resetCeremony();
 }
 relayout();
-deviceAction.addEventListener("click", () => {
-  rolling = false;
+async function writeGeneratedPaper(source){
+  const generated = await generateMnemonic();
+  paperWords = generated.words;
+  setSessionMnemonic(paperWords);
+  updatePaperTexture();
+  syncPaperEditor();
+  completeStation(1);
+  completeStation(2);
+  journeyStations?.select(3);
+  readout.textContent = "128 bits encoded with a valid checksum";
+  focusOn(seedPaper, 5.2);
+  speak(source === "dice" ? COPY.dice : COPY.device);
+}
+
+deviceAction.addEventListener("click", async () => {
+  if (state.fmt === "bip39"){
+    presentTool("device", "Entropy", 850);
+    await writeGeneratedPaper("device");
+    return;
+  }
   if (state.fmt === "codex32"){
     presentTool("paper", "Worksheet", 850);
     readout.textContent = "Manual worksheet selected";
@@ -435,22 +526,15 @@ deviceAction.addEventListener("click", () => {
   }
   setTimeout(() => focusOn(null), reduced ? 0 : 2600);
 });
-diceAction.addEventListener("click", () => {
-  rolling = true;
-  if (!diceGroup.visible) setTarget(diceGroup, -2.55, 1.66, 0.28, true);
+diceAction.addEventListener("click", async () => {
+  if (state.fmt === "bip39"){
+    presentTool("dice", "Entropy", 900);
+    await writeGeneratedPaper("dice");
+    return;
+  }
+  if (!diceGroup.visible) setTarget(diceGroup, -2.45, 1.66, 0.32, true);
   presentTool("dice", "Entropy", 900);
-  rollTime = 0;
-  const random = new Uint32Array(dice.length * 3);
-  crypto.getRandomValues(random);
-  dice.forEach((die, index) => {
-    const offset = index * 3;
-    die.userData.velocity.set(
-      4.5 + (random[offset] % 300) / 100,
-      4.5 + (random[offset + 1] % 300) / 100,
-      4.5 + (random[offset + 2] % 300) / 100
-    );
-  });
-  readout.textContent = "Physical entropy in motion";
+  readout.textContent = "128 bits sourced without a physics simulation";
   focusOn(diceGroup, 5.4);
   speak(COPY.dice);
 });
@@ -471,6 +555,7 @@ function syncVendorLock(){
   document.querySelectorAll("#ven .chip").forEach(chip => chip.disabled = locked);
 }
 wireChips("fmt", "fmt", value => {
+  paperEditor.hidden = true;
   const trayKind = value === "codex32" ? "paper" : value === "bip32" ? "device" : "dice";
   presentTool(trayKind, value, 800);
   setTimeout(relayout, reduced ? 0 : 420);
@@ -497,7 +582,121 @@ wireChips("ven", "ven", value => {
 });
 syncVendorLock();
 syncChoiceControls(state);
-mountJourneyStations("generation");
+journeyStations = mountJourneyStations("generation", station => {
+  if (state.sig === "single" && state.fmt !== "codex32"){
+    if (station === 3){
+      setTarget(devices[0], 2.8, 2.28, -1.12, true);
+      devices[0].scale.setScalar(0.78);
+      seedPaper.rotation.x = 0.3;
+    } else {
+      setTarget(devices[0], 2.45, 2.4, -0.35, true);
+      devices[0].scale.setScalar(1);
+      seedPaper.rotation.x = 0;
+    }
+  }
+  if (station === 1) focusOn(state.fmt === "bip32" ? keyCard : diceGroup, 6.2);
+  if (station === 2) focusOn(state.fmt === "codex32" ? worksheet : state.fmt === "bip32" ? keyCard : seedPaper, 5.6);
+  if (station === 3 && state.fmt === "bip39") focusOn(seedPaper, 6.0);
+});
+
+const paperEditor = document.getElementById("paper-editor");
+const paperGrid = document.getElementById("paper-grid");
+const paperNote = document.getElementById("paper-note");
+const paperChecksum = document.getElementById("paper-checksum");
+let paperReviewRun = 0;
+
+paperWords.forEach((word, index) => {
+  const input = document.createElement("input");
+  input.value = word;
+  input.dataset.index = String(index);
+  input.autocapitalize = "off";
+  input.spellcheck = false;
+  input.setAttribute("aria-label", "Seed word " + (index + 1));
+  input.addEventListener("input", () => {
+    const value = input.value.trim().toLowerCase();
+    if (value.length >= 4){
+      const matches = WORDS.filter(candidate => candidate.startsWith(value));
+      if (matches.length === 1 && matches[0] !== value) input.value = matches[0];
+    }
+  });
+  input.addEventListener("focus", () => {
+    input.select();
+    paperChecksum.classList.toggle("open", index === 11);
+  });
+  paperGrid.appendChild(input);
+});
+
+function syncPaperEditor(){
+  const inputs = [...paperGrid.querySelectorAll("input")];
+  inputs.forEach((input, index) => { input.value = paperWords[index] || ""; });
+}
+
+async function reviewPaperWords(){
+  const run = ++paperReviewRun;
+  const nextWords = [...paperGrid.querySelectorAll("input")]
+    .map(input => input.value.trim().toLowerCase());
+  const [valid, options] = await Promise.all([
+    validMnemonic(nextWords),
+    validLastWords(nextWords.slice(0, 11))
+  ]);
+  if (run !== paperReviewRun) return;
+  paperWords = nextWords;
+  setSessionMnemonic(paperWords);
+  [...paperGrid.querySelectorAll("input")].forEach(input => {
+    input.classList.toggle("bad", !WORDS.includes(input.value.trim().toLowerCase()));
+  });
+  const finalInput = paperGrid.querySelector('input[data-index="11"]');
+  finalInput.classList.toggle("bad", options.length > 0 && !options.includes(paperWords[11]));
+  paperChecksum.replaceChildren(...options.map(word => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = word;
+    button.addEventListener("click", () => {
+      finalInput.value = word;
+      paperChecksum.classList.remove("open");
+      reviewPaperWords();
+    });
+    return button;
+  }));
+  paperNote.textContent = valid
+    ? "Checksum valid. This working copy is ready for the recovery drill."
+    : options.length
+      ? "The first eleven words allow exactly 128 checksum-valid final words."
+      : "Fix the red word before a checksum can exist.";
+  updatePaperTexture();
+}
+
+paperGrid.addEventListener("input", () => {
+  clearTimeout(paperGrid._timer);
+  paperGrid._timer = setTimeout(reviewPaperWords, 320);
+});
+
+document.getElementById("paper-done").addEventListener("click", async () => {
+  await reviewPaperWords();
+  if (await validMnemonic(paperWords)) completeStation(3);
+  paperEditor.hidden = true;
+  focusOn(null);
+});
+
+function positionPaperEditor(){
+  if (paperEditor.hidden || !seedPaper.visible) return;
+  seedPaper.updateMatrixWorld(true);
+  const project = local => {
+    const point = seedPaper.localToWorld(local.clone()).project(camera);
+    return {
+      x: (point.x * 0.5 + 0.5) * innerWidth,
+      y: (-point.y * 0.5 + 0.5) * innerHeight
+    };
+  };
+  const center = project(new THREE.Vector3(0, 0.07, 0));
+  const left = project(new THREE.Vector3(-1.62, 0.07, 0));
+  const right = project(new THREE.Vector3(1.62, 0.07, 0));
+  const width = Math.max(1, Math.hypot(right.x - left.x, right.y - left.y));
+  const scale = THREE.MathUtils.clamp(width / 430, 0.66, 1.08);
+  paperEditor.style.left = center.x + "px";
+  paperEditor.style.top = center.y + "px";
+  paperEditor.style.transform = "translate(-50%,-50%) scale(" + scale + ")";
+}
 
 const ray = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
@@ -528,7 +727,8 @@ addEventListener("pointerup", event => {
   pointer.x = event.clientX / innerWidth * 2 - 1;
   pointer.y = -(event.clientY / innerHeight) * 2 + 1;
   ray.setFromCamera(pointer, camera);
-  const hit = ray.intersectObjects(clickables, false).find(item => item.object.visible);
+  const hit = ray.intersectObjects(clickables, false).find(item =>
+    item.object.visible && (!item.object.userData.owner || item.object.userData.owner.visible));
   if (!hit){
     focusOn(null);
     return;
@@ -536,6 +736,13 @@ addEventListener("pointerup", event => {
   const owner = hit.object.userData.owner;
   const kind = hit.object.userData.kind;
   focusOn(owner, 5.4);
+  if (kind === "paper" && state.fmt === "bip39" && journeyStations.station === 3){
+    syncPaperEditor();
+    paperEditor.hidden = false;
+    positionPaperEditor();
+    speak([COPY.object.paper]);
+    return;
+  }
   speak(COPY.object[kind]);
 });
 addEventListener("wheel", event => {
@@ -567,26 +774,7 @@ function tick(){
     ambient.intensity += (0.58 - ambient.intensity) * dt * 3;
     key.intensity += (260 - key.intensity) * dt * 3;
   }
-  if (rolling){
-    rollTime += dt;
-    dice.forEach((die, index) => {
-      die.rotation.x += die.userData.velocity.x * dt;
-      die.rotation.y += die.userData.velocity.y * dt;
-      die.rotation.z += die.userData.velocity.z * dt;
-      die.position.y = Math.abs(Math.sin(rollTime * 6 + index)) * 0.24;
-    });
-    if (rollTime > 1.7){
-      rolling = false;
-      dice.forEach(die => die.position.y = 0);
-      devices.filter(device => device.visible).forEach(device => setDeviceScreen(device, ["DICE", "MIXED"]));
-      readout.textContent = "Illustrative roll complete. Record enough real rolls outside this demo.";
-      if (state.fmt === "codex32"){
-        sheetFace.material.emissive.setHex(0xfbdc7b);
-        sheetFace.material.emissiveIntensity = 0.28;
-      }
-      setTimeout(() => focusOn(null), reduced ? 0 : 1600);
-    }
-  }
+  positionPaperEditor();
   renderer.render(scene, camera);
 }
 speak(COPY.welcome, 500);

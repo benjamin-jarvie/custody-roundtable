@@ -55,7 +55,7 @@
       || document.createElement("canvas").getContext("webgl");
     if (!gl) location.replace("fallback.html");
   } catch (error) { location.replace("fallback.html"); }
-  import("./in-use.js?v=15").catch(error => {
+  import("./in-use.js?v=16").catch(error => {
     console.error("IN-USE SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });

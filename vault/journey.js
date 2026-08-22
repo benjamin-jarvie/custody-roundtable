@@ -1,6 +1,7 @@
-import { SCRIPTS } from "./script.js?v=4";
+import { SCRIPTS } from "./script.js?v=5";
 
 const STORAGE_KEY = "bitcoin-butlers.journey.v1";
+const MNEMONIC_KEY = "bitcoin-butlers.demo-mnemonic";
 const ALLOWED = {
   format: ["bip39", "bip32", "codex32"],
   signers: ["single", "multi"],
@@ -113,6 +114,21 @@ export function resetJourney(){
   return updateJourney({ ...DEFAULT_STATE });
 }
 
+export function setSessionMnemonic(words){
+  const value = Array.isArray(words) ? words.join(" ") : "";
+  if (!value) return;
+  try { sessionStorage.setItem(MNEMONIC_KEY, value); } catch (error) { /* session memory is optional */ }
+}
+
+export function getSessionMnemonic(fallback = []){
+  try {
+    const words = (sessionStorage.getItem(MNEMONIC_KEY) || "").trim().split(/\s+/).filter(Boolean);
+    return words.length === 12 ? words : [...fallback];
+  } catch (error){
+    return [...fallback];
+  }
+}
+
 export function journeyChoicePatch(sceneKey, value){
   const keys = { fmt: "format", sig: "signers", ven: "vendors", platform: "platform", scr: "script" };
   const key = keys[sceneKey];
@@ -160,15 +176,19 @@ export function mountJourneyStations(page, onSelect = () => {}){
       button.classList.toggle("on", station.id === active);
       button.classList.toggle("done", state.completed.includes(station.id));
       button.textContent = "S" + station.id + "  " + SCRIPTS.journey.stations[station.id];
-      button.addEventListener("click", () => {
-        active = station.id;
-        document.body.dataset.station = String(active);
-        enterStation(active);
-        render();
-        onSelect(active);
-      });
+      button.addEventListener("click", () => select(station.id));
       return button;
     }));
+  }
+
+  function select(id){
+    const station = pageStations.find(item => item.id === Number(id));
+    if (!station) return;
+    active = station.id;
+    document.body.dataset.station = String(active);
+    enterStation(active);
+    render();
+    onSelect(active);
   }
 
   const onChange = event => render(event.detail);
@@ -177,6 +197,7 @@ export function mountJourneyStations(page, onSelect = () => {}){
   queueMicrotask(() => onSelect(active));
   return {
     get station(){ return active; },
+    select,
     refresh: render,
     destroy(){ removeEventListener("journeychange", onChange); nav.remove(); }
   };

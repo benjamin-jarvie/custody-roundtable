@@ -53,7 +53,8 @@ export const SCRIPTS = {
       dice: "Physical entropy. Slow, observable, and only as fair as the dice and the way you roll them.",
       device: "A signing device can protect a seed well. Its random number generator still asks for trust at the first moment.",
       keyfile: "Raw BIP-32 material has no recovery words. The file is the secret, and every unencrypted copy can spend.",
-      worksheet: "The Codex32 worksheet turns generation into arithmetic a person can inspect and repeat."
+      worksheet: "The Codex32 worksheet turns generation into arithmetic a person can inspect and repeat.",
+      paper: "This paper is a working copy. Edit the words here, test the checksum, then prove recovery before the words reach steel."
     }
   },
   inUse: {
@@ -145,7 +146,12 @@ export const SCRIPTS = {
     recoverMultiOk: [
       "Seeds and descriptor together. Now the door opens.",
       "The policy identity can now be reconstructed. Connect its watch-only address to check live funds."
-    ]
+    ],
+    journey: {
+      engrave: "After the recovery drill proves this working copy, the paper feeds the engraver and the same words emerge on steel.",
+      retire: "The steel carries the recovery set forward. The paper now leaves the trust path.",
+      vault: "The proven steel reaches the vault. Recovery remains the final verdict."
+    }
   }
 };
 

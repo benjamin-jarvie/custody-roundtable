@@ -4,8 +4,8 @@
 
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS, emptyWalletLines } from "./script.js?v=4";
-import { WORDS } from "./vendor/bip39-en.js";
+import { SCRIPTS, emptyWalletLines } from "./script.js?v=5";
+import { WORDS, validLastWords, validMnemonic } from "./mnemonic.js?v=1";
 import { masterFromMnemonic } from "./vendor/bip32.js";
 import { loadWatchBalance, formatBtc, formatUsd } from "./balance.js?v=1";
 import {
@@ -13,46 +13,19 @@ import {
   updateJourney,
   journeyChoicePatch,
   syncChoiceControls,
-  mountJourneyStations
-} from "./journey.js?v=1";
+  mountJourneyStations,
+  completeStation,
+  getSessionMnemonic
+} from "./journey.js?v=2";
 import {
   setupPhysicalRenderer,
   brushedMetal,
   blackMetal,
   honedStone,
+  walnutWood,
+  roundedBoxGeometry,
   castRealisticShadows
 } from "./visuals.js?v=5";
-
-// real BIP-39 checksum: 12 words = 128 bits entropy + 4-bit checksum
-// the 12th word carries the checksum: 7 entropy bits + 4 checksum bits.
-// For any first 11 words there are exactly 128 valid final words.
-async function validLastWords(first11){
-  const idx = first11.map(w => WORDS.indexOf(w));
-  if (idx.some(i => i < 0)) return [];
-  let bits = "";
-  for (const i of idx) bits += i.toString(2).padStart(11, "0"); // 121 bits
-  const out = [];
-  for (let v = 0; v < 128; v++){
-    const ent = bits + v.toString(2).padStart(7, "0"); // 128 bits
-    const bytes = new Uint8Array(16);
-    for (let i = 0; i < 16; i++) bytes[i] = parseInt(ent.slice(i*8, i*8+8), 2);
-    const h = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
-    const cs = h[0] >> 4;
-    out.push(WORDS[(v << 4) | cs]);
-  }
-  return out;
-}
-async function validMnemonic(ws){
-  const idx = ws.map(w => WORDS.indexOf(w));
-  if (idx.some(i => i < 0)) return false;
-  let bits = "";
-  for (const i of idx) bits += i.toString(2).padStart(11, "0");
-  const ent = bits.slice(0, 128), cs = bits.slice(128);
-  const bytes = new Uint8Array(16);
-  for (let i = 0; i < 16; i++) bytes[i] = parseInt(ent.slice(i*8, i*8+8), 2);
-  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
-  return cs === h[0].toString(2).padStart(8, "0").slice(0, 4);
-}
 
 const SCRIPT_PRESETS = {
   single: {
@@ -80,8 +53,8 @@ const state = {
 // these words, no passphrase, m/84'/0'/0', native SegWit. No balance is implied.
 const TRUE_WORDS = ["abandon","abandon","abandon","abandon","abandon","abandon",
   "abandon","abandon","abandon","abandon","abandon","about"];
-let words = TRUE_WORDS.slice();
-let wordsValid = true, wordsMatch = true;
+let words = getSessionMnemonic(TRUE_WORDS);
+let wordsValid = true, wordsMatch = words.join(" ") === TRUE_WORDS.join(" ");
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------- renderer / camera ----------
@@ -156,6 +129,105 @@ const wallMat = honedStone(THREE, 0x141922);
 wallMat.side = THREE.BackSide;
 const wall = new THREE.Mesh(new THREE.CylinderGeometry(13.5, 13.5, 12, 48, 1, true), wallMat);
 wall.position.y = 6; scene.add(wall);
+
+// The same ceremony desk carries the proven paper into the steel stage.
+const recoveryWorkbench = new THREE.Group();
+const workbenchTop = new THREE.Mesh(
+  new THREE.BoxGeometry(7.4, 0.24, 3.0),
+  walnutWood(THREE)
+);
+workbenchTop.position.set(0, 1.02, 1.7);
+recoveryWorkbench.add(workbenchTop);
+for (const x of [-3.15, 3.15]){
+  for (const z of [0.65, 2.75]){
+    const leg = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.1, 0.14, 1.0, 12),
+      blackMetal(THREE, 0x171b22, 0.3)
+    );
+    leg.position.set(x, 0.5, z);
+    recoveryWorkbench.add(leg);
+  }
+}
+castRealisticShadows(recoveryWorkbench);
+recoveryWorkbench.visible = false;
+scene.add(recoveryWorkbench);
+
+function journeyPaperTexture(){
+  const canvas = document.createElement("canvas");
+  canvas.width = 768; canvas.height = 480;
+  const context = canvas.getContext("2d");
+  context.fillStyle = "#e7d9b4"; context.fillRect(0, 0, 768, 480);
+  context.fillStyle = "#4f3b26";
+  context.font = "600 24px -apple-system, sans-serif";
+  context.fillText("PROVEN WORKING PAPER", 42, 54);
+  context.font = "34px Bradley Hand, Chalkboard, Georgia, serif";
+  words.forEach((word, index) => {
+    const column = index % 3;
+    const row = Math.floor(index / 3);
+    context.fillText((index + 1) + ". " + word, 46 + column * 236, 112 + row * 78);
+  });
+  context.fillStyle = "#806b4e";
+  context.font = "22px -apple-system, sans-serif";
+  context.fillText(savedJourney.drillPassed
+    ? "Recovery drill passed before engraving."
+    : "Recovery drill must pass before engraving.", 42, 448);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+const journeyPaper = new THREE.Group();
+const journeyPaperBase = new THREE.Mesh(
+  roundedBoxGeometry(THREE, 3.25, 2.1, 0.07, 0.025),
+  new THREE.MeshStandardMaterial({ color: 0xd8c8a1, roughness: 0.92 })
+);
+journeyPaperBase.rotation.x = -Math.PI / 2;
+journeyPaper.add(journeyPaperBase);
+const journeyPaperFace = new THREE.Mesh(
+  new THREE.PlaneGeometry(3.12, 1.98),
+  new THREE.MeshBasicMaterial({ map: journeyPaperTexture(), toneMapped: false })
+);
+journeyPaperFace.rotation.x = -Math.PI / 2;
+journeyPaperFace.position.y = 0.045;
+journeyPaper.add(journeyPaperFace);
+journeyPaper.visible = false;
+scene.add(journeyPaper);
+
+const engraver = new THREE.Group();
+const engraverBody = new THREE.Mesh(
+  roundedBoxGeometry(THREE, 1.6, 1.35, 0.8, 0.08),
+  blackMetal(THREE, 0x242b34, 0.25)
+);
+engraverBody.position.y = 0.58;
+engraver.add(engraverBody);
+const engraverSlot = new THREE.Mesh(
+  new THREE.BoxGeometry(1.2, 0.08, 0.12),
+  brushedMetal(THREE, 0xd8b354, 0.18)
+);
+engraverSlot.position.set(0, 0.56, 0.46);
+engraver.add(engraverSlot);
+engraver.position.set(2.75, 1.2, 1.15);
+engraver.scale.setScalar(0.66);
+engraver.visible = false;
+castRealisticShadows(engraver);
+scene.add(engraver);
+
+const candle = new THREE.Group();
+const wax = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.17, 0.2, 0.62, 20),
+  new THREE.MeshStandardMaterial({ color: 0xd7ccb5, roughness: 0.88 })
+);
+candle.add(wax);
+const flame = new THREE.Mesh(
+  new THREE.SphereGeometry(0.09, 16, 12),
+  new THREE.MeshBasicMaterial({ color: 0xffbd56 })
+);
+flame.scale.set(0.72, 1.55, 0.72);
+flame.position.y = 0.42;
+candle.add(flame);
+candle.position.set(-2.75, 1.55, 1.55);
+candle.visible = false;
+scene.add(candle);
 // The vault door is a working mechanical landmark: housing, jamb, hinges,
 // locking dogs, wheel, and a deep strongroom behind it.
 const steel = brushedMetal(THREE, 0x66707b, 0.2);
@@ -551,6 +623,11 @@ function makePlateAssembly(kind){
 }
 for (let i = 0; i < 3; i++) plates.push(makePlateAssembly("seed"));
 const descPlate = makePlateAssembly("descriptor");
+const journeySteel = makePlateAssembly("seed");
+journeySteel.userData.faceMesh.material.map = plateTexture("bip39", "#a4a8ad");
+journeySteel.userData.faceMesh.material.needsUpdate = true;
+journeySteel.rotation.x = -Math.PI / 2;
+journeySteel.visible = false;
 
 // ---------- layout per state ----------
 const targets = new Map(); // mesh -> {p:Vector3, visible}
@@ -635,6 +712,12 @@ function relayout(instant = false){
   if (instant) for (const [m,t] of targets){ m.position.copy(t.p); m.visible = t.visible; }
 }
 relayout(true);
+validMnemonic(words).then(valid => {
+  wordsValid = valid;
+  wordsMatch = words.join(" ") === TRUE_WORDS.join(" ");
+  updateFp();
+  relayoutPlates();
+});
 
 // ---------- copy ----------
 const L = SCRIPTS.atRest;
@@ -712,6 +795,10 @@ function syncVendorLock(){
   const locked = state.sig === "single";
   document.querySelectorAll("#ven .chip").forEach(c => c.disabled = locked);
 }
+function relayoutJourneyAware(){
+  relayout();
+  if (atRestStations && atRestStations.station !== 10) stageJourneyStation(atRestStations.station);
+}
 wireChips("fmt", "fmt", v => {
   closeDoor();
   editor.hidden = true;
@@ -720,7 +807,7 @@ wireChips("fmt", "fmt", v => {
     passInput.value = "";
   }
   presentTool("plate", v, 800);
-  setTimeout(relayout, reduced ? 0 : 420);
+  setTimeout(relayoutJourneyAware, reduced ? 0 : 420);
   focusOn(null);
   speak([L.fmt[v]]);
 });
@@ -728,12 +815,12 @@ wireChips("sig", "sig", v => {
   editor.hidden = true;
   if (v === "single"){ state.ven = "one";
     document.querySelectorAll("#ven .chip").forEach(c => c.classList.toggle("on", c.dataset.v === "one")); }
-  syncVendorLock(); syncPolicyControls(); closeDoor(); relayout(); resetSafe(); focusOn(null); speak([L.sig[v]]);
+  syncVendorLock(); syncPolicyControls(); closeDoor(); relayoutJourneyAware(); resetSafe(); focusOn(null); speak([L.sig[v]]);
 });
 document.getElementById("ven").addEventListener("click", e => {
   if (state.sig === "single" && e.target.closest(".chip")) speak([L.venLocked]);
 });
-wireChips("ven", "ven", v => { relayout(); focusOn(null); speak([L.ven[v]]); });
+wireChips("ven", "ven", v => { relayoutJourneyAware(); focusOn(null); speak([L.ven[v]]); });
 wireChips("scr", "scr", v => {
   syncPolicyControls();
   closeDoor();
@@ -743,8 +830,69 @@ wireChips("scr", "scr", v => {
 syncVendorLock();
 syncPolicyControls();
 syncChoiceControls(state);
-mountJourneyStations("at-rest", station => {
-  if (station !== 10) closeDoor();
+const btn = document.getElementById("recover");
+const journeyAction = document.getElementById("journey-action");
+let atRestStations = null;
+
+function stageJourneyStation(station){
+  closeDoor();
+  editor.hidden = true;
+  const workshop = station === 8 || station === 9;
+  recoveryWorkbench.visible = workshop;
+  engraver.visible = workshop;
+  candle.visible = workshop;
+  journeyAction.hidden = !workshop;
+  btn.hidden = workshop;
+
+  if (station === 8){
+    journeyAction.textContent = getJourneyState().drillPassed ? "Engrave proven paper" : "Preview paper to steel";
+    setTarget(journeyPaper, -1.15, 1.25, 1.72, true);
+    setTarget(journeySteel, 3.4, 1.3, 1.72, false);
+    plates.forEach((plate, index) => setTarget(plate, index ? 8 : -8, 1.3, -1, false));
+    setTarget(descPlate, 8.5, 1.3, -1, false);
+    focusOn(journeyPaper, 6.0);
+    speak([L.journey.engrave]);
+  } else if (station === 9){
+    journeyAction.textContent = "Retire working paper";
+    setTarget(journeyPaper, -2.1, 1.3, 1.55, true);
+    setTarget(journeySteel, 0.8, 1.28, 1.58, true);
+    focusOn(journeySteel, 6.4);
+    speak([L.journey.retire]);
+  } else {
+    setTarget(journeyPaper, -8, 1.2, 0, false);
+    setTarget(journeySteel, 8, 1.2, 0, false);
+    relayout();
+    focusOn(null);
+    speak([L.journey.vault]);
+  }
+}
+
+atRestStations = mountJourneyStations("at-rest", stageJourneyStation);
+
+journeyAction.addEventListener("click", () => {
+  journeyAction.disabled = true;
+  if (atRestStations.station === 8){
+    setTarget(journeyPaper, 1.75, 1.32, 1.65, true);
+    focusOn(engraver, 5.6);
+    speak([L.journey.engrave]);
+    setTimeout(() => {
+      setTarget(journeyPaper, 2.1, 1.28, 1.65, false);
+      setTarget(journeySteel, 0.8, 1.28, 1.58, true);
+      completeStation(8);
+      journeyAction.disabled = false;
+      atRestStations.select(9);
+    }, reduced ? 0 : 1100);
+  } else {
+    setTarget(journeyPaper, -2.75, 1.34, 1.55, true);
+    focusOn(candle, 5.4);
+    speak([L.journey.retire]);
+    setTimeout(() => {
+      setTarget(journeyPaper, -3.2, 1.25, 1.5, false);
+      completeStation(9);
+      journeyAction.disabled = false;
+      atRestStations.select(10);
+    }, reduced ? 0 : 1000);
+  }
 });
 
 // ---------- the editable plate ----------
@@ -838,7 +986,6 @@ document.getElementById("ed-close").addEventListener("click", () => {
 // recovery
 let recovering = false, awaitingDescriptor = false, failFlash = 0;
 let doorOpenT = 0, wheelSpin = 0, wheelVel = 0, shakeT = 0;
-const btn = document.getElementById("recover");
 function resetSafe(){
   awaitingDescriptor = false;
   state.hasDescriptor = false;

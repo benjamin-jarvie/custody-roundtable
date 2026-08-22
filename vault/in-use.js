@@ -1,13 +1,13 @@
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS } from "./script.js?v=4";
+import { SCRIPTS } from "./script.js?v=5";
 import {
   getJourneyState,
   updateJourney,
   journeyChoicePatch,
   syncChoiceControls,
   mountJourneyStations
-} from "./journey.js?v=1";
+} from "./journey.js?v=2";
 import {
   setupPhysicalRenderer,
   brushedMetal,

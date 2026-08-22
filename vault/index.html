@@ -45,14 +45,14 @@
 <a class="flat" style="position:fixed;right:1rem;top:1rem;z-index:3" href="fallback.html">2D version</a>
 <div class="landing-title">The Custody Vault<strong>One seed. Three moments of truth.</strong></div>
 <nav class="lifecycle-links" aria-label="Choose a seed lifecycle scene">
-  <a href="generation.html">Generation</a>
-  <a href="in-use.html">In use</a>
-  <a href="at-rest.html">At rest</a>
+  <a href="generation.html?station=1">Generation</a>
+  <a href="in-use.html?station=4">In use</a>
+  <a href="at-rest.html?station=10">At rest</a>
 </nav>
 <div class="caption"><div class="bubble"><span class="who">Your Butler</span><span id="say"></span></div></div>
 <script type="module">
   import { speak } from "./butler.js?v=4";
-  import { SCRIPTS } from "./script.js?v=3";
+  import { SCRIPTS } from "./script.js?v=5";
   speak(SCRIPTS.landing.welcome, 320);
 </script>
 </body>

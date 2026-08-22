@@ -145,7 +145,10 @@
   </label>
   <div class="ed-note" id="ed-note"></div>
 </div>
-<div class="act"><button id="recover">Try recovery</button></div>
+<div class="act">
+  <button id="journey-action" hidden>Engrave proven paper</button>
+  <button id="recover">Try recovery</button>
+</div>
 <div class="caption">
   <div class="bubble"><span class="who">Your Butler</span><span id="say"></span></div>
 </div>
@@ -158,7 +161,7 @@
       ||document.createElement("canvas").getContext("webgl");
     if(!gl) location.replace("fallback.html");
   }catch(e){location.replace("fallback.html")}
-  import("./scene.js?v=18").catch(error => {
+  import("./scene.js?v=21").catch(error => {
     console.error("AT-REST SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });
