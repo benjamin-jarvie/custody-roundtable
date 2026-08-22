@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Seed Generation, The Custody Vault</title>
+<meta name="description" content="Compare device and physical entropy inside a guided 3D seed generation ceremony.">
+<link rel="preload" href="butler-host.webp" as="image">
+<link rel="stylesheet" href="scene-shared.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud top">
+  <div class="nav">
+    <img src="logo.png" alt="Bitcoin Butlers" class="logo">
+    <a class="scene-link here" href="generation.html">Seed Generation</a>
+    <a class="scene-link" href="in-use.html">Seed In Use</a>
+    <a class="scene-link" href="index.html">Seed At Rest</a>
+  </div>
+  <a class="flat" href="fallback.html">2D version</a>
+</div>
+<div class="readout" id="readout">Ceremony ready</div>
+<div class="controls">
+  <div class="grp"><div class="lbl">Seed format</div><div class="chips" id="fmt">
+    <button class="chip on" data-v="bip39">BIP-39</button>
+    <button class="chip" data-v="bip32">BIP-32</button>
+    <button class="chip" data-v="codex32">Codex32</button>
+  </div></div>
+  <div class="grp"><div class="lbl">Signers</div><div class="chips" id="sig">
+    <button class="chip on" data-v="single">Single</button>
+    <button class="chip" data-v="multi">Multisig</button>
+  </div></div>
+  <div class="grp"><div class="lbl">Vendors</div><div class="chips" id="ven">
+    <button class="chip on" data-v="one">One</button>
+    <button class="chip" data-v="multi">Multi</button>
+  </div></div>
+</div>
+<div class="act">
+  <button id="device-entropy">Trust the chip</button>
+  <button class="secondary" id="roll-dice">Roll the dice</button>
+</div>
+<div class="caption"><div class="bubble"><span class="who">Your Butler</span><span id="say"></span></div></div>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+<script type="module">
+  const force3d = new URLSearchParams(location.search).has("3d");
+  if (!force3d && navigator.connection && navigator.connection.saveData) location.replace("fallback.html");
+  try {
+    const gl = document.createElement("canvas").getContext("webgl2")
+      || document.createElement("canvas").getContext("webgl");
+    if (!gl) location.replace("fallback.html");
+  } catch (error) { location.replace("fallback.html"); }
+  import("./generation.js?v=5").catch(error => {
+    console.error("GENERATION SCENE ERROR", error.message, error.stack);
+    if (!force3d) location.replace("fallback.html");
+  });
+</script>
+</body>
+</html>

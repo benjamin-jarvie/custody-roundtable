@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Vault, Bitcoin Butlers</title>
 <meta name="description" content="Where your Bitcoin seed sleeps. Walk the vault with a Butler and see what a backup must really survive.">
+<link rel="preload" href="butler-host.webp" as="image">
 <style>
   :root{
     --ink:#0C0F14; --panel:#151A22; --gold:#FBDC7B; --bone:#E9E4D6;
@@ -23,7 +24,8 @@
   .top{align-items:flex-start}
   .nav{display:flex;flex-direction:column;gap:.3rem}
   .logo{width:64px;height:auto;margin-bottom:.5rem}
-  .scene-link{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);cursor:default}
+  .scene-link{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--bone);text-decoration:none}
+  .scene-link:hover{color:var(--gold)}
   .scene-link.here{color:var(--gold);text-shadow:0 0 9px rgba(251,220,123,.3)}
   @media(min-width:700px){.scene-link{font-size:1.02rem}}
   .flat{font-size:.7rem;letter-spacing:.08em;color:var(--slate);text-decoration:underline}
@@ -59,6 +61,16 @@
     background:transparent;border:1px solid var(--line);border-radius:5px;color:var(--bone);cursor:pointer}
   .cs-pick button:hover{border-color:var(--gold);color:var(--gold)}
   .ed-note{font-family:var(--sans);font-size:.72rem;color:var(--slate);margin-top:.6rem;min-height:1.2em}
+  .ed-pass{margin-top:.6rem;font-family:var(--sans)}
+  .ed-pass label{display:block;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);margin-bottom:.3rem}
+  .ed-pass input{font-family:Menlo,monospace;font-size:.8rem;padding:.4rem .5rem;width:100%;
+    background:var(--ink);border:1px solid var(--line);border-radius:5px;color:var(--bone)}
+  .ed-pass input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 1px rgba(251,220,123,.35)}
+  .funds{position:fixed;top:3rem;left:50%;transform:translateX(-50%);z-index:4;
+    font-family:var(--sans);font-size:.85rem;letter-spacing:.06em;color:var(--gold);
+    background:rgba(21,26,34,.9);border:1px solid var(--gold);border-radius:999px;
+    padding:.45rem 1rem;display:none}
+  .funds.show{display:block}
 
   .caption{position:fixed;left:.75rem;right:.75rem;bottom:.75rem;display:flex;gap:.7rem;align-items:flex-end}
   .bubble{flex:1;background:rgba(21,26,34,.94);border:1px solid var(--line);border-left:2px solid var(--gold);
@@ -84,9 +96,9 @@
 <div class="hud top">
   <div class="nav">
     <img src="logo.png" alt="Bitcoin Butlers" class="logo">
-    <a class="scene-link">Seed Generation</a>
-    <a class="scene-link">Seed In Use</a>
-    <a class="scene-link here">Seed At Rest</a>
+    <a class="scene-link" href="generation.html">Seed Generation</a>
+    <a class="scene-link" href="in-use.html">Seed In Use</a>
+    <a class="scene-link here" href="index.html">Seed At Rest</a>
   </div>
   <a class="flat" href="fallback.html">2D version</a>
 </div>
@@ -107,11 +119,6 @@
       <button class="chip on" data-v="one">One</button>
       <button class="chip" data-v="multi">Multi</button>
     </div></div>
-  <div class="grp"><div class="lbl">Passphrase</div>
-    <div class="chips" id="pass">
-      <button class="chip on" data-v="none">None</button>
-      <button class="chip" data-v="butler">"butler"</button>
-    </div></div>
   <div class="grp"><div class="lbl">Derivation path</div>
     <div class="chips" id="path">
       <button class="chip on" data-v="std">m/84'/0'/0'</button>
@@ -125,10 +132,13 @@
   <div class="grp"><div class="lbl">Master fingerprint</div>
     <div class="fp" id="fp">73C5DA0A</div></div>
 </div>
+<div class="funds" id="funds">0.21 BTC · $23,940</div>
 <div class="editor" id="editor" hidden>
   <div class="ed-head">Engrave the plate <button id="ed-close">Done</button></div>
   <div class="ed-grid" id="ed-grid"></div>
   <div class="cs-pick" id="cs-pick"></div>
+  <div class="ed-pass"><label for="ed-passin">Passphrase (optional, BIP-39 only)</label>
+    <input id="ed-passin" type="text" autocapitalize="off" spellcheck="false" placeholder="none"></div>
   <div class="ed-note" id="ed-note"></div>
 </div>
 <div class="act"><button id="recover">Try recovery</button></div>
@@ -137,12 +147,17 @@
 </div>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script type="module">
+  const force3d=new URLSearchParams(location.search).has("3d");
+  if(!force3d && navigator.connection && navigator.connection.saveData) location.replace("fallback.html");
   try{
     const gl=document.createElement("canvas").getContext("webgl2")
       ||document.createElement("canvas").getContext("webgl");
     if(!gl) location.replace("fallback.html");
   }catch(e){location.replace("fallback.html")}
-  import("./scene.js").catch(()=>location.replace("fallback.html"));
+  import("./scene.js?v=5").catch(error => {
+    console.error("AT-REST SCENE ERROR", error.message, error.stack);
+    if (!force3d) location.replace("fallback.html");
+  });
 </script>
 </body>
 </html>
