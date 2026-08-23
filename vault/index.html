@@ -6,7 +6,7 @@
 <title>The Custody Vault, Bitcoin Butlers</title>
 <meta name="description" content="Follow a Bitcoin seed through generation, signing, and recovery with a Butler as your guide.">
 <link rel="preload" href="butler-host-v2.webp" as="image">
-<link rel="stylesheet" href="scene-shared.css?v=7">
+<link rel="stylesheet" href="scene-shared.css?v=8">
 <style>
   body{background:
     radial-gradient(circle at 58% 42%,rgba(49,56,68,.38),transparent 34%),
@@ -28,7 +28,6 @@
     border-radius:8px;padding:.85rem 1rem;text-decoration:none;white-space:nowrap;
     box-shadow:0 14px 34px rgba(0,0,0,.34);transition:transform .2s ease,background .2s ease}
   .lifecycle-links a:hover,.lifecycle-links a:focus-visible{transform:translateY(-3px);outline:none}
-  .lifecycle-links a.locked{opacity:.34;cursor:not-allowed;transform:none}
   .lifecycle-links a:nth-child(2),.lifecycle-links a:nth-child(3){
     color:var(--bone);background:rgba(21,26,34,.94)}
   @media(max-width:600px){
@@ -46,24 +45,14 @@
 <a class="flat" style="position:fixed;right:1rem;top:1rem;z-index:3" href="fallback.html">2D version</a>
 <div class="landing-title">The Custody Vault<strong>One seed. Three moments of truth.</strong></div>
 <nav class="lifecycle-links" aria-label="Choose a seed lifecycle scene">
-  <a href="generation.html" data-station="1">Generation</a>
-  <a href="in-use.html" data-station="4">In use</a>
-  <a href="at-rest.html" data-station="8">At rest</a>
+  <a href="generation.html?station=1&amp;preview=1">Generation</a>
+  <a href="in-use.html?station=4&amp;preview=1">In use</a>
+  <a href="at-rest.html?station=10&amp;preview=1">At rest</a>
 </nav>
 <div class="caption"><div class="bubble"><span class="who">Your Butler</span><span id="say"></span></div></div>
 <script type="module">
   import { speak } from "./butler.js?v=4";
   import { SCRIPTS } from "./script.js?v=8";
-  import { getJourneyState } from "./journey.js?v=7";
-  const journey = getJourneyState();
-  document.querySelectorAll(".lifecycle-links a").forEach(link => {
-    const locked = Number(link.dataset.station) > journey.unlockedThrough;
-    link.classList.toggle("locked", locked);
-    if (locked){
-      link.setAttribute("aria-disabled", "true");
-      link.addEventListener("click", event => event.preventDefault());
-    }
-  });
   speak(SCRIPTS.landing.welcome, 320);
 </script>
 </body>

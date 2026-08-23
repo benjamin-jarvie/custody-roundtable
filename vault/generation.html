@@ -6,7 +6,7 @@
 <title>Seed Generation, The Custody Vault</title>
 <meta name="description" content="Compare device and physical entropy inside a guided 3D seed generation ceremony.">
 <link rel="preload" href="butler-host-v2.webp" as="image">
-<link rel="stylesheet" href="scene-shared.css?v=7">
+<link rel="stylesheet" href="scene-shared.css?v=8">
 <style>
   .paper-editor{position:fixed;left:50%;top:50%;z-index:8;width:430px;
     transform:translate(-50%,-50%);transform-origin:center;padding:.48rem .6rem .55rem;
@@ -37,8 +37,8 @@
   <div class="nav">
     <a href="index.html"><img src="logo.png" alt="Bitcoin Butlers" class="logo"></a>
     <a class="scene-link here" href="generation.html">Seed Generation</a>
-    <a class="scene-link" href="in-use.html">Seed In Use</a>
-    <a class="scene-link" href="at-rest.html">Seed At Rest</a>
+    <a class="scene-link" href="in-use.html?station=4&amp;preview=1">Seed In Use</a>
+    <a class="scene-link" href="at-rest.html?station=10&amp;preview=1">Seed At Rest</a>
   </div>
   <a class="flat" href="fallback.html">2D version</a>
 </div>
@@ -67,10 +67,10 @@
   <div class="paper-note" id="paper-note">Use generated demo words only. The paper stays in this browser session.</div>
 </section>
 <div class="act">
-  <button id="device-entropy">Use the device</button>
-  <button class="secondary" id="roll-dice">Roll dice</button>
-  <button class="secondary" id="deal-cards">Deal cards</button>
-  <button class="secondary" id="pick-words">Pick words</button>
+  <button class="tool-choice tool-on" id="device-entropy">Use the device</button>
+  <button class="tool-choice" id="roll-dice">Roll dice</button>
+  <button class="tool-choice" id="deal-cards">Deal cards</button>
+  <button class="tool-choice" id="pick-words">Pick words</button>
 </div>
 <div class="caption"><div class="bubble"><span class="who">Your Butler</span><span id="say"></span></div></div>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
@@ -82,7 +82,7 @@
       || document.createElement("canvas").getContext("webgl");
     if (!gl) location.replace("fallback.html");
   } catch (error) { location.replace("fallback.html"); }
-  import("./generation.js?v=26").catch(error => {
+  import("./generation.js?v=28").catch(error => {
     console.error("GENERATION SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });

@@ -6,7 +6,7 @@
 <title>The Vault, Bitcoin Butlers</title>
 <meta name="description" content="Where your Bitcoin seed sleeps. Walk the vault with a Butler and see what a backup must really survive.">
 <link rel="preload" href="butler-host-v2.webp" as="image">
-<link rel="stylesheet" href="scene-shared.css?v=7">
+<link rel="stylesheet" href="scene-shared.css?v=8">
 <style>
   :root{
     --ink:#0C0F14; --panel:#151A22; --gold:#FBDC7B; --bone:#E9E4D6;
@@ -96,8 +96,8 @@
 <div class="hud top">
   <div class="nav">
     <a href="index.html"><img src="logo.png" alt="Bitcoin Butlers" class="logo"></a>
-    <a class="scene-link" href="generation.html">Seed Generation</a>
-    <a class="scene-link" href="in-use.html">Seed In Use</a>
+    <a class="scene-link" href="generation.html?station=1&amp;preview=1">Seed Generation</a>
+    <a class="scene-link" href="in-use.html?station=4&amp;preview=1">Seed In Use</a>
     <a class="scene-link here" href="at-rest.html">Seed At Rest</a>
   </div>
   <a class="flat" href="fallback.html">2D version</a>
@@ -163,7 +163,7 @@
       ||document.createElement("canvas").getContext("webgl");
     if(!gl) location.replace("fallback.html");
   }catch(e){location.replace("fallback.html")}
-  import("./scene.js?v=25").catch(error => {
+  import("./scene.js?v=26").catch(error => {
     console.error("AT-REST SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });

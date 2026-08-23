@@ -12,7 +12,7 @@ import {
   setSessionMnemonic,
   getSessionMnemonics,
   setSessionMnemonics
-} from "./journey.js?v=7";
+} from "./journey.js?v=8";
 import { WORDS, generateMnemonic, validLastWords, validMnemonic } from "./mnemonic.js?v=1";
 import {
   setupPhysicalRenderer,
@@ -27,7 +27,7 @@ import {
 
 const COPY = SCRIPTS.generation;
 const savedJourney = getJourneyState();
-const state = { fmt: savedJourney.format, sig: savedJourney.signers, ven: savedJourney.vendors };
+const state = { fmt: savedJourney.format, sig: savedJourney.signers, ven: savedJourney.vendors, tool: "device" };
 const DEMO_WORDS = ["abandon","abandon","abandon","abandon","abandon","abandon",
   "abandon","abandon","abandon","abandon","abandon","about"];
 let paperWords = getSessionMnemonic(DEMO_WORDS);
@@ -476,6 +476,21 @@ const deviceAction = document.getElementById("device-entropy");
 const diceAction = document.getElementById("roll-dice");
 const cardsAction = document.getElementById("deal-cards");
 const wordsAction = document.getElementById("pick-words");
+function selectedToolObject(){
+  return { device: devices[0], dice: diceGroup, cards: cardsGroup, words: wordsGroup }[state.tool] || devices[0];
+}
+function setSelectedTool(tool){
+  state.tool = tool;
+  [deviceAction, diceAction, cardsAction, wordsAction].forEach(button => {
+    button.classList.toggle("tool-on", button === {
+      device: deviceAction,
+      dice: diceAction,
+      cards: cardsAction,
+      words: wordsAction
+    }[tool]);
+  });
+  relayout();
+}
 function setTarget(object, x, y, z, visible = true){
   const wasVisible = object.visible;
   targets.set(object, { position: new THREE.Vector3(x, y, z), visible });
@@ -514,24 +529,24 @@ function stageCeremony(index){
       device.scale.setScalar(1);
       setDeviceScreen(device, ["CEREMONY " + (deviceIndex + 1), "READY"]);
     } else {
-      const completed = deviceIndex < index;
-      setTarget(device, -0.9 + deviceIndex * 1.05, 2.18, -1.22, true);
-      device.scale.setScalar(0.64);
-      setDeviceScreen(device, completed ? ["SEED " + (deviceIndex + 1), "SEALED"] : ["SIGNER " + (deviceIndex + 1), "WAITING"]);
+      setTarget(device, deviceIndex < index ? -5.5 : 5.5, 1.2, -1.4, false);
     }
   });
 }
 function relayout(){
   const multi = state.sig === "multi";
-  const showDice = state.fmt !== "bip32";
+  const station = journeyStations?.station || 1;
+  const atEntropy = station === 1;
+  const showDice = atEntropy && state.tool === "dice";
   const showWorksheet = state.fmt === "codex32";
   const showKeyCard = state.fmt === "bip32";
   const showPaper = state.fmt === "bip39";
-  const showWitnessedTools = state.fmt === "bip39";
-  const showDevices = state.fmt !== "codex32";
+  const showCards = state.fmt === "bip39" && atEntropy && state.tool === "cards";
+  const showWords = state.fmt === "bip39" && atEntropy && state.tool === "words";
+  const showDevices = state.fmt !== "codex32" && (!atEntropy || state.tool === "device");
   setTarget(diceGroup, -2.85, 1.66, 0.62, showDice);
-  setTarget(cardsGroup, -2.18, 1.67, -0.28, showWitnessedTools);
-  setTarget(wordsGroup, -1.35, 1.69, 0.62, showWitnessedTools);
+  setTarget(cardsGroup, -2.18, 1.67, -0.28, showCards);
+  setTarget(wordsGroup, -1.35, 1.69, 0.62, showWords);
   setTarget(worksheet, -0.45, 1.72, 0.05, showWorksheet);
   setTarget(keyCard, -0.65, 1.72, 0.12, showKeyCard);
   setTarget(seedPaper, 0.5, 1.72, 0.18, showPaper);
@@ -552,8 +567,8 @@ function relayout(){
       device.scale.set(...normalizers[index]);
     } else device.scale.set(1,1,1);
   });
-  if (multi) stageCeremony(Math.min(getJourneyState().ceremoniesComplete, 2));
-  const hero = showWorksheet ? worksheet : showKeyCard ? keyCard : seedPaper;
+  if (multi && showDevices) stageCeremony(Math.min(getJourneyState().ceremoniesComplete, 2));
+  const hero = atEntropy ? selectedToolObject() : showWorksheet ? worksheet : showKeyCard ? keyCard : seedPaper;
   focusOn(hero, 6.2);
   setTimeout(() => focusOn(null), reduced ? 0 : 1400);
   updateActions();
@@ -576,21 +591,21 @@ async function writeGeneratedPaper(source){
   updateJourney({ ceremoniesComplete, drillPassed: false, descriptorReady: false });
   if (required > ceremoniesComplete){
     setDeviceScreen(devices[ceremonyIndex], ["SEED " + ceremoniesComplete, "SEALED"], "#8FC79A");
-    stageCeremony(ceremoniesComplete);
+    if (state.tool === "device") stageCeremony(ceremoniesComplete);
     readout.textContent = "Ceremony " + ceremoniesComplete + " of 3 complete";
-    focusOn(devices[ceremoniesComplete], 5.6);
+    focusOn(state.tool === "device" ? devices[ceremoniesComplete] : selectedToolObject(), 5.6);
     speak([COPY.ceremony(ceremoniesComplete + 1)]);
     return;
   }
   completeStation(1);
   completeStation(2);
-  journeyStations?.select(3);
   readout.textContent = "128 bits encoded with a valid checksum";
-  focusOn(seedPaper, 5.2);
+  focusOn(selectedToolObject(), 5.6);
   speak([COPY.tools[source]]);
 }
 
 deviceAction.addEventListener("click", async () => {
+  setSelectedTool("device");
   if (state.fmt === "bip39"){
     presentTool("device", "Entropy", 850);
     await writeGeneratedPaper("device");
@@ -611,6 +626,7 @@ deviceAction.addEventListener("click", async () => {
   setTimeout(() => focusOn(null), reduced ? 0 : 2600);
 });
 diceAction.addEventListener("click", async () => {
+  setSelectedTool("dice");
   if (state.fmt === "bip39"){
     presentTool("dice", "Entropy", 900);
     await writeGeneratedPaper("dice");
@@ -623,10 +639,12 @@ diceAction.addEventListener("click", async () => {
   speak(COPY.dice);
 });
 cardsAction.addEventListener("click", async () => {
+  setSelectedTool("cards");
   presentTool("paper", "Cards", 850);
   await writeGeneratedPaper("cards");
 });
 wordsAction.addEventListener("click", async () => {
+  setSelectedTool("words");
   presentTool("plate", "Words", 850);
   await writeGeneratedPaper("words");
 });
@@ -648,6 +666,7 @@ function syncVendorLock(){
 }
 wireChips("fmt", "fmt", value => {
   paperEditor.hidden = true;
+  setSelectedTool("device");
   updateJourney({
     currentStation: 1,
     unlockedThrough: 1,
@@ -697,6 +716,7 @@ wireChips("ven", "ven", value => {
 syncVendorLock();
 syncChoiceControls(state);
 journeyStations = mountJourneyStations("generation", station => {
+  relayout();
   if (state.sig === "single" && state.fmt !== "codex32"){
     if (station === 3){
       setTarget(devices[0], 2.8, 2.28, -1.12, true);

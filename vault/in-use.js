@@ -14,7 +14,7 @@ import {
   getSessionPassphrase,
   setSessionPassphrase,
   resolvePolicy
-} from "./journey.js?v=7";
+} from "./journey.js?v=8";
 import { validMnemonic } from "./mnemonic.js?v=1";
 import { masterFromMnemonic } from "./vendor/bip32.js";
 import { loadWatchBalance, formatBtc, formatUsd } from "./balance.js?v=1";

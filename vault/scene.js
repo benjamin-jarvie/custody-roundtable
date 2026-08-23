@@ -19,7 +19,7 @@ import {
   getSessionMnemonics,
   POLICY_PRESETS,
   resolvePolicy
-} from "./journey.js?v=7";
+} from "./journey.js?v=8";
 import {
   setupPhysicalRenderer,
   brushedMetal,

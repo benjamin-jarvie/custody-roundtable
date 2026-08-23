@@ -212,9 +212,11 @@ export function syncChoiceControls(sceneState){
 export function mountJourneyStations(page, onSelect = () => {}){
   const pageStations = STATIONS.filter(station => station.page === page);
   const pageStart = pageStations[0].id;
-  const requested = Number(new URLSearchParams(location.search).get("station"));
+  const params = new URLSearchParams(location.search);
+  const requested = Number(params.get("station"));
+  const preview = params.get("preview") === "1";
   let state = getJourneyState();
-  let active = pageStations.some(station => station.id === requested && station.id <= state.unlockedThrough)
+  let active = pageStations.some(station => station.id === requested && (preview || station.id <= state.unlockedThrough))
     ? requested
     : pageStations.some(station => station.id === state.currentStation && station.id <= state.unlockedThrough)
       ? state.currentStation
@@ -228,7 +230,7 @@ export function mountJourneyStations(page, onSelect = () => {}){
       select(){}, refresh(){}, destroy(){}
     };
   }
-  state = enterStation(active);
+  if (!preview) state = enterStation(active);
   document.body.dataset.station = String(active);
 
   const nav = document.createElement("nav");
@@ -243,7 +245,7 @@ export function mountJourneyStations(page, onSelect = () => {}){
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.station = String(station.id);
-      button.disabled = station.id > state.unlockedThrough;
+      button.disabled = station.id > state.unlockedThrough && !(preview && station.id === active);
       button.className = "station-step";
       button.classList.toggle("on", station.id === active);
       button.classList.toggle("done", state.completed.includes(station.id));
