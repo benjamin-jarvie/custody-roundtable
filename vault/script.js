@@ -86,6 +86,14 @@ export const SCRIPTS = {
       "The quorum is complete. The signed transaction returns to the online wallet for broadcast.",
       "The QR carried public transaction data. The signer screens carried the judgment."
     ],
+    journey: {
+      load: "The working paper loads the signer. A BIP-39 passphrase changes the root before the fingerprint appears.",
+      watch: "The signer and watch-only wallet now share a public policy. The private seed remains inside the signer.",
+      deposit: "A public demo address shows the live test-deposit boundary. One address is never a whole-wallet scan.",
+      drillStart: "The signer is wiped. Recovery now has to recreate the same fingerprint from the paper and remembered context.",
+      drillPass: "The restored fingerprint matches. The test coins can sweep out and back while the stake is still small.",
+      drillFail: "The fingerprint changed. Stop here, return to the paper or passphrase, and fix the recovery set before engraving."
+    },
     object: {
       psbt: "A PSBT is a public envelope for a transaction and its signatures. Moving it is safe. Approving it blindly is not.",
       signer: "Read the destination and amount on the signer itself. The computer screen is a request, never the authority.",

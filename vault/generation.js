@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS } from "./script.js?v=5";
+import { SCRIPTS } from "./script.js?v=6";
 import {
   getJourneyState,
   updateJourney,
@@ -10,7 +10,7 @@ import {
   completeStation,
   getSessionMnemonic,
   setSessionMnemonic
-} from "./journey.js?v=2";
+} from "./journey.js?v=3";
 import { WORDS, generateMnemonic, validLastWords, validMnemonic } from "./mnemonic.js?v=1";
 import {
   setupPhysicalRenderer,

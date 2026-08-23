@@ -1,13 +1,21 @@
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS } from "./script.js?v=5";
+import { SCRIPTS } from "./script.js?v=6";
 import {
   getJourneyState,
   updateJourney,
   journeyChoicePatch,
   syncChoiceControls,
-  mountJourneyStations
-} from "./journey.js?v=2";
+  mountJourneyStations,
+  completeStation,
+  uncompleteStation,
+  getSessionMnemonic,
+  getSessionPassphrase,
+  setSessionPassphrase
+} from "./journey.js?v=4";
+import { validMnemonic } from "./mnemonic.js?v=1";
+import { masterFromMnemonic } from "./vendor/bip32.js";
+import { loadWatchBalance, formatBtc, formatUsd } from "./balance.js?v=1";
 import {
   setupPhysicalRenderer,
   brushedMetal,
@@ -27,10 +35,16 @@ const state = {
   ven: savedJourney.vendors,
   platform: savedJourney.platform
 };
+const DEMO_WORDS = ["abandon","abandon","abandon","abandon","abandon","abandon",
+  "abandon","abandon","abandon","abandon","abandon","about"];
+let inUseStations = null;
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const canvas = document.getElementById("c");
 const readout = document.getElementById("readout");
 const walkButton = document.getElementById("walk-psbt");
+const passphraseGroup = document.getElementById("passphrase-group");
+const passphraseInput = document.getElementById("signer-passphrase");
+passphraseInput.value = getSessionPassphrase();
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -490,8 +504,117 @@ function startTransfer(){
   speak(COPY.transferStart);
   focusOn(psbt, 5.4);
 }
+
+const waitBeat = duration => new Promise(resolve => setTimeout(resolve, reduced ? 0 : duration));
+
+async function loadSignerFromPaper(){
+  const words = getSessionMnemonic(DEMO_WORDS);
+  const passphrase = state.fmt === "bip39" ? getSessionPassphrase() : "";
+  if (!await validMnemonic(words)){
+    readout.textContent = "Paper checksum failed";
+    setSigner(signers[0], ["LOAD BLOCKED", "CHECK PAPER"], "#DE8A66");
+    speak([COPY.journey.drillFail]);
+    return;
+  }
+  walkButton.disabled = true;
+  readout.textContent = "Paper loading into signer";
+  setSigner(signers[0], ["LOADING", "12 WORDS"]);
+  focusOn(signers[0], 5.2);
+  await waitBeat(650);
+  const master = await masterFromMnemonic(words, passphrase);
+  setSigner(signers[0], ["SEED LOADED", "FP " + master.fp], "#8FC79A");
+  updateJourney({
+    fingerprint: master.fp,
+    passphraseSet: Boolean(passphrase),
+    drillPassed: false
+  });
+  completeStation(4);
+  readout.textContent = "Signer fingerprint " + master.fp;
+  speak([COPY.journey.load]);
+  walkButton.disabled = false;
+  await waitBeat(500);
+  inUseStations.select(5);
+}
+
+async function checkTestDeposit(){
+  walkButton.disabled = true;
+  setWatchScreen(["MEMPOOL", "CHECKING"]);
+  readout.textContent = "Checking public demo address";
+  focusOn(activeWatch, 5.4);
+  try {
+    const result = await loadWatchBalance({ allowDemo: true });
+    if (!result) throw new Error("Watch-only address required");
+    const value = formatBtc(result.btc);
+    setWatchScreen([result.source === "demo" ? "DEMO ADDRESS" : "WATCH ADDRESS", value.replace(" BTC", " BTC")], "#8FC79A");
+    readout.textContent = result.usdValue === null
+      ? value
+      : value + "  |  " + formatUsd(result.usdValue);
+    completeStation(6);
+    speak([COPY.journey.deposit]);
+    walkButton.disabled = false;
+    await waitBeat(500);
+    inUseStations.select(7);
+  } catch (error){
+    setWatchScreen(["BALANCE", "UNAVAILABLE"], "#DE8A66");
+    readout.textContent = error.message;
+    walkButton.disabled = false;
+  }
+}
+
+async function runRecoveryDrill(){
+  const journey = getJourneyState();
+  const words = getSessionMnemonic(DEMO_WORDS);
+  const passphrase = state.fmt === "bip39" ? getSessionPassphrase() : "";
+  walkButton.disabled = true;
+  updateJourney({ drillPassed: false });
+  uncompleteStation(7);
+  setSigner(signers[0], ["SIGNER", "WIPED"], "#DE8A66");
+  setWatchScreen(["TEST COINS", "HELD"]);
+  readout.textContent = "Signer wiped";
+  focusOn(signers[0], 5.1);
+  speak([COPY.journey.drillStart]);
+  await waitBeat(850);
+
+  if (!await validMnemonic(words)){
+    setSigner(signers[0], ["RESTORE", "CHECKSUM FAIL"], "#DE8A66");
+    readout.textContent = "Recovery paper checksum failed";
+    speak([COPY.journey.drillFail]);
+    walkButton.disabled = false;
+    return;
+  }
+
+  setSigner(signers[0], ["RESTORING", "FROM PAPER"]);
+  await waitBeat(700);
+  const restored = await masterFromMnemonic(words, passphrase);
+  const matched = Boolean(journey.fingerprint) && restored.fp === journey.fingerprint;
+  if (!matched){
+    setSigner(signers[0], ["FP MISMATCH", restored.fp], "#DE8A66");
+    readout.textContent = journey.fingerprint
+      ? "Expected " + journey.fingerprint + ", restored " + restored.fp
+      : "Load the signer at S4 before running the drill";
+    speak([COPY.journey.drillFail]);
+    walkButton.disabled = false;
+    return;
+  }
+
+  setSigner(signers[0], ["RESTORED", "FP " + restored.fp], "#8FC79A");
+  readout.textContent = "Fingerprint matched";
+  await waitBeat(700);
+  setWatchScreen(["TEST COINS", "OUT + BACK"], "#8FC79A");
+  readout.textContent = "Recovery drill passed";
+  updateJourney({ drillPassed: true });
+  completeStation(7);
+  speak([COPY.journey.drillPass]);
+  focusOn(activeWatch, 5.3);
+  walkButton.disabled = false;
+}
+
 walkButton.addEventListener("click", () => {
-  if (transfer.active) return;
+  if (transfer.active || walkButton.disabled) return;
+  const station = inUseStations?.station || 4;
+  if (station === 4){ loadSignerFromPaper(); return; }
+  if (station === 6){ checkTestDeposit(); return; }
+  if (station === 7){ runRecoveryDrill(); return; }
   walkButton.disabled = true;
   presentTool("psbt", "PSBT", 760);
   setTimeout(startTransfer, reduced ? 0 : 480);
@@ -505,6 +628,10 @@ function arrive(owner){
       speak(COPY.transferDone);
       transfer.active = false;
       walkButton.disabled = false;
+      if (inUseStations?.station === 5){
+        completeStation(5);
+        setTimeout(() => inUseStations.select(6), reduced ? 0 : 900);
+      }
       setTimeout(() => focusOn(null), reduced ? 0 : 2600);
     }
     return;
@@ -531,7 +658,11 @@ function syncVendorLock(){
   const locked = state.sig === "single";
   document.querySelectorAll("#ven .chip").forEach(chip => chip.disabled = locked);
 }
+function syncPassphraseField(){
+  passphraseGroup.hidden = state.fmt !== "bip39";
+}
 wireChips("fmt", "fmt", value => {
+  syncPassphraseField();
   relayout();
   speak(COPY.format[value]);
 });
@@ -558,10 +689,49 @@ wireChips("ven", "ven", value => {
   relayout();
   speak(COPY.vendors[value]);
 });
+passphraseInput.addEventListener("input", () => {
+  setSessionPassphrase(passphraseInput.value);
+  updateJourney({ passphraseSet: Boolean(passphraseInput.value), drillPassed: false });
+});
 syncVendorLock();
+syncPassphraseField();
 syncChoiceControls(state);
 relayout();
-mountJourneyStations("in-use");
+function stageInUseStation(station){
+  relayout();
+  monitor.scale.setScalar(1);
+  phone.scale.setScalar(1);
+  walkButton.disabled = false;
+  if (station === 4){
+    if (state.platform === "desktop"){
+      setTarget(monitor, -2.7, 2.45, -1.35, true);
+      monitor.scale.setScalar(0.58);
+    } else {
+      setTarget(phone, -2.6, 2.05, -1.2, true);
+      phone.scale.setScalar(0.78);
+    }
+    if (state.sig === "single") setTarget(signers[0], 0.55, 2.25, -0.15, true);
+    walkButton.textContent = "Load paper into signer";
+    readout.textContent = "Signer empty";
+    focusOn(signers[0], 6.0);
+    speak([COPY.journey.load]);
+  } else if (station === 5){
+    walkButton.textContent = "Walk the PSBT";
+    readout.textContent = "Watch-only policy ready";
+    focusOn(activeWatch, 5.7);
+    speak([COPY.journey.watch]);
+  } else if (station === 6){
+    walkButton.textContent = "Check test deposit";
+    readout.textContent = "Test deposit pending";
+    focusOn(activeWatch, 5.4);
+    speak([COPY.journey.deposit]);
+  } else {
+    walkButton.textContent = "Run recovery drill";
+    readout.textContent = getJourneyState().drillPassed ? "Recovery drill passed" : "Recovery drill ready";
+    focusOn(signers[0], 5.2);
+  }
+}
+inUseStations = mountJourneyStations("in-use", stageInUseStation);
 
 const ray = new THREE.Raycaster();
 const pointer = new THREE.Vector2();

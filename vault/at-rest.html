@@ -6,7 +6,7 @@
 <title>The Vault, Bitcoin Butlers</title>
 <meta name="description" content="Where your Bitcoin seed sleeps. Walk the vault with a Butler and see what a backup must really survive.">
 <link rel="preload" href="butler-host-v2.webp" as="image">
-<link rel="stylesheet" href="scene-shared.css?v=5">
+<link rel="stylesheet" href="scene-shared.css?v=6">
 <style>
   :root{
     --ink:#0C0F14; --panel:#151A22; --gold:#FBDC7B; --bone:#E9E4D6;
@@ -161,7 +161,7 @@
       ||document.createElement("canvas").getContext("webgl");
     if(!gl) location.replace("fallback.html");
   }catch(e){location.replace("fallback.html")}
-  import("./scene.js?v=21").catch(error => {
+  import("./scene.js?v=22").catch(error => {
     console.error("AT-REST SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });

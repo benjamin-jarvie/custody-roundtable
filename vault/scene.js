@@ -4,7 +4,7 @@
 
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS, emptyWalletLines } from "./script.js?v=5";
+import { SCRIPTS, emptyWalletLines } from "./script.js?v=6";
 import { WORDS, validLastWords, validMnemonic } from "./mnemonic.js?v=1";
 import { masterFromMnemonic } from "./vendor/bip32.js";
 import { loadWatchBalance, formatBtc, formatUsd } from "./balance.js?v=1";
@@ -16,7 +16,7 @@ import {
   mountJourneyStations,
   completeStation,
   getSessionMnemonic
-} from "./journey.js?v=2";
+} from "./journey.js?v=3";
 import {
   setupPhysicalRenderer,
   brushedMetal,

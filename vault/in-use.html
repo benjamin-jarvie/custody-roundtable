@@ -6,7 +6,7 @@
 <title>Seed In Use, The Custody Vault</title>
 <meta name="description" content="Walk a PSBT across an air gap and see how one signer differs from a multi-vendor quorum.">
 <link rel="preload" href="butler-host-v2.webp" as="image">
-<link rel="stylesheet" href="scene-shared.css?v=5">
+<link rel="stylesheet" href="scene-shared.css?v=6">
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -33,6 +33,11 @@
   </div>
   <div class="axis-note">This device builds and broadcasts the PSBT. It holds no private seed.</div>
   </div>
+  <div class="grp station-only" id="passphrase-group" data-show-station="4">
+    <div class="lbl">BIP-39 passphrase</div>
+    <input class="station-input" id="signer-passphrase" type="password" autocomplete="off" placeholder="optional second secret">
+    <div class="axis-note">Session only. The passphrase changes the fingerprint and has no checksum.</div>
+  </div>
   <div class="grp"><div class="lbl">Signers</div><div class="chips" id="sig">
     <button class="chip on" data-v="single">Single</button>
     <button class="chip" data-v="multi">Multisig</button>
@@ -55,7 +60,7 @@
       || document.createElement("canvas").getContext("webgl");
     if (!gl) location.replace("fallback.html");
   } catch (error) { location.replace("fallback.html"); }
-  import("./in-use.js?v=16").catch(error => {
+  import("./in-use.js?v=20").catch(error => {
     console.error("IN-USE SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });

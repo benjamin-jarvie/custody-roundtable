@@ -1,7 +1,8 @@
-import { SCRIPTS } from "./script.js?v=5";
+import { SCRIPTS } from "./script.js?v=6";
 
 const STORAGE_KEY = "bitcoin-butlers.journey.v1";
 const MNEMONIC_KEY = "bitcoin-butlers.demo-mnemonic";
+const PASSPHRASE_KEY = "bitcoin-butlers.demo-passphrase";
 const ALLOWED = {
   format: ["bip39", "bip32", "codex32"],
   signers: ["single", "multi"],
@@ -33,6 +34,7 @@ const DEFAULT_STATE = {
   vendors: "one",
   platform: "desktop",
   passphraseSet: false,
+  fingerprint: "",
   script: "segwit",
   path: "m/84'/0'/0'",
   drillPassed: false,
@@ -109,6 +111,12 @@ export function completeStation(id){
   });
 }
 
+export function uncompleteStation(id){
+  const state = getJourneyState();
+  const stationId = Number(id);
+  return updateJourney({ completed: state.completed.filter(item => item !== stationId) });
+}
+
 export function resetJourney(){
   safeWrite({ ...DEFAULT_STATE });
   return updateJourney({ ...DEFAULT_STATE });
@@ -127,6 +135,18 @@ export function getSessionMnemonic(fallback = []){
   } catch (error){
     return [...fallback];
   }
+}
+
+export function setSessionPassphrase(value){
+  try {
+    if (value) sessionStorage.setItem(PASSPHRASE_KEY, value);
+    else sessionStorage.removeItem(PASSPHRASE_KEY);
+  } catch (error){ /* session memory is optional */ }
+}
+
+export function getSessionPassphrase(){
+  try { return sessionStorage.getItem(PASSPHRASE_KEY) || ""; }
+  catch (error){ return ""; }
 }
 
 export function journeyChoicePatch(sceneKey, value){
