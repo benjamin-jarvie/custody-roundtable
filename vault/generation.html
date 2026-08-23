@@ -67,8 +67,10 @@
   <div class="paper-note" id="paper-note">Use generated demo words only. The paper stays in this browser session.</div>
 </section>
 <div class="act">
-  <button id="device-entropy">Trust the chip</button>
-  <button class="secondary" id="roll-dice">Roll the dice</button>
+  <button id="device-entropy">Use the device</button>
+  <button class="secondary" id="roll-dice">Roll dice</button>
+  <button class="secondary" id="deal-cards">Deal cards</button>
+  <button class="secondary" id="pick-words">Pick words</button>
 </div>
 <div class="caption"><div class="bubble"><span class="who">Your Butler</span><span id="say"></span></div></div>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
@@ -80,7 +82,7 @@
       || document.createElement("canvas").getContext("webgl");
     if (!gl) location.replace("fallback.html");
   } catch (error) { location.replace("fallback.html"); }
-  import("./generation.js?v=22").catch(error => {
+  import("./generation.js?v=26").catch(error => {
     console.error("GENERATION SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });

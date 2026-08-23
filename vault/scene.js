@@ -4,7 +4,7 @@
 
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS, emptyWalletLines } from "./script.js?v=7";
+import { SCRIPTS, emptyWalletLines } from "./script.js?v=8";
 import { WORDS, validLastWords, validMnemonic } from "./mnemonic.js?v=1";
 import { masterFromMnemonic } from "./vendor/bip32.js";
 import { loadWatchBalance, formatBtc, formatUsd } from "./balance.js?v=1";
@@ -16,9 +16,10 @@ import {
   mountJourneyStations,
   completeStation,
   getSessionMnemonic,
+  getSessionMnemonics,
   POLICY_PRESETS,
   resolvePolicy
-} from "./journey.js?v=5";
+} from "./journey.js?v=7";
 import {
   setupPhysicalRenderer,
   brushedMetal,
@@ -35,7 +36,7 @@ const state = {
   fmt: savedJourney.format,
   sig: savedJourney.signers,
   ven: savedJourney.vendors,
-  hasDescriptor: savedJourney.descriptorReady,
+  hasDescriptor: false,
   pass: "",
   path: savedJourney.path,
   scr: savedJourney.script
@@ -490,9 +491,9 @@ async function refreshVaultBalance({ allowDemo = false } = {}){
 
 // ---------- plates ----------
 const FACE = {
-  bip39: t => { t.font = "30px Georgia";
+  bip39: (t, seedWords = words) => { t.font = "30px Georgia";
     const rows = ["SEED PLATE",""];
-    for (let i = 0; i < 12; i += 3) rows.push(words.slice(i, i+3).join("  "));
+    for (let i = 0; i < 12; i += 3) rows.push(seedWords.slice(i, i+3).join("  "));
     rows.forEach((l,i)=>t.fillText(l,36,64+i*52)); },
   bip32: t => { t.font = "22px Menlo, monospace";
     const x = master ? master.xprv : "deriving...";
@@ -502,7 +503,7 @@ const FACE = {
   codex32:t => { t.font = "38px Menlo, monospace"; ["CODEX32 PLATE","","MS12NAMEA320ZYXWV","checksummed by hand","no device trusted"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
   descriptor: t => { t.font = "38px Menlo, monospace"; ["THE DESCRIPTOR","","wsh(sortedmulti(2,","xpub1..., xpub2...))","quorum + paths + script"].forEach((l,i)=>t.fillText(l,36,86+i*62)); },
 };
-function plateTexture(kind, tint){
+function plateTexture(kind, tint, seedWords = words){
   const c = document.createElement("canvas"); c.width = 512; c.height = 512;
   const t = c.getContext("2d");
   const g = t.createLinearGradient(0,0,512,512);
@@ -521,7 +522,7 @@ function plateTexture(kind, tint){
   t.lineWidth = 7; t.strokeRect(9,9,494,494);
   t.fillStyle = kind === "descriptor" ? "#3d3211" : "#252a30";
   t.textBaseline = "alphabetic";
-  FACE[kind](t);
+  FACE[kind](t, seedWords);
   const texture = new THREE.CanvasTexture(c);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -664,10 +665,11 @@ function closeDoor(){ doorTarget = 0; vaultRecoveryStatus.visible = false; balan
 function relayoutPlates(){
   const multi = state.sig === "multi";
   const tints = (multi && state.ven === "multi") ? VENDOR_TINTS_DIFF : VENDOR_TINTS_SAME;
+  const mnemonics = getSessionMnemonics([]);
   plates.forEach((m, i) => {
     const material = m.userData.faceMesh.material;
     if (material.map) material.map.dispose();
-    material.map = plateTexture(state.fmt, tints[i]);
+    material.map = plateTexture(state.fmt, tints[i], multi ? (mnemonics[i] || words) : words);
     material.needsUpdate = true;
   });
 }
@@ -676,10 +678,11 @@ function relayout(instant = false){
   updateFp();
   const multi = state.sig === "multi";
   const tints = (multi && state.ven === "multi") ? VENDOR_TINTS_DIFF : VENDOR_TINTS_SAME;
+  const mnemonics = getSessionMnemonics([]);
   plates.forEach((m, i) => {
     const material = m.userData.faceMesh.material;
     if (material.map) material.map.dispose();
-    material.map = plateTexture(state.fmt, tints[i]);
+    material.map = plateTexture(state.fmt, tints[i], multi ? (mnemonics[i] || words) : words);
     material.needsUpdate = true;
     if (multi){
       const spots = [[0, 2.65, 0],[-3.65, 0.45, 0.5],[3.65, 0.45, -0.5]];
@@ -979,7 +982,6 @@ function resetSafe(){
   awaitingDescriptor = false;
   state.hasDescriptor = false;
   doorTarget = 0;
-  updateJourney({ descriptorReady: false });
 }
 let doorTarget = 0;
 btn.addEventListener("click", () => {

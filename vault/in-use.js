@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS } from "./script.js?v=7";
+import { SCRIPTS } from "./script.js?v=8";
 import {
   getJourneyState,
   updateJourney,
@@ -10,10 +10,11 @@ import {
   completeStation,
   uncompleteStation,
   getSessionMnemonic,
+  getSessionMnemonics,
   getSessionPassphrase,
   setSessionPassphrase,
   resolvePolicy
-} from "./journey.js?v=5";
+} from "./journey.js?v=7";
 import { validMnemonic } from "./mnemonic.js?v=1";
 import { masterFromMnemonic } from "./vendor/bip32.js";
 import { loadWatchBalance, formatBtc, formatUsd } from "./balance.js?v=1";
@@ -417,6 +418,58 @@ psbt.userData.kind = "psbt";
 mark(psbt, envelope, "psbt");
 mark(psbt, qr, "psbt");
 scene.add(psbt);
+
+function descriptorTexture(fingerprints = ["FP1", "FP2", "FP3"], path = "POLICY PENDING"){
+  const canvas = document.createElement("canvas");
+  canvas.width = 768; canvas.height = 440;
+  const context = canvas.getContext("2d");
+  context.fillStyle = "#17150e"; context.fillRect(0, 0, 768, 440);
+  context.strokeStyle = "#FBDC7B"; context.lineWidth = 14; context.strokeRect(18, 18, 732, 404);
+  context.textAlign = "center";
+  context.fillStyle = "#FBDC7B";
+  context.font = "700 50px -apple-system, sans-serif";
+  context.fillText("DESCRIPTOR  |  2 OF 3", 384, 92);
+  context.fillStyle = "#E9E4D6";
+  context.font = "34px Menlo, monospace";
+  fingerprints.slice(0, 3).forEach((fingerprint, index) => {
+    context.fillText("SIGNER " + (index + 1) + "  " + fingerprint, 384, 160 + index * 58);
+  });
+  context.fillStyle = "#C4CBD5";
+  context.font = "30px Menlo, monospace";
+  context.fillText(path, 384, 372);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+const descriptorCard = new THREE.Group();
+const descriptorBase = new THREE.Mesh(
+  roundedBoxGeometry(THREE, 2.35, 1.45, 0.11, 0.06),
+  brushedMetal(THREE, 0x9b8240, 0.22)
+);
+descriptorBase.rotation.x = -Math.PI / 2;
+descriptorCard.add(descriptorBase);
+const descriptorFace = new THREE.Mesh(
+  new THREE.PlaneGeometry(2.18, 1.28),
+  new THREE.MeshBasicMaterial({ map: descriptorTexture(), toneMapped: false, side: THREE.DoubleSide })
+);
+descriptorFace.rotation.x = -Math.PI / 2;
+descriptorFace.position.y = 0.1;
+descriptorCard.add(descriptorFace);
+descriptorCard.userData.kind = "descriptor";
+mark(descriptorCard, descriptorBase, "descriptor");
+mark(descriptorCard, descriptorFace, "descriptor");
+descriptorCard.visible = false;
+scene.add(descriptorCard);
+
+function updateDescriptorCard(){
+  const journey = getJourneyState();
+  const fingerprints = journey.fingerprints.length ? journey.fingerprints : ["FP1", "FP2", "FP3"];
+  const oldMap = descriptorFace.material.map;
+  descriptorFace.material.map = descriptorTexture(fingerprints, journey.path);
+  descriptorFace.material.needsUpdate = true;
+  oldMap?.dispose();
+}
 const pathLine = new THREE.Line(
   new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
   new THREE.LineDashedMaterial({
@@ -463,6 +516,7 @@ function relayout(){
   activeWatch = state.platform === "phone" ? phone : monitor;
   setTarget(monitor, -2.85, 2.75, -0.2, state.platform === "desktop");
   setTarget(phone, -2.85, 2.22, -0.2, state.platform === "phone");
+  setTarget(descriptorCard, 0, 1.72, 0.5, false);
   const spots = multi
     ? [[-0.65, 2.22, -0.5], [1.15, 2.2, -0.85], [2.85, 2.28, -0.4]]
     : [[1.1, 2.25, -0.5], [0, 2.2, -0.8], [0, 2.2, -0.8]];
@@ -524,29 +578,54 @@ function startTransfer(){
 
 const waitBeat = duration => new Promise(resolve => setTimeout(resolve, reduced ? 0 : duration));
 
+function stageLoadSigner(currentIndex){
+  if (state.sig !== "multi") return;
+  const background = [[-0.85, 2.12, -1.32], [0.35, 2.12, -1.52], [1.55, 2.12, -1.32]];
+  signers.forEach((signer, index) => {
+    if (index === currentIndex){
+      setTarget(signer, 0.65, 2.3, -0.16, true);
+      signer.scale.setScalar(1);
+    } else {
+      setTarget(signer, ...background[index], true);
+      signer.scale.setScalar(0.64);
+    }
+  });
+}
+
 async function loadSignerFromPaper(){
-  const words = getSessionMnemonic(DEMO_WORDS);
+  const singleWords = getSessionMnemonic(DEMO_WORDS);
+  const required = state.sig === "multi" ? 3 : 1;
+  const mnemonics = state.sig === "multi"
+    ? getSessionMnemonics([]).slice(0, required)
+    : [singleWords];
   const passphrase = state.fmt === "bip39" ? getSessionPassphrase() : "";
-  if (!await validMnemonic(words)){
+  if (mnemonics.length < required || !(await Promise.all(mnemonics.map(validMnemonic))).every(Boolean)){
     readout.textContent = "Paper checksum failed";
-    setSigner(signers[0], ["LOAD BLOCKED", "CHECK PAPER"], "#DE8A66");
+    setSigner(signers[Math.min(mnemonics.length, required - 1)], ["LOAD BLOCKED", "CHECK PAPER"], "#DE8A66");
     speak([COPY.journey.drillFail]);
     return;
   }
   walkButton.disabled = true;
-  readout.textContent = "Paper loading into signer";
-  setSigner(signers[0], ["LOADING", "12 WORDS"]);
-  focusOn(signers[0], 5.2);
-  await waitBeat(650);
-  const master = await masterFromMnemonic(words, passphrase);
-  setSigner(signers[0], ["SEED LOADED", "FP " + master.fp], "#8FC79A");
+  const masters = await Promise.all(mnemonics.map(words => masterFromMnemonic(words, passphrase)));
+  for (let index = 0; index < required; index++){
+    stageLoadSigner(index);
+    readout.textContent = "Loading signer " + (index + 1) + " of " + required;
+    setSigner(signers[index], ["LOADING", "SEED " + (index + 1)]);
+    focusOn(signers[index], 5.2);
+    await waitBeat(480);
+    setSigner(signers[index], ["SEED LOADED", "FP " + masters[index].fp], "#8FC79A");
+  }
+  const fingerprints = masters.map(master => master.fp);
   updateJourney({
-    fingerprint: master.fp,
+    fingerprint: fingerprints[0],
+    fingerprints,
     passphraseSet: Boolean(passphrase),
     drillPassed: false
   });
   completeStation(4);
-  readout.textContent = "Signer fingerprint " + master.fp;
+  readout.textContent = required === 1
+    ? "Signer fingerprint " + fingerprints[0]
+    : "Three independent fingerprints recorded";
   speak([COPY.journey.load]);
   walkButton.disabled = false;
   await waitBeat(500);
@@ -580,19 +659,28 @@ async function checkTestDeposit(){
 
 async function runRecoveryDrill(){
   const journey = getJourneyState();
-  const words = getSessionMnemonic(DEMO_WORDS);
+  const required = state.sig === "multi" ? 2 : 1;
+  const singleWords = getSessionMnemonic(DEMO_WORDS);
+  const mnemonics = state.sig === "multi"
+    ? getSessionMnemonics([]).slice(0, required)
+    : [singleWords];
+  const expected = state.sig === "multi"
+    ? journey.fingerprints.slice(0, required)
+    : [journey.fingerprint];
   const passphrase = state.fmt === "bip39" ? getSessionPassphrase() : "";
   walkButton.disabled = true;
   updateJourney({ drillPassed: false });
   uncompleteStation(7);
-  setSigner(signers[0], ["SIGNER", "WIPED"], "#DE8A66");
+  for (let index = 0; index < required; index++){
+    setSigner(signers[index], ["SIGNER " + (index + 1), "WIPED"], "#DE8A66");
+  }
   setWatchScreen(["TEST COINS", "HELD"]);
   readout.textContent = "Signer wiped";
   focusOn(signers[0], 5.1);
   speak([COPY.journey.drillStart]);
   await waitBeat(850);
 
-  if (!await validMnemonic(words)){
+  if (mnemonics.length < required || !(await Promise.all(mnemonics.map(validMnemonic))).every(Boolean)){
     setSigner(signers[0], ["RESTORE", "CHECKSUM FAIL"], "#DE8A66");
     readout.textContent = "Recovery paper checksum failed";
     speak([COPY.journey.drillFail]);
@@ -600,22 +688,28 @@ async function runRecoveryDrill(){
     return;
   }
 
-  setSigner(signers[0], ["RESTORING", "FROM PAPER"]);
-  await waitBeat(700);
-  const restored = await masterFromMnemonic(words, passphrase);
-  const matched = Boolean(journey.fingerprint) && restored.fp === journey.fingerprint;
-  if (!matched){
-    setSigner(signers[0], ["FP MISMATCH", restored.fp], "#DE8A66");
-    readout.textContent = journey.fingerprint
-      ? "Expected " + journey.fingerprint + ", restored " + restored.fp
+  const restored = [];
+  for (let index = 0; index < required; index++){
+    setSigner(signers[index], ["RESTORING", "SEED " + (index + 1)]);
+    focusOn(signers[index], 5.1);
+    await waitBeat(520);
+    restored.push(await masterFromMnemonic(mnemonics[index], passphrase));
+  }
+  const mismatch = restored.findIndex((master, index) => !expected[index] || master.fp !== expected[index]);
+  if (mismatch >= 0){
+    setSigner(signers[mismatch], ["FP MISMATCH", restored[mismatch].fp], "#DE8A66");
+    readout.textContent = expected[mismatch]
+      ? "Expected " + expected[mismatch] + ", restored " + restored[mismatch].fp
       : "Load the signer at S4 before running the drill";
     speak([COPY.journey.drillFail]);
     walkButton.disabled = false;
     return;
   }
 
-  setSigner(signers[0], ["RESTORED", "FP " + restored.fp], "#8FC79A");
-  readout.textContent = "Fingerprint matched";
+  restored.forEach((master, index) => {
+    setSigner(signers[index], ["RESTORED " + (index + 1), "FP " + master.fp], "#8FC79A");
+  });
+  readout.textContent = required === 1 ? "Fingerprint matched" : "2 of 3 fingerprints matched";
   await waitBeat(700);
   setWatchScreen(["TEST COINS", "OUT + BACK"], "#8FC79A");
   readout.textContent = "Recovery drill passed";
@@ -633,6 +727,14 @@ walkButton.addEventListener("click", () => {
   if (station === 6){ checkTestDeposit(); return; }
   if (station === 7){ runRecoveryDrill(); return; }
   syncPolicyControls();
+  if (state.sig === "multi"){
+    updateDescriptorCard();
+    setTarget(descriptorCard, 0, 1.72, 0.5, true);
+    updateJourney({ descriptorReady: true });
+    focusOn(descriptorCard, 5.6);
+  } else {
+    updateJourney({ descriptorReady: false });
+  }
   setSigner(signers[0], ["XPUB EXPORTED", state.path]);
   setWatchScreen(["POLICY RECEIVED", resolvePolicy(state.sig, state.scr).label]);
   readout.textContent = "Public policy bound at " + state.path;
@@ -684,6 +786,7 @@ function syncPassphraseField(){
   passphraseGroup.hidden = state.fmt !== "bip39";
 }
 wireChips("fmt", "fmt", value => {
+  updateJourney({ descriptorReady: false, drillPassed: false });
   syncPassphraseField();
   relayout();
   speak(COPY.format[value]);
@@ -694,6 +797,7 @@ wireChips("platform", "platform", value => {
   speak([COPY.platform[value]]);
 });
 wireChips("sig", "sig", value => {
+  updateJourney({ descriptorReady: false, drillPassed: false });
   if (value === "single"){
     state.ven = "one";
     document.querySelectorAll("#ven .chip").forEach(chip => {
@@ -742,14 +846,23 @@ function stageInUseStation(station){
       phone.scale.setScalar(0.78);
     }
     if (state.sig === "single") setTarget(signers[0], 0.55, 2.25, -0.15, true);
+    else stageLoadSigner(0);
     walkButton.textContent = "Load paper into signer";
     readout.textContent = "Signer empty";
     focusOn(signers[0], 6.0);
     speak([COPY.journey.load]);
   } else if (station === 5){
-    walkButton.textContent = "Bind policy and walk PSBT";
+    if (state.sig === "multi"){
+      updateDescriptorCard();
+      descriptorCard.rotation.x = 0.32;
+      setTarget(descriptorCard, 0, 1.72, 0.5, true);
+      walkButton.textContent = "Assemble descriptor and walk PSBT";
+      focusOn(descriptorCard, 5.8);
+    } else {
+      walkButton.textContent = "Bind policy and walk PSBT";
+      focusOn(activeWatch, 5.7);
+    }
     readout.textContent = "Watch-only policy ready";
-    focusOn(activeWatch, 5.7);
     speak([COPY.journey.watch]);
   } else if (station === 6){
     walkButton.textContent = "Check test deposit";

@@ -1,7 +1,8 @@
-import { SCRIPTS } from "./script.js?v=7";
+import { SCRIPTS } from "./script.js?v=8";
 
 const STORAGE_KEY = "bitcoin-butlers.journey.v1";
 const MNEMONIC_KEY = "bitcoin-butlers.demo-mnemonic";
+const MNEMONICS_KEY = "bitcoin-butlers.demo-mnemonics";
 const PASSPHRASE_KEY = "bitcoin-butlers.demo-passphrase";
 const ALLOWED = {
   format: ["bip39", "bip32", "codex32"],
@@ -53,6 +54,7 @@ const DEFAULT_STATE = {
   platform: "desktop",
   passphraseSet: false,
   fingerprint: "",
+  fingerprints: [],
   script: "segwit",
   path: "m/84'/0'/0'",
   drillPassed: false,
@@ -80,6 +82,9 @@ function normalize(input){
   state.unlockedThrough = Math.min(10, Math.max(1, Number(state.unlockedThrough) || 1));
   state.completed = Array.isArray(state.completed)
     ? [...new Set(state.completed.map(Number).filter(id => id >= 1 && id <= 10))]
+    : [];
+  state.fingerprints = Array.isArray(state.fingerprints)
+    ? state.fingerprints.filter(value => typeof value === "string").slice(0, 3)
     : [];
   state.ceremoniesComplete = Math.min(3, Math.max(0, Number(state.ceremoniesComplete) || 0));
   if (state.signers === "single"){
@@ -116,10 +121,8 @@ export function enterStation(id){
   const station = STATIONS.find(item => item.id === Number(id));
   if (!station) return getJourneyState();
   const state = getJourneyState();
-  return updateJourney({
-    currentStation: station.id,
-    unlockedThrough: Math.max(state.unlockedThrough, station.id)
-  });
+  if (station.id > state.unlockedThrough) return state;
+  return updateJourney({ currentStation: station.id });
 }
 
 export function completeStation(id){
@@ -157,6 +160,26 @@ export function getSessionMnemonic(fallback = []){
   }
 }
 
+export function setSessionMnemonics(mnemonics){
+  const valid = Array.isArray(mnemonics)
+    ? mnemonics.filter(words => Array.isArray(words) && words.length === 12)
+    : [];
+  try { sessionStorage.setItem(MNEMONICS_KEY, JSON.stringify(valid)); }
+  catch (error){ /* session memory is optional */ }
+}
+
+export function getSessionMnemonics(fallback = []){
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(MNEMONICS_KEY) || "[]");
+    const valid = Array.isArray(saved)
+      ? saved.filter(words => Array.isArray(words) && words.length === 12)
+      : [];
+    return valid.length ? valid : fallback.map(words => [...words]);
+  } catch (error){
+    return fallback.map(words => [...words]);
+  }
+}
+
 export function setSessionPassphrase(value){
   try {
     if (value) sessionStorage.setItem(PASSPHRASE_KEY, value);
@@ -191,11 +214,20 @@ export function mountJourneyStations(page, onSelect = () => {}){
   const pageStart = pageStations[0].id;
   const requested = Number(new URLSearchParams(location.search).get("station"));
   let state = getJourneyState();
-  let active = pageStations.some(station => station.id === requested)
+  let active = pageStations.some(station => station.id === requested && station.id <= state.unlockedThrough)
     ? requested
-    : pageStations.some(station => station.id === state.currentStation)
+    : pageStations.some(station => station.id === state.currentStation && station.id <= state.unlockedThrough)
       ? state.currentStation
-      : pageStart;
+      : pageStart <= state.unlockedThrough ? pageStart : null;
+  if (active === null){
+    const unlocked = STATIONS.filter(station => station.id <= state.unlockedThrough);
+    const fallback = unlocked[unlocked.length - 1] || STATIONS[0];
+    location.replace(fallback.href + "?station=" + fallback.id);
+    return {
+      get station(){ return fallback.id; },
+      select(){}, refresh(){}, destroy(){}
+    };
+  }
   state = enterStation(active);
   document.body.dataset.station = String(active);
 

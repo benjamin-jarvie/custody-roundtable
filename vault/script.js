@@ -49,8 +49,17 @@ export const SCRIPTS = {
       "The dice make the entropy source visible.",
       "Record enough fair rolls, then let the deterministic conversion be reproduced independently. Entropy cannot be verified after the fact. It can only be sourced."
     ],
+    tools: {
+      device: "The device supplied 128 random bits. Its speed is useful, while its hidden randomness remains part of the trust path.",
+      dice: "The dice witnessed the source. The deterministic conversion wrote a valid checksum straight onto the paper.",
+      cards: "A well-shuffled deck can source witnessed entropy. The shuffle quality is the claim that matters.",
+      words: "The entropy pills make each selection visible. Human choice can add bias, so the source still needs a disciplined method."
+    },
+    ceremony: number => "Signer " + number + " now gets its own independent ceremony. No seed is reused across the quorum.",
     object: {
       dice: "Physical entropy. Slow, observable, and only as fair as the dice and the way you roll them.",
+      cards: "A shuffled deck is a witnessed entropy source when the shuffle is deep and the ordering is recorded without bias.",
+      words: "Entropy pills make each draw visible. The method must prevent a person from choosing comfortable words.",
       device: "A signing device can protect a seed well. Its random number generator still asks for trust at the first moment.",
       keyfile: "Raw BIP-32 material has no recovery words. The file is the secret, and every unencrypted copy can spend.",
       worksheet: "The Codex32 worksheet turns generation into arithmetic a person can inspect and repeat.",
@@ -104,7 +113,8 @@ export const SCRIPTS = {
     object: {
       psbt: "A PSBT is a public envelope for a transaction and its signatures. Moving it is safe. Approving it blindly is not.",
       signer: "Read the destination and amount on the signer itself. The computer screen is a request, never the authority.",
-      monitor: "The watch-only wallet can build and broadcast. It should not know any private seed."
+      monitor: "The watch-only wallet can build and broadcast. It should not know any private seed.",
+      descriptor: "The descriptor assembles three public fingerprints, the quorum, paths, and script policy. It watches the wallet and makes recovery findable."
     }
   },
   atRest: {

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS } from "./script.js?v=7";
+import { SCRIPTS } from "./script.js?v=8";
 import {
   getJourneyState,
   updateJourney,
@@ -9,8 +9,10 @@ import {
   mountJourneyStations,
   completeStation,
   getSessionMnemonic,
-  setSessionMnemonic
-} from "./journey.js?v=5";
+  setSessionMnemonic,
+  getSessionMnemonics,
+  setSessionMnemonics
+} from "./journey.js?v=7";
 import { WORDS, generateMnemonic, validLastWords, validMnemonic } from "./mnemonic.js?v=1";
 import {
   setupPhysicalRenderer,
@@ -290,6 +292,47 @@ for (let i = 0; i < 5; i++){
 diceGroup.userData.kind = "dice";
 scene.add(diceGroup);
 
+const cardsGroup = new THREE.Group();
+for (let index = 0; index < 5; index++){
+  const card = new THREE.Mesh(
+    roundedBoxGeometry(THREE, 0.48, 0.72, 0.025, 0.025),
+    new THREE.MeshStandardMaterial({
+      color: [0x8e2630, 0x18202a, 0xeee8d8][index % 3],
+      roughness: 0.72,
+      emissive: index % 2 ? 0x3d0f12 : 0x101419,
+      emissiveIntensity: 0.08
+    })
+  );
+  card.rotation.x = -Math.PI / 2;
+  card.rotation.z = (index - 2) * 0.13;
+  card.position.set((index - 2) * 0.12, index * 0.008, Math.abs(index - 2) * 0.035);
+  cardsGroup.add(card);
+  mark(cardsGroup, card, "cards");
+}
+cardsGroup.userData.kind = "cards";
+cardsGroup.scale.setScalar(1.15);
+scene.add(cardsGroup);
+
+const wordsGroup = new THREE.Group();
+const wordBowl = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.46, 0.34, 0.18, 28, 1, true),
+  brushedMetal(THREE, 0x8e969f, 0.28)
+);
+wordsGroup.add(wordBowl);
+for (let index = 0; index < 7; index++){
+  const pill = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.055, 0.18, 6, 10),
+    new THREE.MeshStandardMaterial({ color: index % 2 ? 0xe9e4d6 : 0xd8b354, roughness: 0.58 })
+  );
+  const angle = index / 7 * Math.PI * 2;
+  pill.position.set(Math.cos(angle) * 0.24, 0.12 + (index % 3) * 0.035, Math.sin(angle) * 0.2);
+  pill.rotation.set(0.2 * index, angle, Math.PI / 2);
+  wordsGroup.add(pill);
+}
+wordsGroup.userData.kind = "words";
+mark(wordsGroup, wordBowl, "words");
+scene.add(wordsGroup);
+
 const worksheet = new THREE.Group();
 const sheet = new THREE.Mesh(
   roundedBoxGeometry(THREE, 2.7, 1.85, 0.06, 0.05),
@@ -431,6 +474,8 @@ const targets = new Map();
 let journeyStations = null;
 const deviceAction = document.getElementById("device-entropy");
 const diceAction = document.getElementById("roll-dice");
+const cardsAction = document.getElementById("deal-cards");
+const wordsAction = document.getElementById("pick-words");
 function setTarget(object, x, y, z, visible = true){
   const wasVisible = object.visible;
   targets.set(object, { position: new THREE.Vector3(x, y, z), visible });
@@ -446,6 +491,8 @@ function resetCeremony(){
   devices.forEach(device => setDeviceScreen(device, ["RNG", "READY"]));
 }
 function updateActions(){
+  cardsAction.hidden = state.fmt !== "bip39";
+  wordsAction.hidden = state.fmt !== "bip39";
   if (state.fmt === "bip32"){
     deviceAction.textContent = "Use key generator";
     diceAction.textContent = "Add dice entropy";
@@ -453,9 +500,26 @@ function updateActions(){
     deviceAction.textContent = "Use worksheet";
     diceAction.textContent = "Roll the dice";
   } else {
-    deviceAction.textContent = "Trust the chip";
-    diceAction.textContent = "Roll the dice";
+    deviceAction.textContent = "Use the device";
+    diceAction.textContent = "Roll dice";
+    cardsAction.textContent = "Deal cards";
+    wordsAction.textContent = "Pick words";
   }
+}
+function stageCeremony(index){
+  if (state.sig !== "multi") return;
+  devices.forEach((device, deviceIndex) => {
+    if (deviceIndex === index){
+      setTarget(device, 2.35, 2.38, -0.28, true);
+      device.scale.setScalar(1);
+      setDeviceScreen(device, ["CEREMONY " + (deviceIndex + 1), "READY"]);
+    } else {
+      const completed = deviceIndex < index;
+      setTarget(device, -0.9 + deviceIndex * 1.05, 2.18, -1.22, true);
+      device.scale.setScalar(0.64);
+      setDeviceScreen(device, completed ? ["SEED " + (deviceIndex + 1), "SEALED"] : ["SIGNER " + (deviceIndex + 1), "WAITING"]);
+    }
+  });
 }
 function relayout(){
   const multi = state.sig === "multi";
@@ -463,14 +527,17 @@ function relayout(){
   const showWorksheet = state.fmt === "codex32";
   const showKeyCard = state.fmt === "bip32";
   const showPaper = state.fmt === "bip39";
+  const showWitnessedTools = state.fmt === "bip39";
   const showDevices = state.fmt !== "codex32";
-  setTarget(diceGroup, -2.45, 1.66, 0.32, showDice);
+  setTarget(diceGroup, -2.85, 1.66, 0.62, showDice);
+  setTarget(cardsGroup, -2.18, 1.67, -0.28, showWitnessedTools);
+  setTarget(wordsGroup, -1.35, 1.69, 0.62, showWitnessedTools);
   setTarget(worksheet, -0.45, 1.72, 0.05, showWorksheet);
   setTarget(keyCard, -0.65, 1.72, 0.12, showKeyCard);
-  setTarget(seedPaper, 0, 1.72, 0.22, showPaper);
+  setTarget(seedPaper, 0.5, 1.72, 0.18, showPaper);
   const spots = multi
     ? [[-1.9, 2.4, -0.75], [0.25, 2.42, -1.0], [2.35, 2.4, -0.68]]
-    : [[2.45, 2.4, -0.35], [0, 2.4, -1], [0, 2.4, -1]];
+    : [[2.75, 2.4, -0.35], [0, 2.4, -1], [0, 2.4, -1]];
   devices.forEach((device, index) => {
     const spot = spots[index];
     const shouldShow = showDevices && (multi || index === 0);
@@ -485,6 +552,7 @@ function relayout(){
       device.scale.set(...normalizers[index]);
     } else device.scale.set(1,1,1);
   });
+  if (multi) stageCeremony(Math.min(getJourneyState().ceremoniesComplete, 2));
   const hero = showWorksheet ? worksheet : showKeyCard ? keyCard : seedPaper;
   focusOn(hero, 6.2);
   setTimeout(() => focusOn(null), reduced ? 0 : 1400);
@@ -495,15 +563,31 @@ relayout();
 async function writeGeneratedPaper(source){
   const generated = await generateMnemonic();
   paperWords = generated.words;
+  const required = state.sig === "multi" ? 3 : 1;
+  const journey = getJourneyState();
+  const ceremonyIndex = state.sig === "multi" ? Math.min(journey.ceremoniesComplete, 2) : 0;
+  const mnemonics = getSessionMnemonics([]);
+  mnemonics[ceremonyIndex] = [...paperWords];
+  setSessionMnemonics(mnemonics);
   setSessionMnemonic(paperWords);
   updatePaperTexture();
   syncPaperEditor();
+  const ceremoniesComplete = ceremonyIndex + 1;
+  updateJourney({ ceremoniesComplete, drillPassed: false, descriptorReady: false });
+  if (required > ceremoniesComplete){
+    setDeviceScreen(devices[ceremonyIndex], ["SEED " + ceremoniesComplete, "SEALED"], "#8FC79A");
+    stageCeremony(ceremoniesComplete);
+    readout.textContent = "Ceremony " + ceremoniesComplete + " of 3 complete";
+    focusOn(devices[ceremoniesComplete], 5.6);
+    speak([COPY.ceremony(ceremoniesComplete + 1)]);
+    return;
+  }
   completeStation(1);
   completeStation(2);
   journeyStations?.select(3);
   readout.textContent = "128 bits encoded with a valid checksum";
   focusOn(seedPaper, 5.2);
-  speak(source === "dice" ? COPY.dice : COPY.device);
+  speak([COPY.tools[source]]);
 }
 
 deviceAction.addEventListener("click", async () => {
@@ -538,6 +622,14 @@ diceAction.addEventListener("click", async () => {
   focusOn(diceGroup, 5.4);
   speak(COPY.dice);
 });
+cardsAction.addEventListener("click", async () => {
+  presentTool("paper", "Cards", 850);
+  await writeGeneratedPaper("cards");
+});
+wordsAction.addEventListener("click", async () => {
+  presentTool("plate", "Words", 850);
+  await writeGeneratedPaper("words");
+});
 
 function wireChips(id, key, callback){
   document.getElementById(id).addEventListener("click", event => {
@@ -556,12 +648,34 @@ function syncVendorLock(){
 }
 wireChips("fmt", "fmt", value => {
   paperEditor.hidden = true;
+  updateJourney({
+    currentStation: 1,
+    unlockedThrough: 1,
+    completed: [],
+    ceremoniesComplete: 0,
+    descriptorReady: false,
+    drillPassed: false,
+    fingerprints: []
+  });
+  journeyStations?.select(1);
+  setSessionMnemonics([]);
   const trayKind = value === "codex32" ? "paper" : value === "bip32" ? "device" : "dice";
   presentTool(trayKind, value, 800);
   setTimeout(relayout, reduced ? 0 : 420);
   speak(COPY.format[value]);
 });
 wireChips("sig", "sig", value => {
+  updateJourney({
+    currentStation: 1,
+    unlockedThrough: 1,
+    completed: [],
+    ceremoniesComplete: 0,
+    descriptorReady: false,
+    drillPassed: false,
+    fingerprints: []
+  });
+  journeyStations?.select(1);
+  setSessionMnemonics([]);
   if (value === "single"){
     state.ven = "one";
     document.querySelectorAll("#ven .chip").forEach(chip => {
