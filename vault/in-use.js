@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS } from "./script.js?v=6";
+import { SCRIPTS } from "./script.js?v=7";
 import {
   getJourneyState,
   updateJourney,
@@ -11,8 +11,9 @@ import {
   uncompleteStation,
   getSessionMnemonic,
   getSessionPassphrase,
-  setSessionPassphrase
-} from "./journey.js?v=4";
+  setSessionPassphrase,
+  resolvePolicy
+} from "./journey.js?v=5";
 import { validMnemonic } from "./mnemonic.js?v=1";
 import { masterFromMnemonic } from "./vendor/bip32.js";
 import { loadWatchBalance, formatBtc, formatUsd } from "./balance.js?v=1";
@@ -33,7 +34,9 @@ const state = {
   fmt: savedJourney.format,
   sig: savedJourney.signers,
   ven: savedJourney.vendors,
-  platform: savedJourney.platform
+  platform: savedJourney.platform,
+  scr: savedJourney.script,
+  path: savedJourney.path
 };
 const DEMO_WORDS = ["abandon","abandon","abandon","abandon","abandon","abandon",
   "abandon","abandon","abandon","abandon","abandon","about"];
@@ -44,7 +47,21 @@ const readout = document.getElementById("readout");
 const walkButton = document.getElementById("walk-psbt");
 const passphraseGroup = document.getElementById("passphrase-group");
 const passphraseInput = document.getElementById("signer-passphrase");
+const journeyPath = document.getElementById("journey-path");
 passphraseInput.value = getSessionPassphrase();
+
+function syncPolicyControls(){
+  if (state.sig === "multi" && !["segwit", "nested"].includes(state.scr)) state.scr = "segwit";
+  const policy = resolvePolicy(state.sig, state.scr);
+  state.path = policy.path;
+  journeyPath.textContent = policy.path;
+  document.querySelectorAll("#scr .chip").forEach(button => {
+    const supported = state.sig === "single" || ["segwit", "nested"].includes(button.dataset.v);
+    button.disabled = !supported;
+    button.classList.toggle("on", button.dataset.v === state.scr);
+  });
+  updateJourney({ script: state.scr, path: state.path });
+}
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -615,6 +632,11 @@ walkButton.addEventListener("click", () => {
   if (station === 4){ loadSignerFromPaper(); return; }
   if (station === 6){ checkTestDeposit(); return; }
   if (station === 7){ runRecoveryDrill(); return; }
+  syncPolicyControls();
+  setSigner(signers[0], ["XPUB EXPORTED", state.path]);
+  setWatchScreen(["POLICY RECEIVED", resolvePolicy(state.sig, state.scr).label]);
+  readout.textContent = "Public policy bound at " + state.path;
+  speak([COPY.journey.xpub]);
   walkButton.disabled = true;
   presentTool("psbt", "PSBT", 760);
   setTimeout(startTransfer, reduced ? 0 : 480);
@@ -679,6 +701,7 @@ wireChips("sig", "sig", value => {
     });
   }
   syncVendorLock();
+  syncPolicyControls();
   relayout();
   speak(COPY.signers[value]);
 });
@@ -689,12 +712,20 @@ wireChips("ven", "ven", value => {
   relayout();
   speak(COPY.vendors[value]);
 });
+wireChips("scr", "scr", value => {
+  state.scr = value;
+  syncPolicyControls();
+  setSigner(signers[0], [resolvePolicy(state.sig, state.scr).label, state.path]);
+  readout.textContent = "Policy bound at " + state.path;
+  speak([COPY.policy[value]]);
+});
 passphraseInput.addEventListener("input", () => {
   setSessionPassphrase(passphraseInput.value);
   updateJourney({ passphraseSet: Boolean(passphraseInput.value), drillPassed: false });
 });
 syncVendorLock();
 syncPassphraseField();
+syncPolicyControls();
 syncChoiceControls(state);
 relayout();
 function stageInUseStation(station){
@@ -716,7 +747,7 @@ function stageInUseStation(station){
     focusOn(signers[0], 6.0);
     speak([COPY.journey.load]);
   } else if (station === 5){
-    walkButton.textContent = "Walk the PSBT";
+    walkButton.textContent = "Bind policy and walk PSBT";
     readout.textContent = "Watch-only policy ready";
     focusOn(activeWatch, 5.7);
     speak([COPY.journey.watch]);

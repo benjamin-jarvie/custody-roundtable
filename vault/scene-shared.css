@@ -65,6 +65,7 @@ body::after{content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
 .chip:disabled{opacity:.35;cursor:not-allowed}
 .axis-note{font-family:var(--sans);font-size:.58rem;line-height:1.35;color:var(--slate);
   margin-top:.38rem;max-width:34ch}
+.fp{font-family:Menlo,monospace;font-size:.78rem;color:var(--gold);letter-spacing:.08em}
 .act{position:fixed;bottom:5.6rem;left:50%;transform:translateX(-50%);display:flex;
   flex-wrap:wrap;justify-content:center;gap:.5rem;z-index:6}
 .act button{font-family:var(--sans);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;

@@ -80,6 +80,12 @@ export const SCRIPTS = {
       desktop: "The watch-only wallet runs on a desktop. It builds and broadcasts transactions but holds no private seed.",
       phone: "The watch-only wallet runs on a phone. The boundary is unchanged: the phone builds the request, the signer approves it."
     },
+    policy: {
+      segwit: "Native SegWit binds the watch-only policy to the m/84 single-sig path or the m/48 native multisig compatibility path.",
+      nested: "Nested SegWit binds the watch-only policy to m/49 for single-sig or the m/48 nested multisig compatibility path.",
+      taproot: "Single-key Taproot binds the watch-only policy to m/86. This journey does not claim Taproot multisig support.",
+      legacy: "Legacy P2PKH binds the watch-only policy to m/44."
+    },
     transferStart: "The watch-only wallet builds a PSBT. It contains the transaction, never the private seed.",
     transferStep: count => "Signature " + count + " joins the PSBT. The private key never crosses the air gap.",
     transferDone: [
@@ -89,6 +95,7 @@ export const SCRIPTS = {
     journey: {
       load: "The working paper loads the signer. A BIP-39 passphrase changes the root before the fingerprint appears.",
       watch: "The signer and watch-only wallet now share a public policy. The private seed remains inside the signer.",
+      xpub: "The signer exports public watch-only information and the selected policy. The Butler narrates this handoff because another floating QR would add spectacle without teaching the boundary.",
       deposit: "A public demo address shows the live test-deposit boundary. One address is never a whole-wallet scan.",
       drillStart: "The signer is wiped. Recovery now has to recreate the same fingerprint from the paper and remembered context.",
       drillPass: "The restored fingerprint matches. The test coins can sweep out and back while the stake is still small.",

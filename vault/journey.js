@@ -1,4 +1,4 @@
-import { SCRIPTS } from "./script.js?v=6";
+import { SCRIPTS } from "./script.js?v=7";
 
 const STORAGE_KEY = "bitcoin-butlers.journey.v1";
 const MNEMONIC_KEY = "bitcoin-butlers.demo-mnemonic";
@@ -10,6 +10,24 @@ const ALLOWED = {
   platform: ["desktop", "phone"],
   script: ["segwit", "nested", "taproot", "legacy"]
 };
+
+export const POLICY_PRESETS = {
+  single: {
+    legacy: { path: "m/44'/0'/0'", label: "Legacy P2PKH" },
+    nested: { path: "m/49'/0'/0'", label: "Nested SegWit" },
+    segwit: { path: "m/84'/0'/0'", label: "Native SegWit" },
+    taproot: { path: "m/86'/0'/0'", label: "Single-key Taproot" }
+  },
+  multi: {
+    nested: { path: "m/48'/0'/0'/1'", label: "Nested multisig compatibility" },
+    segwit: { path: "m/48'/0'/0'/2'", label: "Native multisig compatibility" }
+  }
+};
+
+export function resolvePolicy(signers, script){
+  const policies = POLICY_PRESETS[signers] || POLICY_PRESETS.single;
+  return policies[script] || policies.segwit;
+}
 
 export const STATIONS = [
   { id: 1, page: "generation", href: "generation.html", slug: "entropy" },
@@ -68,6 +86,8 @@ function normalize(input){
     state.vendors = "one";
     state.ceremoniesComplete = Math.min(1, state.ceremoniesComplete);
   }
+  if (state.signers === "multi" && !POLICY_PRESETS.multi[state.script]) state.script = "segwit";
+  state.path = resolvePolicy(state.signers, state.script).path;
   return state;
 }
 

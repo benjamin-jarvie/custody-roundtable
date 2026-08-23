@@ -6,7 +6,7 @@
 <title>Seed Generation, The Custody Vault</title>
 <meta name="description" content="Compare device and physical entropy inside a guided 3D seed generation ceremony.">
 <link rel="preload" href="butler-host-v2.webp" as="image">
-<link rel="stylesheet" href="scene-shared.css?v=6">
+<link rel="stylesheet" href="scene-shared.css?v=7">
 <style>
   .paper-editor{position:fixed;left:50%;top:50%;z-index:8;width:430px;
     transform:translate(-50%,-50%);transform-origin:center;padding:.48rem .6rem .55rem;
@@ -80,7 +80,7 @@
       || document.createElement("canvas").getContext("webgl");
     if (!gl) location.replace("fallback.html");
   } catch (error) { location.replace("fallback.html"); }
-  import("./generation.js?v=21").catch(error => {
+  import("./generation.js?v=22").catch(error => {
     console.error("GENERATION SCENE ERROR", error.message, error.stack);
     if (!force3d) location.replace("fallback.html");
   });

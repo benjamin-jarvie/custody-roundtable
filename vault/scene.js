@@ -4,7 +4,7 @@
 
 import * as THREE from "three";
 import { speak, presentTool } from "./butler.js?v=4";
-import { SCRIPTS, emptyWalletLines } from "./script.js?v=6";
+import { SCRIPTS, emptyWalletLines } from "./script.js?v=7";
 import { WORDS, validLastWords, validMnemonic } from "./mnemonic.js?v=1";
 import { masterFromMnemonic } from "./vendor/bip32.js";
 import { loadWatchBalance, formatBtc, formatUsd } from "./balance.js?v=1";
@@ -15,8 +15,10 @@ import {
   syncChoiceControls,
   mountJourneyStations,
   completeStation,
-  getSessionMnemonic
-} from "./journey.js?v=3";
+  getSessionMnemonic,
+  POLICY_PRESETS,
+  resolvePolicy
+} from "./journey.js?v=5";
 import {
   setupPhysicalRenderer,
   brushedMetal,
@@ -27,18 +29,7 @@ import {
   castRealisticShadows
 } from "./visuals.js?v=5";
 
-const SCRIPT_PRESETS = {
-  single: {
-    legacy: { path: "m/44'/0'/0'", label: "Legacy P2PKH" },
-    nested: { path: "m/49'/0'/0'", label: "Nested SegWit" },
-    segwit: { path: "m/84'/0'/0'", label: "Native SegWit" },
-    taproot: { path: "m/86'/0'/0'", label: "Single-key Taproot" }
-  },
-  multi: {
-    nested: { path: "m/48'/0'/0'/1'", label: "Nested multisig compatibility" },
-    segwit: { path: "m/48'/0'/0'/2'", label: "Native multisig compatibility" }
-  }
-};
+const SCRIPT_PRESETS = POLICY_PRESETS;
 const savedJourney = getJourneyState();
 const state = {
   fmt: savedJourney.format,
@@ -635,8 +626,7 @@ function setTarget(m, x, y, z, visible = true){ targets.set(m, { p: new THREE.Ve
 const fpEl = document.getElementById("fp");
 const pathDisplay = document.getElementById("path-display");
 function activePolicy(){
-  const policies = SCRIPT_PRESETS[state.sig];
-  return policies[state.scr] || policies.segwit;
+  return resolvePolicy(state.sig, state.scr);
 }
 function syncPolicyControls(){
   const multi = state.sig === "multi";
@@ -646,8 +636,7 @@ function syncPolicyControls(){
   updateJourney({ script: state.scr, path: state.path });
   pathDisplay.textContent = policy.path;
   document.querySelectorAll("#scr .chip").forEach(button => {
-    const supported = !multi || Boolean(SCRIPT_PRESETS.multi[button.dataset.v]);
-    button.disabled = !supported;
+    button.disabled = true;
     button.classList.toggle("on", button.dataset.v === state.scr);
   });
 }
